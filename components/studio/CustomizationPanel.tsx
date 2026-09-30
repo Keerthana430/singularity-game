@@ -8,6 +8,7 @@ import { useAvatarStore } from '@/store/avatarStore';
 import { ItemCard } from './ItemCard';
 import { ColorPicker } from './ColorPicker';
 import { StatsPreviewCard } from './StatsPreviewCard';
+import { SpeciesCard } from './SpeciesCard';
 import { hairStyles } from '@/data/hairStyles';
 import { tops } from '@/data/tops';
 import { bottoms } from '@/data/bottoms';
@@ -19,7 +20,7 @@ import { weapons, WeaponItem } from '@/data/weapons';
 import Link from 'next/link';
 import { useToast } from '@/components/Toast';
 import { sound } from '@/lib/audio';
-import { Zap, Shield, Flame, Wind, Sparkles, Swords, Check, Dices, Coins, Hammer, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, Shield, Flame, Wind, Sparkles, Swords, Check, Dices, Coins, Hammer } from 'lucide-react';
 
 const BODY_TYPES = [
   { id: 'slim', label: 'Slim', desc: 'Lean build' },
@@ -213,173 +214,124 @@ const SPECIES_ANATOMICAL_PRESETS: Record<string, { body: { type: 'slim' | 'regul
 
 function SpeciesPanel() {
   const { currentAvatar, updateAvatar } = useAvatarStore();
-  const [showOtherSpecies, setShowOtherSpecies] = React.useState(false);
+  const [filter, setFilter] = React.useState<'all' | 'core' | 'scifi'>('all');
 
   const CORE_SPECIES_IDS = ['human', 'elf', 'fairy', 'dwarf'];
+  const SCIFI_SPECIES_IDS = ['ogre', 'robot', 'alien'];
+
+  const displayedSpecies = SPECIES_LIST.filter((sp) => {
+    if (filter === 'core') return CORE_SPECIES_IDS.includes(sp.id);
+    if (filter === 'scifi') return SCIFI_SPECIES_IDS.includes(sp.id);
+    return true;
+  });
+
   const selectedSpecies = SPECIES_LIST.find((s) => s.id === (currentAvatar.species || 'human')) || SPECIES_LIST[0];
 
-  const handleRollRandomSpecies = () => {
-    const chosenId = CORE_SPECIES_IDS[Math.floor(Math.random() * CORE_SPECIES_IDS.length)];
-    const chosen = SPECIES_LIST.find((s) => s.id === chosenId) || SPECIES_LIST[0];
-    sound.playSweep();
-    const preset = SPECIES_ANATOMICAL_PRESETS[chosen.id] || SPECIES_ANATOMICAL_PRESETS.human;
+  const handleSelectSpecies = (sp: SpeciesData) => {
+    sound.playClick();
+    const preset = SPECIES_ANATOMICAL_PRESETS[sp.id] || SPECIES_ANATOMICAL_PRESETS.human;
     useAvatarStore.getState().updateAvatar({
-      species: chosen.id,
-      skinTone: chosen.defaultSkinTone,
-      classRole: chosen.roles[0].id,
+      species: sp.id,
+      skinTone: sp.defaultSkinTone,
+      classRole: sp.roles[0].id,
       body: { ...currentAvatar.body, ...preset.body },
       weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
     });
   };
 
-  const coreList = SPECIES_LIST.filter((s) => CORE_SPECIES_IDS.includes(s.id));
-  const otherList = SPECIES_LIST.filter((s) => !CORE_SPECIES_IDS.includes(s.id));
+  const handleRollRandomSpecies = () => {
+    const chosen = SPECIES_LIST[Math.floor(Math.random() * SPECIES_LIST.length)];
+    sound.playSweep();
+    handleSelectSpecies(chosen);
+  };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <StatsPreviewCard config={currentAvatar} />
 
+      {/* ── CARD DECK HEADER & CONTROLS ── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2.5">
           <div>
-            <p className="text-xs text-white/50 uppercase tracking-widest font-bold">Core Species (4 Races)</p>
-            <span className="text-[10px] text-[#00FF66] font-mono">Specialized Combat Domains</span>
+            <h3 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              <span>Species Cards</span>
+              <span className="text-[10px] text-[#00FF66] font-mono px-1.5 py-0.2 rounded bg-[#00FF66]/10 border border-[#00FF66]/30">
+                {SPECIES_LIST.length}
+              </span>
+            </h3>
+            <p className="text-[10px] text-white/50 font-mono">Collectible RPG race blueprints</p>
           </div>
 
-          {/* Random Species Roller */}
+          {/* Draw Random Card Button */}
           <button
             onClick={handleRollRandomSpecies}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-[11px] font-bold font-mono uppercase tracking-wider transition-all shadow-sm hover:scale-105 active:scale-95"
+            title="Draw a random species card from the deck"
           >
-            <Dices size={14} className="text-amber-400" />
-            <span>Roll Random</span>
+            <Dices size={13} className="text-amber-400" />
+            <span>Draw Card</span>
           </button>
         </div>
 
-        {/* 4 Core Species */}
-        <div className="grid grid-cols-1 gap-2.5">
-          {coreList.map((sp) => {
-            const isSelected = (currentAvatar.species || 'human') === sp.id;
-            return (
-              <button
-                key={sp.id}
-                onClick={() => {
-                  const preset = SPECIES_ANATOMICAL_PRESETS[sp.id] || SPECIES_ANATOMICAL_PRESETS.human;
-                  useAvatarStore.getState().updateAvatar({
-                    species: sp.id,
-                    skinTone: sp.defaultSkinTone,
-                    classRole: sp.roles[0].id,
-                    body: { ...currentAvatar.body, ...preset.body },
-                    weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
-                  });
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden ${
-                  isSelected
-                    ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_15px_rgba(0,255,102,0.15)]'
-                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: sp.accentColor }}
-                    />
-                    <span className="text-sm font-black text-white">{sp.name}</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-                      {sp.domain}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <span className="w-5 h-5 rounded-full bg-[#00FF66] text-black flex items-center justify-center">
-                      <Check size={12} className="stroke-[3]" />
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-white/60 mt-1">{sp.tagline}</p>
-
-                <div
-                  className="mt-2 px-2.5 py-1.5 rounded-xl border text-[11px] font-medium flex items-center gap-1.5"
-                  style={{
-                    borderColor: `${sp.accentColor}30`,
-                    backgroundColor: `${sp.accentColor}10`,
-                  }}
-                >
-                  <Zap size={12} style={{ color: sp.accentColor }} />
-                  <span className="text-white/90">
-                    <strong>Buff: </strong>{sp.innateBuff}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-white/40">
-                  <span>HP: {sp.baseHp}</span>
-                  <span>ATK: {sp.basePower}</span>
-                  <span>AGI: {sp.baseAgility}</span>
-                  <span>DEF: {sp.baseDefense}</span>
-                  <span>MAG: {sp.baseMagic}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Bonus Species Accordion */}
-        <div className="mt-3">
+        {/* Deck Filter Tabs */}
+        <div className="flex items-center gap-1.5 mb-3 p-1 rounded-xl bg-black/60 border border-white/10">
           <button
-            onClick={() => setShowOtherSpecies(!showOtherSpecies)}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-mono text-white/70"
+            onClick={() => setFilter('all')}
+            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
+              filter === 'all'
+                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
           >
-            <span>Additional Sci-Fi Species ({otherList.length})</span>
-            {showOtherSpecies ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            All ({SPECIES_LIST.length})
           </button>
+          <button
+            onClick={() => setFilter('core')}
+            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
+              filter === 'core'
+                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            Core (4)
+          </button>
+          <button
+            onClick={() => setFilter('scifi')}
+            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
+              filter === 'scifi'
+                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            Sci-Fi (3)
+          </button>
+        </div>
 
-          {showOtherSpecies && (
-            <div className="grid grid-cols-1 gap-2 mt-2">
-              {otherList.map((sp) => {
-                const isSelected = (currentAvatar.species || 'human') === sp.id;
-                return (
-                  <button
-                    key={sp.id}
-                    onClick={() => {
-                      const preset = SPECIES_ANATOMICAL_PRESETS[sp.id] || SPECIES_ANATOMICAL_PRESETS.human;
-                      useAvatarStore.getState().updateAvatar({
-                        species: sp.id,
-                        skinTone: sp.defaultSkinTone,
-                        classRole: sp.roles[0].id,
-                        body: { ...currentAvatar.body, ...preset.body },
-                        weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
-                      });
-                    }}
-                    className={`p-3 rounded-2xl border text-left transition-all ${
-                      isSelected
-                        ? 'border-[#00FF66] bg-[#00FF66]/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: sp.accentColor }} />
-                        <span className="text-xs font-black text-white">{sp.name}</span>
-                        <span className="text-[10px] font-mono text-white/60">({sp.domain})</span>
-                      </div>
-                      {isSelected && <Check size={14} className="text-[#00FF66]" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        {/* ── 2-COLUMN COLLECTIBLE CARD GRID ── */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {displayedSpecies.map((sp) => (
+            <SpeciesCard
+              key={sp.id}
+              species={sp}
+              isSelected={(currentAvatar.species || 'human') === sp.id}
+              onSelect={() => handleSelectSpecies(sp)}
+            />
+          ))}
         </div>
       </div>
 
-      {/* Sub-Choice: Class Roles for chosen species */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-white/50 uppercase tracking-widest">
-            {selectedSpecies.name} Sub-Class Specialization
-          </p>
-          <span className="text-[10px] text-violet-400 font-mono">Role Archetype</span>
+      {/* ── SUB-CLASS ROLE SPECIALIZATION DECK ── */}
+      <div className="pt-2 border-t border-white/10">
+        <div className="flex items-center justify-between mb-2.5">
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-wider text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              {selectedSpecies.name} Sub-Class Deck
+            </h4>
+            <p className="text-[10px] text-white/50 font-mono">Specialized role combat mastery</p>
+          </div>
+          <span className="text-[10px] text-violet-400 font-mono font-bold px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/30">
+            {(currentAvatar.classRole || selectedSpecies.roles[0].id).toUpperCase()}
+          </span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -388,40 +340,54 @@ function SpeciesPanel() {
             return (
               <button
                 key={role.id}
-                onClick={() => updateAvatar({ classRole: role.id })}
-                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                onClick={() => {
+                  sound.playClick();
+                  updateAvatar({ classRole: role.id });
+                }}
+                className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between select-none ${
                   isRoleSelected
-                    ? 'border-violet-400 bg-violet-600/20 text-white shadow-[0_0_12px_rgba(124,92,255,0.25)]'
-                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'
+                    ? 'border-violet-400 bg-violet-950/40 text-white shadow-[0_0_15px_rgba(167,139,250,0.3)] scale-[1.02]'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase text-white">{role.name}</span>
-                    <span className="text-[10px] font-mono uppercase text-violet-300">[{role.id}]</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black uppercase text-white truncate mr-1">
+                      {role.name}
+                    </span>
+                    {isRoleSelected && (
+                      <span className="w-3.5 h-3.5 rounded-full bg-violet-400 text-black flex items-center justify-center shrink-0">
+                        <Check size={9} className="stroke-[3]" />
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[11px] text-white/50 mt-1 leading-tight">{role.roleDesc}</p>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/10 text-violet-300 font-bold inline-block mb-1">
+                    [{role.id}]
+                  </span>
+                  <p className="text-[10px] text-white/50 leading-tight line-clamp-2">
+                    {role.roleDesc}
+                  </p>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-white/10 text-[10px] font-mono">
+                <div className="flex flex-wrap gap-1 mt-2 pt-1.5 border-t border-white/10 text-[9px] font-mono">
                   {role.hpMod !== 0 && (
-                    <span className={role.hpMod > 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                    <span className={role.hpMod > 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
                       HP {role.hpMod > 0 ? `+${role.hpMod}` : role.hpMod}
                     </span>
                   )}
                   {role.powerMod !== 0 && (
-                    <span className="text-rose-400">ATK +{role.powerMod}</span>
+                    <span className="text-rose-400 font-bold">ATK +{role.powerMod}</span>
                   )}
                   {role.defenseMod !== 0 && (
-                    <span className="text-cyan-400">DEF +{role.defenseMod}</span>
+                    <span className="text-cyan-400 font-bold">DEF +{role.defenseMod}</span>
                   )}
                   {role.agilityMod !== 0 && (
-                    <span className={role.agilityMod > 0 ? 'text-amber-400' : 'text-rose-400'}>
+                    <span className={role.agilityMod > 0 ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
                       AGI {role.agilityMod > 0 ? `+${role.agilityMod}` : role.agilityMod}
                     </span>
                   )}
                   {role.magicMod !== 0 && (
-                    <span className="text-violet-400">MAG +{role.magicMod}</span>
+                    <span className="text-violet-400 font-bold">MAG +{role.magicMod}</span>
                   )}
                 </div>
               </button>
