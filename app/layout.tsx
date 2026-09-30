@@ -1,0 +1,31 @@
+import type { Metadata } from 'next';
+import './globals.css';
+import { Navbar } from '@/components/Navbar';
+import { ToastProvider } from '@/components/Toast';
+
+export const metadata: Metadata = {
+  title: 'Singularity Avatar Builder',
+  description: 'Build your character. Define your style. Enter your world.',
+  keywords: ['avatar', 'character creator', 'singularity', '3D avatar', 'gaming'],
+  openGraph: {
+    title: 'Singularity Avatar Builder',
+    description: 'Build your character. Define your style. Enter your world.',
+    type: 'website',
+  },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="antialiased">
+        <ToastProvider />
+        <Navbar />
+        <main className="min-h-screen">{children}</main>
+      </body>
+    </html>
+  );
+}
