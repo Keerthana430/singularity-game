@@ -230,13 +230,7 @@ export default function StudioPage() {
 
         {/* Right: Export & Save */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setExportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all touch-target"
-          >
-            <Download size={14} />
-            <span className="hidden sm:inline">Export</span>
-          </button>
+
 
           <button
             onClick={handleSave}
