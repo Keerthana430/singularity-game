@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AvatarConfig, StudioCategory } from '@/types/avatar';
 import { createDefaultAvatar } from '@/data/defaults';
+import { PRESET_AVATARS } from '@/data/presets';
 
 interface AvatarStore {
   // Current editing avatar
@@ -52,12 +53,13 @@ function pick<T>(arr: T[]): T {
 }
 
 const DEFAULT_AVATAR = createDefaultAvatar();
+const INITIAL_SAVED_BUILDS = PRESET_AVATARS.map((p) => p.avatar);
 
 export const useAvatarStore = create<AvatarStore>()(
   persist(
     (set, get) => ({
       currentAvatar: DEFAULT_AVATAR,
-      savedAvatars: [],
+      savedAvatars: INITIAL_SAVED_BUILDS,
       history: [DEFAULT_AVATAR],
       historyIndex: 0,
       activeCategory: 'body',
