@@ -165,21 +165,21 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#070912] flex flex-col select-none text-white font-sans">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#020502] flex flex-col select-none text-white font-sans">
       {/* Background ambient sci-fi glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 right-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-[#00FF66]/5 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-40 right-1/4 w-[600px] h-[600px] bg-emerald-600/5 rounded-full blur-[140px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(#00FF660a_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
       </div>
 
       {/* TOP STUDIO TOOLBAR */}
-      <header className="relative z-30 h-16 border-b border-white/10 bg-[#070912]/80 backdrop-blur-xl px-4 flex items-center justify-between">
+      <header className="relative z-30 h-16 border-b border-[#00FF66]/15 bg-[#020502]/90 backdrop-blur-xl px-4 flex items-center justify-between">
         {/* Left: Back + Avatar Name */}
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 text-white/70 hover:text-white transition-all text-xs font-semibold uppercase tracking-wider touch-target"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/20 hover:border-[#00FF66]/50 hover:bg-[#00FF66]/10 text-white/70 hover:text-white transition-all text-xs font-semibold uppercase tracking-wider touch-target"
           >
             <ChevronLeft size={16} />
             <span>Exit</span>
@@ -197,11 +197,11 @@ export default function StudioPage() {
                   onChange={(e) => setAvatarName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
                   autoFocus
-                  className="bg-black/60 border border-violet-500/60 rounded px-2.5 py-1 text-sm font-bold text-white tracking-wide focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  className="bg-black/70 border border-[#00FF66]/60 rounded px-2.5 py-1 text-sm font-bold text-white tracking-wide focus:outline-none focus:ring-1 focus:ring-[#00FF66]"
                 />
                 <button
                   onClick={handleNameSave}
-                  className="p-1.5 rounded bg-violet-600 hover:bg-violet-500 text-white"
+                  className="p-1.5 rounded bg-[#00FF66] hover:bg-[#00FF66]/80 text-black font-bold"
                 >
                   <Check size={14} />
                 </button>
@@ -214,20 +214,20 @@ export default function StudioPage() {
                 }}
                 className="group flex items-center gap-2 px-2.5 py-1 rounded hover:bg-white/5 transition-all text-left"
               >
-                <span className="font-extrabold text-sm tracking-wider uppercase text-white group-hover:text-violet-300 transition-colors">
+                <span className="font-extrabold text-sm tracking-wider uppercase text-white group-hover:text-[#00FF66] transition-colors" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                   {currentAvatar.name}
                 </span>
-                <span className="text-[10px] text-white/30 uppercase tracking-widest font-mono">edit</span>
+                <span className="text-[10px] text-[#00FF66]/50 uppercase tracking-widest font-mono">edit</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Center: Presets & Quick Actions */}
-        <div className="hidden md:flex items-center gap-1 glass-panel px-2 py-1">
+        <div className="hidden md:flex items-center gap-1 bg-black/60 border border-[#00FF66]/20 rounded-xl px-2 py-1 shadow-[0_0_15px_rgba(0,255,102,0.1)]">
           <button
             onClick={() => setPresetModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-300 hover:bg-violet-500/20 transition-all uppercase tracking-wider"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#00FF66] hover:bg-[#00FF66]/15 transition-all uppercase tracking-wider"
           >
             <Sparkles size={14} />
             <span>Archetypes</span>
@@ -294,21 +294,21 @@ export default function StudioPage() {
       {/* MAIN STUDIO WORKSPACE: 3-column layout */}
       <div className="relative flex-1 min-h-0 flex overflow-hidden">
         {/* LEFT COLUMN: Categories Navigation */}
-        <aside className="w-44 border-r border-[#00FF66]/15 bg-[#020502]/85 backdrop-blur-xl z-20 flex flex-col justify-between py-2 hidden sm:flex">
+        <aside className="w-48 border-r border-[#00FF66]/15 bg-[#020502]/90 backdrop-blur-xl z-20 flex flex-col justify-between py-2 hidden sm:flex">
           <div className="overflow-y-auto">
             <div className="px-4 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Studio Customizer</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#00FF66]/60">Studio Customizer</p>
             </div>
             <CategoryTabs orientation="vertical" />
           </div>
 
-          <div className="p-3 border-t border-white/10">
-            <div className="glass-panel p-2.5 flex flex-col gap-1">
+          <div className="p-3 border-t border-[#00FF66]/15">
+            <div className="bg-black/60 border border-[#00FF66]/20 rounded-xl p-2.5 flex flex-col gap-1">
               <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Build Ver.</span>
               <span className="text-xs text-white/90 font-bold font-mono">SINGULARITY v2.4</span>
-              <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>PROCEDURAL ENGINE</span>
+              <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[#00FF66] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
+                <span className="font-mono">PROCEDURAL RIG ACTIVE</span>
               </div>
             </div>
           </div>
@@ -330,6 +330,12 @@ export default function StudioPage() {
           <div className="relative flex-1 w-full h-full min-h-0">
             <AvatarViewer config={currentAvatar} className="w-full h-full" showControls={true} animate={true} />
 
+            {/* Futuristic Viewport HUD Reticles */}
+            <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-[#00FF66]/40 pointer-events-none" />
+            <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-[#00FF66]/40 pointer-events-none" />
+            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-[#00FF66]/40 pointer-events-none" />
+            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-[#00FF66]/40 pointer-events-none" />
+
             {/* Holographic Drag-and-Drop Zone Active Overlay */}
             {isDragOver && (
               <motion.div
@@ -350,25 +356,26 @@ export default function StudioPage() {
               </motion.div>
             )}
 
-            {/* Sci-Fi HUD Viewport Overlay */}
-            <div className="absolute top-4 left-4 pointer-events-none hidden md:flex flex-col gap-1 text-[11px] font-mono text-white/50">
+            {/* Sci-Fi HUD Viewport Overlay with Live Species & Build Specs */}
+            <div className="absolute top-4 left-4 pointer-events-none hidden md:flex flex-col gap-1 text-[11px] font-mono text-white/50 bg-black/60 border border-[#00FF66]/20 backdrop-blur-md p-2.5 rounded-xl shadow-lg">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
-                <span className="text-[#00FF66] font-bold tracking-wider">LIVE HOLO-RIG</span>
+                <span className="text-[#00FF66] font-bold tracking-wider">LIVE RIG MONITOR</span>
               </div>
-              <span>BODY: {currentAvatar.body.type.toUpperCase()}</span>
-              <span>PARTS: PROCEDURAL MESH</span>
-              <span>RENDER: 60 FPS WEBGL</span>
+              <span className="text-white/80">SPECIES: <span className="text-[#00FF66] font-bold">{(currentAvatar.species || 'HUMAN').toUpperCase()}</span></span>
+              <span>BODY: {currentAvatar.body.type.toUpperCase()} ({currentAvatar.body.height.toFixed(2)}x)</span>
+              <span>WEAPON: {(currentAvatar.weapon || 'UNARMED').toUpperCase()}</span>
+              <span className="text-white/40">RENDER: 60 FPS WEBGL</span>
             </div>
 
             {/* Quick Archetype Preset Switcher Pill (Bottom Left) */}
-            <div className="absolute bottom-4 left-4 hidden lg:flex items-center gap-1.5 glass-panel p-1.5 z-10">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold px-2">Presets:</span>
+            <div className="absolute bottom-4 left-4 hidden lg:flex items-center gap-1.5 bg-black/70 border border-[#00FF66]/20 backdrop-blur-md p-1.5 rounded-xl z-10 shadow-lg">
+              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold px-2">Presets:</span>
               {PRESET_AVATARS.slice(0, 3).map((p) => (
                 <button
                   key={p.id}
                   onClick={() => loadPreset(p.avatar)}
-                  className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-white/5 hover:bg-violet-600/30 text-white/80 hover:text-white transition-all border border-white/5 hover:border-violet-500/40"
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/5 hover:bg-[#00FF66]/20 text-white/80 hover:text-white transition-all border border-white/5 hover:border-[#00FF66]/40"
                 >
                   {p.name}
                 </button>
@@ -378,15 +385,15 @@ export default function StudioPage() {
         </main>
 
         {/* RIGHT COLUMN: Customization Controls Panel */}
-        <aside className="w-80 md:w-96 border-l border-white/10 bg-[#070912]/90 backdrop-blur-2xl z-20 flex flex-col h-full overflow-hidden shadow-2xl">
-          <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between">
+        <aside className="w-80 md:w-96 border-l border-[#00FF66]/15 bg-[#020502]/95 backdrop-blur-2xl z-20 flex flex-col h-full overflow-hidden shadow-2xl">
+          <div className="px-5 py-3 border-b border-[#00FF66]/15 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sliders size={16} className="text-violet-400" />
-              <h2 className="text-xs font-bold uppercase tracking-widest text-white">
+              <Sliders size={16} className="text-[#00FF66]" />
+              <h2 className="text-xs font-bold uppercase tracking-widest text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                 {activeCategory} customization
               </h2>
             </div>
-            <span className="text-[10px] text-violet-400 font-mono uppercase bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
+            <span className="text-[10px] text-[#00FF66] font-mono uppercase bg-[#00FF66]/15 px-2 py-0.5 rounded border border-[#00FF66]/30">
               Active
             </span>
           </div>
@@ -404,7 +411,7 @@ export default function StudioPage() {
             Export your unique avatar build as a lightweight JSON configuration or copy the rig parameters directly.
           </p>
 
-          <div className="p-3 bg-black/60 rounded-xl border border-white/10 font-mono text-xs text-violet-300 max-h-48 overflow-y-auto">
+          <div className="p-3 bg-black/80 rounded-xl border border-[#00FF66]/20 font-mono text-xs text-[#00FF66] max-h-48 overflow-y-auto">
             <pre>{JSON.stringify(currentAvatar, null, 2)}</pre>
           </div>
 
@@ -413,14 +420,13 @@ export default function StudioPage() {
               onClick={handleCopyJson}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all"
             >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+              {copied ? <Check size={14} className="text-[#00FF66]" /> : <Copy size={14} />}
               <span>{copied ? 'Copied!' : 'Copy JSON'}</span>
             </button>
 
             <button
               onClick={handleDownloadJson}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-violet-500/20"
-              style={{ background: 'linear-gradient(135deg, #7C5CFF, #22D3EE)' }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-black font-black text-xs uppercase tracking-wider transition-all neon-green-button shadow-[0_0_20px_rgba(0,255,102,0.3)]"
             >
               <Download size={14} />
               <span>Download File</span>

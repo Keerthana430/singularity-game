@@ -164,7 +164,13 @@ function AccessoriesPanel() {
                 key={item.id}
                 item={item}
                 selected={currentAvatar.accessories[slot.key] === item.id}
-                onSelect={(id) => updateAccessories({ [slot.key]: id })}
+                onSelect={(id) => {
+                  updateAccessories({ [slot.key]: id });
+                  if (item.color) {
+                    useAvatarStore.getState().updateAvatar({ accessoryColor: item.color });
+                  }
+                }}
+                accentColor={item.color || currentAvatar.accessoryColor}
               />
             ))}
           </div>
@@ -173,6 +179,37 @@ function AccessoriesPanel() {
     </div>
   );
 }
+
+const SPECIES_ANATOMICAL_PRESETS: Record<string, { body: { type: 'slim' | 'regular' | 'broad' | 'chibi'; height: number; bodySize: number; headSize: number }; defaultWeapon: string }> = {
+  human: {
+    body: { type: 'regular', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'photon-blade',
+  },
+  elf: {
+    body: { type: 'slim', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'cyber-staff',
+  },
+  fairy: {
+    body: { type: 'chibi', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'star-wand',
+  },
+  dwarf: {
+    body: { type: 'broad', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'energy-hammer',
+  },
+  robot: {
+    body: { type: 'regular', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'plasma-blaster',
+  },
+  ogre: {
+    body: { type: 'broad', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'energy-hammer',
+  },
+  alien: {
+    body: { type: 'slim', height: 1.0, bodySize: 1.0, headSize: 1.0 },
+    defaultWeapon: 'cyber-staff',
+  },
+};
 
 function SpeciesPanel() {
   const { currentAvatar, updateAvatar } = useAvatarStore();
@@ -185,10 +222,13 @@ function SpeciesPanel() {
     const chosenId = CORE_SPECIES_IDS[Math.floor(Math.random() * CORE_SPECIES_IDS.length)];
     const chosen = SPECIES_LIST.find((s) => s.id === chosenId) || SPECIES_LIST[0];
     sound.playSweep();
+    const preset = SPECIES_ANATOMICAL_PRESETS[chosen.id] || SPECIES_ANATOMICAL_PRESETS.human;
     useAvatarStore.getState().updateAvatar({
       species: chosen.id,
       skinTone: chosen.defaultSkinTone,
       classRole: chosen.roles[0].id,
+      body: { ...currentAvatar.body, ...preset.body },
+      weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
     });
   };
 
@@ -224,10 +264,13 @@ function SpeciesPanel() {
               <button
                 key={sp.id}
                 onClick={() => {
+                  const preset = SPECIES_ANATOMICAL_PRESETS[sp.id] || SPECIES_ANATOMICAL_PRESETS.human;
                   useAvatarStore.getState().updateAvatar({
                     species: sp.id,
                     skinTone: sp.defaultSkinTone,
                     classRole: sp.roles[0].id,
+                    body: { ...currentAvatar.body, ...preset.body },
+                    weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
                   });
                 }}
                 className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden ${
@@ -299,10 +342,13 @@ function SpeciesPanel() {
                   <button
                     key={sp.id}
                     onClick={() => {
+                      const preset = SPECIES_ANATOMICAL_PRESETS[sp.id] || SPECIES_ANATOMICAL_PRESETS.human;
                       useAvatarStore.getState().updateAvatar({
                         species: sp.id,
                         skinTone: sp.defaultSkinTone,
                         classRole: sp.roles[0].id,
+                        body: { ...currentAvatar.body, ...preset.body },
+                        weapon: (!currentAvatar.weapon || currentAvatar.weapon === 'unarmed') ? preset.defaultWeapon : currentAvatar.weapon,
                       });
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
@@ -423,8 +469,13 @@ function WeaponsPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <StatsPreviewCard config={currentAvatar} />
+    <div className="flex flex-col gap-4">
+      {currentAvatar.species === 'fairy' && (
+        <div className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center gap-2.5 text-xs text-pink-200">
+          <Sparkles size={16} className="text-pink-400 flex-shrink-0" />
+          <span><strong>Fairy Weapon Resonance:</strong> Due to fairy physiology and flight, heavy weapons are magically refined into celestial wands and ethereal starlight foci.</span>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -539,15 +590,25 @@ function ColorsPanel() {
 }
 
 export function CustomizationPanel() {
-  const { activeCategory, currentAvatar, updateAvatar, coins } = useAvatarStore();
+  const { activeCategory, currentAvatar, updateAvatar, coins, addCoins } = useAvatarStore();
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sleek Cyber Wallet Bar */}
+      {/* Sleek Cyber Wallet Bar (Testing Phase: Unlimited Currency) */}
       <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-2 mx-4 flex-shrink-0 text-xs">
-        <div className="flex items-center gap-1.5 font-mono text-amber-300 font-bold">
+        <div className="flex items-center gap-2 font-mono text-amber-300 font-bold">
           <span>🪙</span>
-          <span>{coins} COINS</span>
+          <span>{coins.toLocaleString()} COINS</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider font-sans font-bold">
+            UNLIMITED (TEST)
+          </span>
+          <button
+            onClick={() => addCoins(1000000)}
+            className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 transition-all font-mono font-bold"
+            title="Top up testing coins"
+          >
+            +MAX
+          </button>
         </div>
         <Link
           href="/lobby"
@@ -585,8 +646,8 @@ export function CustomizationPanel() {
                     key={item.id}
                     item={item}
                     selected={currentAvatar.hair === item.id}
-                    onSelect={(id) => updateAvatar({ hair: id })}
-                    accentColor={currentAvatar.hairColor}
+                    onSelect={(id) => updateAvatar({ hair: id, ...(item.color ? { hairColor: item.color } : {}) })}
+                    accentColor={item.color || currentAvatar.hairColor}
                   />
                 ))}
               </div>
@@ -599,8 +660,8 @@ export function CustomizationPanel() {
                     key={item.id}
                     item={item}
                     selected={currentAvatar.top === item.id}
-                    onSelect={(id) => updateAvatar({ top: id })}
-                    accentColor={currentAvatar.topColor}
+                    onSelect={(id) => updateAvatar({ top: id, ...(item.color ? { topColor: item.color } : {}) })}
+                    accentColor={item.color || currentAvatar.topColor}
                   />
                 ))}
               </div>
@@ -613,8 +674,8 @@ export function CustomizationPanel() {
                     key={item.id}
                     item={item}
                     selected={currentAvatar.bottom === item.id}
-                    onSelect={(id) => updateAvatar({ bottom: id })}
-                    accentColor={currentAvatar.bottomColor}
+                    onSelect={(id) => updateAvatar({ bottom: id, ...(item.color ? { bottomColor: item.color } : {}) })}
+                    accentColor={item.color || currentAvatar.bottomColor}
                   />
                 ))}
               </div>
@@ -627,8 +688,8 @@ export function CustomizationPanel() {
                     key={item.id}
                     item={item}
                     selected={currentAvatar.shoes === item.id}
-                    onSelect={(id) => updateAvatar({ shoes: id })}
-                    accentColor={currentAvatar.shoeColor}
+                    onSelect={(id) => updateAvatar({ shoes: id, ...(item.color ? { shoeColor: item.color } : {}) })}
+                    accentColor={item.color || currentAvatar.shoeColor}
                   />
                 ))}
               </div>

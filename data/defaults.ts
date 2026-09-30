@@ -6,6 +6,7 @@ export function createDefaultAvatar(name = 'My Avatar'): AvatarConfig {
   return {
     id: uuidv4(),
     name,
+    gender: 'female',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     body: { type: 'regular', height: 1.0, headSize: 1.0, bodySize: 1.0 },

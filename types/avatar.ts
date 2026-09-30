@@ -31,6 +31,7 @@ export interface AvatarAccessories {
 export interface AvatarConfig {
   id: string;
   name: string;
+  gender?: 'male' | 'female';
   species?: Species;
   classRole?: ClassRole;
   weapon?: string;

@@ -4,6 +4,8 @@ import { Navbar } from '@/components/Navbar';
 import { ToastProvider } from '@/components/Toast';
 import { DeviceNoticeBanner } from '@/components/DeviceNoticeBanner';
 
+import { SessionSync } from '@/components/auth/SessionSync';
+
 export const metadata: Metadata = {
   title: 'Singularity Avatar Builder',
   description: 'Build your character. Define your style. Enter your world.',
@@ -23,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className="antialiased">
+        <SessionSync />
         <ToastProvider />
         <Navbar />
         <DeviceNoticeBanner />

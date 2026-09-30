@@ -4,15 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Package, Layers, ChevronRight, Menu, X, Star, Swords } from 'lucide-react';
+import { User, Package, Layers, ChevronRight, Menu, X, Star, Swords, Heart, LogIn, LogOut } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
+import { useAuthStore } from '@/store/authStore';
 
 const navLinks = [
   { href: '/studio', label: '// STUDIO', icon: Layers },
   { href: '/avatars', label: '// VAULT', icon: User },
   { href: '/inventory', label: '// LOCKER', icon: Package },
   { href: '/lobby', label: '// ARENA', icon: Swords },
+  { href: '/contest', label: '// CONTEST', icon: Heart },
   { href: '/profile', label: '// PROFILE', icon: Star },
 ];
 
@@ -21,6 +23,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentAvatar = useAvatarStore((s) => s.currentAvatar);
+  const { isLoggedIn, team, logout } = useAuthStore();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -79,6 +82,29 @@ export function Navbar() {
 
             {/* Right: user info + CTA */}
             <div className="hidden md:flex items-center gap-3">
+              {/* Team Auth Badge */}
+              {isLoggedIn && team ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#00FF66]/10 border border-[#00FF66]/40 font-mono">
+                  <div className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
+                  <span className="text-[10px] text-[#00FF66] font-black uppercase tracking-wider">{team.displayName}</span>
+                  <button
+                    onClick={() => logout()}
+                    className="ml-1 p-1 text-white/40 hover:text-red-400 transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut size={12} />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] text-xs font-bold font-mono uppercase tracking-wider hover:bg-[#00FF66]/20 transition-all"
+                >
+                  <LogIn size={12} />
+                  <span>Team Login</span>
+                </Link>
+              )}
+
               {/* Avatar identity badge */}
               <div className="hud-box flex items-center gap-2 px-3 py-1.5 bg-black/80 border border-[#00FF66]/40 font-mono">
                 <div
@@ -87,7 +113,7 @@ export function Navbar() {
                   aria-hidden="true"
                 />
                 <span className="text-xs text-white font-bold">{currentAvatar.name.toUpperCase()}</span>
-                <span className="text-[10px] text-[#00FF66] font-black">[LV.12]</span>
+                <span className="text-[10px] text-[#00FF66] font-black">[{((currentAvatar.classRole || 'OPERATIVE') as string).toUpperCase()}]</span>
               </div>
 
               <Link
@@ -146,6 +172,30 @@ export function Navbar() {
               >
                 CREATE AVATAR &gt;
               </Link>
+              {/* Mobile Team Auth */}
+              {isLoggedIn && team ? (
+                <div className="flex items-center justify-between px-4 py-3 mt-1 bg-[#00FF66]/10 border border-[#00FF66]/30">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
+                    <span className="text-xs text-[#00FF66] font-black uppercase">{team.displayName}</span>
+                  </div>
+                  <button
+                    onClick={() => { logout(); setMobileOpen(false); }}
+                    className="text-xs text-white/40 hover:text-red-400 font-bold uppercase"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-2 mt-1 px-4 py-3 text-xs font-bold uppercase tracking-wider border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66]"
+                >
+                  <LogIn size={14} />
+                  Team Login
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

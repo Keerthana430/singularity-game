@@ -1,8 +1,33 @@
 'use client';
 // components/studio/ItemCard.tsx
+// Rich RPG Equipment card with distinct item-specific icons, signature color themes,
+// and glowing previews to eliminate the duplicate generic circle swatch.
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Coins } from 'lucide-react';
+import {
+  Lock,
+  Shirt,
+  Sparkles,
+  Crown,
+  Feather,
+  Scissors,
+  Footprints,
+  Shield,
+  Eye,
+  Glasses,
+  Headphones,
+  Flame,
+  Zap,
+  Heart,
+  Star,
+  Sun,
+  Bot,
+  Layers,
+  Smile,
+  CircleDot,
+  Hexagon,
+} from 'lucide-react';
 import { AvatarItem, Rarity } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useToast } from '@/components/Toast';
@@ -22,6 +47,247 @@ const rarityDot: Record<Rarity, string> = {
   legendary: 'bg-amber-400',
 };
 
+// Item-specific distinctive iconography & badges
+function getItemVisual(item: AvatarItem, itemColor: string) {
+  const id = item.id.toLowerCase();
+
+  // ── Tops & Outfits ──
+  if (id === 'lolita-dress') {
+    return {
+      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'LOLITA',
+      bgGlow: '#FF7EB6',
+    };
+  }
+  if (id === 'maid-dress') {
+    return {
+      icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: '#FFFFFF' }} />,
+      tag: 'MAID',
+      bgGlow: '#E2E8F0',
+    };
+  }
+  if (id === 'magical-dress') {
+    return {
+      icon: <Star size={22} className="stroke-[2.2]" style={{ color: '#C084FC' }} />,
+      tag: 'MAGICAL',
+      bgGlow: '#8B5CF6',
+    };
+  }
+  if (id === 'sundress') {
+    return {
+      icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
+      tag: 'SUMMER',
+      bgGlow: '#FBBF24',
+    };
+  }
+  if (id === 'princess-gown') {
+    return {
+      icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
+      tag: 'GOWN',
+      bgGlow: '#EC4899',
+    };
+  }
+  if (id === 'cyber-dress') {
+    return {
+      icon: <Zap size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />,
+      tag: 'CYBER',
+      bgGlow: '#06B6D4',
+    };
+  }
+  if (id === 'hoodie-dress') {
+    return {
+      icon: <Feather size={22} className="stroke-[2.2]" style={{ color: '#818CF8' }} />,
+      tag: 'COZY',
+      bgGlow: '#6366F1',
+    };
+  }
+  if (id === 'armor') {
+    return {
+      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />,
+      tag: 'ARMOR',
+      bgGlow: '#475569',
+    };
+  }
+  if (id === 'futuristic-suit') {
+    return {
+      icon: <Bot size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />,
+      tag: 'MECHA',
+      bgGlow: '#00FF66',
+    };
+  }
+  if (id === 'hoodie') {
+    return {
+      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#CBD5E1' }} />,
+      tag: 'STREET',
+      bgGlow: '#334155',
+    };
+  }
+  if (id === 'jacket') {
+    return {
+      icon: <Layers size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
+      tag: 'JACKET',
+      bgGlow: '#78350F',
+    };
+  }
+  if (id === 'shirt') {
+    return {
+      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#F8FAFC' }} />,
+      tag: 'FORMAL',
+      bgGlow: '#94A3B8',
+    };
+  }
+  if (id === 'tshirt') {
+    return {
+      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#60A5FA' }} />,
+      tag: 'CASUAL',
+      bgGlow: '#3B82F6',
+    };
+  }
+  if (id === 'tank') {
+    return {
+      icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#FB7185' }} />,
+      tag: 'SPORT',
+      bgGlow: '#E11D48',
+    };
+  }
+  if (id === 'crop') {
+    return {
+      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
+      tag: 'CROP',
+      bgGlow: '#D946EF',
+    };
+  }
+
+  // ── Bottoms ──
+  if (id.includes('skirt') || id === 'tutu') {
+    return {
+      icon: <Scissors size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'SKIRT',
+      bgGlow: itemColor,
+    };
+  }
+  if (id === 'jeans' || id === 'shorts' || id === 'cargo' || id === 'joggers' || id === 'leggings') {
+    return {
+      icon: <Layers size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'PANTS',
+      bgGlow: itemColor,
+    };
+  }
+  if (id === 'armor-pants') {
+    return {
+      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />,
+      tag: 'GREAVES',
+      bgGlow: '#475569',
+    };
+  }
+
+  // ── Shoes ──
+  if (item.category === 'shoes') {
+    return {
+      icon: <Footprints size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: id.toUpperCase().slice(0, 7),
+      bgGlow: itemColor,
+    };
+  }
+
+  // ── Accessories ──
+  if (id === 'cat-ears' || id === 'bunny-ears') {
+    return {
+      icon: <Smile size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
+      tag: 'EARS',
+      bgGlow: '#FF5C93',
+    };
+  }
+  if (id === 'bow') {
+    return {
+      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#FF2D78' }} />,
+      tag: 'BOW',
+      bgGlow: '#FF2D78',
+    };
+  }
+  if (id === 'halo') {
+    return {
+      icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#FFD700' }} />,
+      tag: 'HOLY',
+      bgGlow: '#FFD700',
+    };
+  }
+  if (id === 'glasses') {
+    return {
+      icon: <Glasses size={22} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />,
+      tag: 'OPTIC',
+      bgGlow: '#38BDF8',
+    };
+  }
+  if (id === 'crown') {
+    return {
+      icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
+      tag: 'ROYAL',
+      bgGlow: '#F59E0B',
+    };
+  }
+  if (id === 'headphones') {
+    return {
+      icon: <Headphones size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />,
+      tag: 'AUDIO',
+      bgGlow: '#06B6D4',
+    };
+  }
+  if (id === 'mask' || id === 'visor') {
+    return {
+      icon: <Eye size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />,
+      tag: 'VISOR',
+      bgGlow: '#00FF66',
+    };
+  }
+  if (id.includes('wing')) {
+    return {
+      icon: <Feather size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'WINGS',
+      bgGlow: itemColor,
+    };
+  }
+  if (id === 'jetpack') {
+    return {
+      icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#F97316' }} />,
+      tag: 'THRUST',
+      bgGlow: '#F97316',
+    };
+  }
+  if (id.includes('pauldron') || id.includes('shoulder')) {
+    return {
+      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#EAB308' }} />,
+      tag: 'GUARD',
+      bgGlow: '#EAB308',
+    };
+  }
+
+  // ── Hair ──
+  if (item.category === 'hair') {
+    return {
+      icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'HAIR',
+      bgGlow: itemColor,
+    };
+  }
+
+  // ── Face ──
+  if (item.category === 'face' || id.includes('eye') || id.includes('wink')) {
+    return {
+      icon: <Eye size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+      tag: 'EYES',
+      bgGlow: itemColor,
+    };
+  }
+
+  // Default fallback
+  return {
+    icon: <CircleDot size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+    tag: 'ITEM',
+    bgGlow: itemColor,
+  };
+}
+
 interface ItemCardProps {
   item: AvatarItem;
   selected: boolean;
@@ -35,6 +301,10 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
 
   const cost = item.cost ?? 0;
   const isUnlocked = cost === 0 || isItemUnlocked(item.id);
+
+  // Every item has its own signature color, falling back to accentColor or vibrant emerald
+  const itemColor = item.color || accentColor || '#00FF66';
+  const visual = getItemVisual(item, itemColor);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,64 +354,81 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
       onDragStartCapture={handleDragStart}
       aria-pressed={selected}
       aria-label={`${item.name} — ${rarityLabel[item.rarity]}${!isUnlocked ? ` (${cost} coins)` : ''}`}
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-200 cursor-pointer text-left ${
+      className={`relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer text-left overflow-hidden ${
         !isUnlocked
-          ? 'border-white/10 bg-black/40 hover:border-amber-400/40'
+          ? 'border-white/10 bg-black/50 hover:border-amber-400/40'
           : selected
-          ? `rarity-${item.rarity}-bg border-[#00FF66]/80 shadow-[0_0_16px_rgba(0,255,102,0.45)]`
-          : `rarity-${item.rarity}-bg hover:border-white/20`
+          ? 'border-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_20px_rgba(0,255,102,0.35)] ring-1 ring-[#00FF66]'
+          : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'
       }`}
     >
-      {/* Preview area — procedural colored swatch */}
+      {/* Visual Preview Area with Distinct Iconography & Signature Hue */}
       <div
-        className="w-14 h-14 rounded-lg flex items-center justify-center relative overflow-hidden"
+        className="w-14 h-14 rounded-xl flex flex-col items-center justify-center relative overflow-hidden transition-all shadow-inner"
         style={{
-          background: accentColor
-            ? `radial-gradient(circle at 40% 40%, ${accentColor}60, ${accentColor}20)`
-            : 'rgba(0,255,102,0.12)',
+          background: `radial-gradient(circle at 50% 40%, ${visual.bgGlow}40 0%, rgba(10,12,18,0.92) 85%)`,
+          border: `1px solid ${visual.bgGlow}50`,
         }}
       >
+        {/* Subtle Ambient Backlight Glow */}
         <div
-          className="w-8 h-8 rounded-full opacity-70"
-          style={{
-            background: accentColor
-              ? `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`
-              : 'linear-gradient(135deg, #00FF66, #39FF14)',
-          }}
+          className="absolute inset-0 opacity-40 blur-md pointer-events-none"
+          style={{ background: visual.bgGlow }}
+        />
+
+        {/* Dynamic Distinct Item Icon */}
+        <div className="relative z-10 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110">
+          {visual.icon}
+        </div>
+
+        {/* Micro Subtype Badge */}
+        <span
+          className="absolute top-1 right-1 text-[7px] font-mono font-black px-1 rounded uppercase tracking-wider text-black z-10"
+          style={{ backgroundColor: visual.bgGlow }}
+        >
+          {visual.tag}
+        </span>
+
+        {/* Color Dot indicator */}
+        <div
+          className="absolute bottom-1 left-1 w-2 h-2 rounded-full border border-black/60 shadow-sm z-10"
+          style={{ backgroundColor: itemColor }}
+          title={`Theme: ${itemColor}`}
         />
 
         {/* Lock / Coin Overlay if not owned */}
         {!isUnlocked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 rounded-lg p-1 text-center">
-            <Lock size={14} className="text-amber-400 mb-0.5" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xs rounded-xl p-1 text-center z-20">
+            <Lock size={13} className="text-amber-400 mb-0.5" />
             <span className="text-[9px] font-black font-mono text-amber-300">
               {cost} 🪙
             </span>
           </div>
         )}
 
+        {/* Active Selected Ring */}
         {selected && isUnlocked && (
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute inset-0 border-2 border-[#00FF66] rounded-lg shadow-[0_0_10px_rgba(0,255,102,0.5)]"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="absolute inset-0 border-2 border-[#00FF66] rounded-xl shadow-[inset_0_0_12px_rgba(0,255,102,0.6)] pointer-events-none"
           />
         )}
       </div>
 
       {/* Name */}
-      <span className="text-[10px] font-medium text-white/80 text-center leading-tight line-clamp-2">
+      <span className="text-[10px] font-bold text-white/90 text-center leading-tight line-clamp-2 px-0.5">
         {item.name}
       </span>
 
       {/* Rarity & Cost indicator */}
-      <div className="flex items-center gap-1.5 text-[9px] font-mono">
+      <div className="flex items-center gap-1.5 text-[9px] font-mono mt-auto">
         <div className={`w-1.5 h-1.5 rounded-full ${rarityDot[item.rarity]}`} />
         <span className={`uppercase tracking-wide rarity-${item.rarity}`}>
           {rarityLabel[item.rarity]}
         </span>
         {!isUnlocked && (
-          <span className="text-amber-400 font-bold ml-1">{cost}🪙</span>
+          <span className="text-amber-400 font-bold ml-0.5">{cost}🪙</span>
         )}
       </div>
     </motion.button>

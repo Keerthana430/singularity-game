@@ -33,6 +33,8 @@ export interface CalculatedStats {
   };
 }
 
+export type AvatarCombatStats = CalculatedStats;
+
 export function calculateAvatarStats(config: AvatarConfig): CalculatedStats {
   // 1. Resolve Species
   const rawSpecies = config.species || 'human';

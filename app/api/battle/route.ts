@@ -38,6 +38,22 @@ const ATTACK_MOVES = [
   'Orbital Beam',
 ];
 
+export async function GET() {
+  return NextResponse.json(
+    {
+      status: 'online',
+      endpoint: '/api/battle',
+      methods: ['GET', 'POST'],
+      description: 'Simulates turn-based combat between two AvatarConfig combatants.',
+      samplePayload: {
+        fighter1: '<AvatarConfig>',
+        fighter2: '<AvatarConfig>',
+      },
+    },
+    { status: 200 }
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const { fighter1, fighter2 }: BattleRequest = await request.json();

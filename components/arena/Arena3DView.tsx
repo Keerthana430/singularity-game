@@ -5,7 +5,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { AvatarConfig } from '@/types/avatar';
-import { CombatAction } from './Arena3DCanvas';
+import { CombatAction, BiomeType } from './Arena3DCanvas';
 
 const Arena3DCanvas = dynamic(
   () => import('./Arena3DCanvas').then((m) => ({ default: m.Arena3DCanvas })),
@@ -29,6 +29,8 @@ interface Arena3DViewProps {
   opponentConfig: AvatarConfig;
   playerAction: CombatAction;
   opponentAction: CombatAction;
+  biome?: BiomeType;
+  roundKey?: number | string;
   activeFx?: 'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null;
   fxSource?: 'player' | 'opponent';
   floatingCombatText?: {

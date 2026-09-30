@@ -28,6 +28,7 @@ import {
   Coins as CoinsIcon,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
+import { AvatarConfig } from '@/types/avatar';
 import { Arena3DView } from '@/components/arena/Arena3DView';
 import { VersusScreen } from '@/components/arena/VersusScreen';
 import { CombatAction } from '@/components/arena/Arena3DCanvas';
@@ -48,7 +49,7 @@ interface Combatant {
   magic: number;
   criticalRate: number;
   evasionRate: number;
-  avatarConfig: any;
+  avatarConfig: AvatarConfig;
   shieldActive?: boolean;
 }
 
@@ -127,7 +128,9 @@ export default function LobbyPage() {
   const [currentRoundNumber, setCurrentRoundNumber] = useState(1);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(INITIAL_LEADERBOARD);
 
-  // 3D Battle Arena Animation States
+  // 3D Battle Arena Animation States & Biomes
+  const [currentBiome, setCurrentBiome] = useState<'grassland' | 'volcano' | 'mystic'>('grassland');
+  const [battleRoundKey, setBattleRoundKey] = useState<number>(Date.now());
   const [playerAction, setPlayerAction] = useState<CombatAction>('idle');
   const [opponentAction, setOpponentAction] = useState<CombatAction>('idle');
   const [activeFx, setActiveFx] = useState<'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null>(null);
@@ -163,7 +166,15 @@ export default function LobbyPage() {
         const res = await fetch('/api/leaderboard');
         const json = await res.json();
         if (json.success && json.data) {
-          const apiLeaderboard: LeaderboardEntry[] = json.data.map((item: any) => ({
+          interface RawLeaderboardItem {
+            rank: number;
+            name: string;
+            classRole?: string;
+            victories: number;
+            losses: number;
+            rating: number;
+          }
+          const apiLeaderboard: LeaderboardEntry[] = json.data.map((item: RawLeaderboardItem) => ({
             rank: item.rank,
             name: item.name,
             creator: item.name === currentAvatar.name ? 'YOU' : 'CyberSystem',
@@ -247,6 +258,11 @@ export default function LobbyPage() {
         message: `Deployment confirmed for ${stage.toUpperCase()} FINALS! Face ${opponent.name}.`,
       },
     ]);
+
+    const biomes: ('grassland' | 'volcano' | 'mystic')[] = ['grassland', 'volcano', 'mystic'];
+    const nextBiome = biomes[Math.floor(Math.random() * biomes.length)];
+    setCurrentBiome(nextBiome);
+    setBattleRoundKey(Date.now());
 
     setTournamentStage(stage);
     setCurrentRoundNumber(1);
@@ -925,6 +941,8 @@ export default function LobbyPage() {
                   opponentConfig={opponentFighter.avatarConfig}
                   playerAction={playerAction}
                   opponentAction={opponentAction}
+                  biome={currentBiome}
+                  roundKey={battleRoundKey}
                   activeFx={activeFx}
                   fxSource={fxSource}
                   floatingCombatText={floatingTexts}
@@ -1232,6 +1250,8 @@ export default function LobbyPage() {
                   opponentConfig={PRESET_AVATARS[0].avatar}
                   playerAction="idle"
                   opponentAction="idle"
+                  biome={currentBiome}
+                  roundKey={battleRoundKey}
                   className="w-full h-full"
                 />
               </div>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://singularity-avatar.app/sitemap.xml
