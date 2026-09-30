@@ -27,7 +27,6 @@ import { CustomizationPanel } from '@/components/studio/CustomizationPanel';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import { sound } from '@/lib/audio';
-import { PRESET_AVATARS } from '@/data/presets';
 
 export default function StudioPage() {
   const {
@@ -51,7 +50,6 @@ export default function StudioPage() {
   const { add: addToast } = useToast();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
-  const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [vaultModalOpen, setVaultModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -146,26 +144,6 @@ export default function StudioPage() {
     downloadAnchor.click();
     downloadAnchor.remove();
     addToast('Avatar JSON downloaded!', 'success');
-  };
-
-  const loadPreset = (presetConfig: typeof currentAvatar) => {
-    updateAvatar({
-      body: presetConfig.body,
-      skinTone: presetConfig.skinTone,
-      face: presetConfig.face,
-      hair: presetConfig.hair,
-      hairColor: presetConfig.hairColor,
-      top: presetConfig.top,
-      topColor: presetConfig.topColor,
-      bottom: presetConfig.bottom,
-      bottomColor: presetConfig.bottomColor,
-      shoes: presetConfig.shoes,
-      shoeColor: presetConfig.shoeColor,
-      accessories: presetConfig.accessories,
-      accessoryColor: presetConfig.accessoryColor,
-    });
-    setPresetModalOpen(false);
-    addToast(`Equipped archetype preset!`, 'success');
   };
 
   return (
@@ -318,20 +296,6 @@ export default function StudioPage() {
               <span>WEAPON: {(currentAvatar.weapon || 'UNARMED').toUpperCase()}</span>
               <span className="text-white/40">RENDER: 60 FPS WEBGL</span>
             </div>
-
-            {/* Quick Archetype Preset Switcher Pill (Bottom Left) */}
-            <div className="absolute bottom-4 left-4 hidden lg:flex items-center gap-1.5 bg-black/70 border border-[#00FF66]/20 backdrop-blur-md p-1.5 rounded-xl z-10 shadow-lg">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold px-2">Presets:</span>
-              {PRESET_AVATARS.slice(0, 3).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => loadPreset(p.avatar)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/5 hover:bg-[#00FF66]/20 text-white/80 hover:text-white transition-all border border-white/5 hover:border-[#00FF66]/40"
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
           </div>
         </main>
 
@@ -413,39 +377,6 @@ export default function StudioPage() {
         </div>
       </Modal>
 
-      {/* ARCHETYPE PRESETS MODAL */}
-      <Modal open={presetModalOpen} onClose={() => setPresetModalOpen(false)} title="Select Character Archetype" size="lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
-          {PRESET_AVATARS.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => loadPreset(p.avatar)}
-              className="group p-4 rounded-xl border border-white/10 bg-white/5 hover:border-violet-500/50 hover:bg-violet-950/20 cursor-pointer transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-bold text-white group-hover:text-violet-300 transition-colors">
-                    {p.name}
-                  </span>
-                  <span className="text-[10px] uppercase font-bold text-violet-400 bg-violet-500/20 px-2 py-0.5 rounded">
-                    {p.role}
-                  </span>
-                </div>
-                <p className="text-xs text-white/60 leading-relaxed mb-3">
-                  {p.tagline}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[11px] text-white/40">
-                <span>Top: {p.avatar.top}</span>
-                <span className="text-violet-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                  Equip Archetype &rarr;
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Modal>
       {/* LOADOUT VAULT MODAL */}
       <Modal open={vaultModalOpen} onClose={() => setVaultModalOpen(false)} title="Avatar Loadout Vault" size="lg">
         <div className="flex flex-col gap-4 font-mono">

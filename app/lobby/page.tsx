@@ -40,6 +40,8 @@ import { useToast } from '@/components/Toast';
 import { PRESET_AVATARS } from '@/data/presets';
 import { sound } from '@/lib/audio';
 import { getSpeciesAttacks, getAttackByType, type SpeciesAttack } from '@/data/speciesAttacks';
+import { BattleResultModal, type VictoryEmote } from '@/components/arena/BattleResultModal';
+import { RoundCountdownOverlay } from '@/components/arena/RoundCountdownOverlay';
 
 interface Combatant {
   id: string;
@@ -159,6 +161,10 @@ export default function LobbyPage() {
   const [attackVfxSpark, setAttackVfxSpark] = useState<string | undefined>(undefined);
   const [isAttackCrit, setIsAttackCrit] = useState<boolean>(false);
   const [isAttackDodge, setIsAttackDodge] = useState<boolean>(false);
+  const [battleOutcome, setBattleOutcome] = useState<'stage-victory' | 'tournament-champion' | 'defeat' | null>(null);
+  const [isRoundCountingDown, setIsRoundCountingDown] = useState(false);
+  const [coinsEarnedInMatch, setCoinsEarnedInMatch] = useState(0);
+  const [totalDamageDealtInMatch, setTotalDamageDealtInMatch] = useState(0);
   const [overdriveEnergy, setOverdriveEnergy] = useState(30); // 0 to 100%
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [showCutscene, setShowCutscene] = useState(false);
@@ -310,6 +316,7 @@ export default function LobbyPage() {
     setOpponentBurnTurns(0);
     setOpponentHealsRemaining(1);
     setOpponentEnergy(20);
+    setBattleOutcome(null);
 
     // Launch dramatic VS screen first
     setShowVersusScreen(true);
@@ -337,6 +344,9 @@ export default function LobbyPage() {
     setPlayerAction('victory');
     setActiveFx(null);
 
+    const dmgDealt = opponentFighter ? opponentFighter.maxHp : 300;
+    setTotalDamageDealtInMatch((prev) => prev + dmgDealt);
+
     setBattleLogs((prev) => [
       ...prev,
       {
@@ -352,16 +362,20 @@ export default function LobbyPage() {
     setTimeout(() => {
       if (tournamentStage === 'quarter') {
         addCoins(150);
-        addToast('🪙 Quarter-Final Victory! +150 Cyber Coins earned! Advancing to Semi-Finals!', 'success');
-        startStageBattle('semi');
+        setCoinsEarnedInMatch(150);
+        setBattleOutcome('stage-victory');
       } else if (tournamentStage === 'semi') {
         addCoins(300);
-        addToast('🪙 Semi-Final Victory! +300 Cyber Coins earned! Advancing to Grand Finals!', 'success');
-        startStageBattle('final');
+        setCoinsEarnedInMatch(300);
+        setBattleOutcome('stage-victory');
       } else if (tournamentStage === 'final') {
         setTournamentStage('champion');
         addCoins(650);
-        addToast(`🏆 CHAMPION! +650 Cyber Coins earned! Won the ${tournamentFormat}!`, 'success');
+        setCoinsEarnedInMatch(650);
+        setBattleOutcome('tournament-champion');
+
+        // Record post-battle healing timer on champion victory (minor damage sustained)
+        recordBattleEnd(0.15, isFairy);
 
         // Sync victory to Backend API
         fetch('/api/leaderboard', {
@@ -391,7 +405,7 @@ export default function LobbyPage() {
         ]);
       }
       setIsTurnAnimating(false);
-    }, 1400);
+    }, 1200);
   };
 
   // End of Round Cleanup & Turn Decrements
@@ -406,6 +420,7 @@ export default function LobbyPage() {
 
     // Check Defeat
     if (pCurrentHp <= 0) {
+      sound.playImpact();
       setPlayerAction('hit');
       setOpponentAction('victory');
       fetch('/api/leaderboard', {
@@ -435,6 +450,9 @@ export default function LobbyPage() {
       ]);
       addToast('Tournament eliminated! Refit your build in the Studio.', 'error');
       setIsTurnAnimating(false);
+      setTimeout(() => {
+        setBattleOutcome('defeat');
+      }, 1200);
       return;
     }
 
@@ -1151,33 +1169,16 @@ export default function LobbyPage() {
                   </div>
                 </div>
 
-                {/* Cinematic Round Cutscene Overlay */}
-                <AnimatePresence>
-                  {showCutscene && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none"
-                    >
-                      <motion.div
-                        initial={{ scale: 0.8, y: -20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 1.05, opacity: 0 }}
-                        className="flex flex-col items-center gap-2"
-                      >
-                        <span className="px-3 py-1 rounded-full bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] font-mono text-xs font-bold uppercase tracking-wider">
-                          ROUND {currentRoundNumber} ENGAGE
-                        </span>
-                        <div className="flex items-center gap-3 text-2xl font-black uppercase text-white mt-1">
-                          <span className="text-[#00FF66]">{playerFighter.name}</span>
-                          <span className="text-white/40 text-sm">VS</span>
-                          <span className="text-red-400">{opponentFighter.name}</span>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Cinematic 3... 2... 1... ENGAGE Countdown Entrance */}
+                {isRoundCountingDown && opponentFighter && (
+                  <RoundCountdownOverlay
+                    roundNumber={currentRoundNumber}
+                    stageName={`${tournamentFormat} // ${tournamentStage.toUpperCase()} FINALS`}
+                    playerName={playerFighter.name}
+                    opponentName={opponentFighter.name}
+                    onComplete={() => setIsRoundCountingDown(false)}
+                  />
+                )}
               </div>
 
               {/* Species-Specific 4-Move Combat Deck */}
@@ -1477,14 +1478,45 @@ export default function LobbyPage() {
             stageTitle={`${tournamentFormat} // ${tournamentStage.toUpperCase()} FINALS`}
             onProceed={() => {
               setShowVersusScreen(false);
-              setShowCutscene(true);
-              setTimeout(() => {
-                setShowCutscene(false);
-              }, 1600);
+              setIsRoundCountingDown(true);
             }}
           />
         )}
       </AnimatePresence>
+
+      {/* COMPREHENSIVE BATTLE OUTCOME MODAL (VICTORY, CHAMPION & DEFEAT) */}
+      <BattleResultModal
+        outcome={battleOutcome}
+        stageTitle={`${tournamentFormat} // ${tournamentStage.toUpperCase()}`}
+        nextStageTitle={tournamentStage === 'quarter' ? 'Semi-Finals' : tournamentStage === 'semi' ? 'Grand Finals' : undefined}
+        coinsEarned={coinsEarnedInMatch}
+        playerName={playerFighter.name}
+        opponentName={opponentFighter?.name || 'Rival Fighter'}
+        turnsTaken={currentRoundNumber}
+        damageDealt={totalDamageDealtInMatch}
+        healTimeLeft={healTimeLeft}
+        onNextStage={() => {
+          setBattleOutcome(null);
+          if (tournamentStage === 'quarter') {
+            startStageBattle('semi');
+          } else if (tournamentStage === 'semi') {
+            startStageBattle('final');
+          }
+        }}
+        onInstantHeal={handleInstantHealPurchase}
+        onReturnToBase={() => {
+          setBattleOutcome(null);
+          setTournamentStage('idle');
+        }}
+        onNewTournament={() => {
+          setBattleOutcome(null);
+          handleStartTournament();
+        }}
+        onTriggerEmote={(emote: VictoryEmote) => {
+          setPlayerAction('victory');
+          addFloatingText(`${emote.icon} ${emote.label.toUpperCase()}!`, 'player', true, emote.fxColor);
+        }}
+      />
     </div>
   );
 }

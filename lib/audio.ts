@@ -167,6 +167,30 @@ class SoundSynthesizer {
       // Ignore audio errors
     }
   }
+
+  // Rolling Dice Rattle Sound
+  playDiceRoll() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      const count = 5;
+      for (let i = 0; i < count; i++) {
+        const now = this.ctx.currentTime + i * 0.05;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300 + Math.random() * 400, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
+    } catch {
+      // Ignore audio errors
+    }
+  }
 }
 
 export const sound = new SoundSynthesizer();

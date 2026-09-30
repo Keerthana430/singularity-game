@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy } from 'lucide-react';
+import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 const navLinks = [
   { href: '/studio', label: '// STUDIO', icon: Layers },
   { href: '/lobby', label: '// ARENA', icon: Swords },
+  { href: '/ludo', label: '// LUDO', icon: Dices },
   { href: '/contest', label: '// CONTEST', icon: Heart },
   { href: '/#rankings', label: '// RANKINGS', icon: Trophy },
 ];

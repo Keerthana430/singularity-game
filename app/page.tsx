@@ -22,6 +22,8 @@ import {
   Trophy,
   Star,
   Award,
+  Coins,
+  Flame,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useContestStore } from '@/store/contestStore';
@@ -51,7 +53,6 @@ export default function HomePage() {
   const { currentAvatar, randomizeAvatar, updateAvatar } = useAvatarStore();
   const { entries: contestEntries } = useContestStore();
   const { add: addToast } = useToast();
-  const [selectedPresetId, setSelectedPresetId] = useState(PRESET_AVATARS[0].id);
   const [leaderboardTab, setLeaderboardTab] = useState<'overall' | 'battle' | 'beauty'>('overall');
   const [battleLeaderboard, setBattleLeaderboard] = useState<BattleLeaderboardEntry[]>(DEFAULT_BATTLE_LEADERBOARD);
 
@@ -117,25 +118,7 @@ export default function HomePage() {
     return [...nameMap.values()].sort((a, b) => b.score - a.score).slice(0, 8);
   }, [beautyLeaderboard]);
 
-  const handleApplyPreset = (preset: typeof PRESET_AVATARS[0]) => {
-    setSelectedPresetId(preset.id);
-    updateAvatar({
-      body: preset.avatar.body,
-      skinTone: preset.avatar.skinTone,
-      face: preset.avatar.face,
-      hair: preset.avatar.hair,
-      hairColor: preset.avatar.hairColor,
-      top: preset.avatar.top,
-      topColor: preset.avatar.topColor,
-      bottom: preset.avatar.bottom,
-      bottomColor: preset.avatar.bottomColor,
-      shoes: preset.avatar.shoes,
-      shoeColor: preset.avatar.shoeColor,
-      accessories: preset.avatar.accessories,
-      accessoryColor: preset.avatar.accessoryColor,
-    });
-    addToast(`Loaded ${preset.name} archetype!`, 'success');
-  };
+
 
   return (
     <div className="relative min-h-screen bg-[#020502] text-white selection:bg-[#00FF66] selection:text-black overflow-x-hidden pt-16">
@@ -258,149 +241,247 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CORE FEATURES GRID with Monospace Slash Headers */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* SECTION 1: THE THREE OFFICIAL GAME MODES                    */}
+      {/* ═══════════════════════════════════════════════════════════ */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// ENGINE_SPECIFICATIONS //</p>
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <p className="text-xs font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// ACTIVE_GAMES_MATRIX //</p>
           <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            INTERFACE IS THE MESSAGE.
+            SELECT YOUR GAME MODE
           </h2>
           <p className="text-white/70 mt-3 text-xs sm:text-sm font-mono">
-            &gt; Built with zero-fail Three.js procedural primitives, chromashift dyes, and real-time turn-based combat telemetry.
+            &gt; Three high-octane competitive modes. Deploy your custom avatar into tactical 3D colosseums, authentic real-time board warfare, and global fashion runways.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Feature 1 */}
-          <div className="hud-box glass-panel p-6 border border-[#00FF66]/20 flex flex-col gap-4 group hover:border-[#00FF66] transition-all">
-            <div className="w-12 h-12 bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
-              <Cpu size={24} />
-            </div>
-            <h3 className="text-lg font-black uppercase font-mono text-white group-hover:text-[#00FF66] transition-colors">
-              // PROCEDURAL_RIG_MESH
-            </h3>
-            <p className="text-xs font-mono text-white/70 leading-relaxed">
-              Roblox top-stud cylinder head, blocky torso, limbs, and printed facial decals sculpted in 3D runtime without asset lag.
-            </p>
-          </div>
-
-          {/* Feature 2 */}
-          <div className="hud-box glass-panel p-6 border border-[#00FF66]/20 flex flex-col gap-4 group hover:border-[#00FF66] transition-all">
-            <div className="w-12 h-12 bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
-              <Palette size={24} />
-            </div>
-            <h3 className="text-lg font-black uppercase font-mono text-white group-hover:text-[#00FF66] transition-colors">
-              // NEON_CHROMASHIFT
-            </h3>
-            <p className="text-xs font-mono text-white/70 leading-relaxed">
-              Cyberpunk neon green (`#00FF66`), obsidian black (`#020502`), and radiant emissive RGB color picker system.
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="hud-box glass-panel p-6 border border-[#00FF66]/20 flex flex-col gap-4 group hover:border-[#00FF66] transition-all">
-            <div className="w-12 h-12 bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
-              <Swords size={24} />
-            </div>
-            <h3 className="text-lg font-black uppercase font-mono text-white group-hover:text-[#00FF66] transition-colors">
-              // ARENA_TOURNAMENT
-            </h3>
-            <p className="text-xs font-mono text-white/70 leading-relaxed">
-              Deploy custom builds into 8-man arcade battle tournaments with dynamic combat logs and live health telemetry.
-            </p>
-          </div>
-
-          {/* Feature 4 - Beauty Contest */}
-          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/20 flex flex-col gap-4 group hover:border-[#FF69B4] transition-all md:col-span-3 md:col-start-1">
-            <div className="flex items-center gap-6">
-              <div className="w-12 h-12 bg-[#FF69B4]/10 border border-[#FF69B4]/40 flex items-center justify-center text-[#FF69B4]">
-                <Heart size={24} />
+          {/* Game 1: Battle Royale */}
+          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col justify-between group hover:border-[#00FF66] hover:bg-black/90 transition-all shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
+                  <Swords size={24} />
+                </div>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] font-bold">
+                  8-Fighter Bracket
+                </span>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-black uppercase font-mono text-white group-hover:text-[#FF69B4] transition-colors">
-                  // BEAUTY_CONTEST
-                </h3>
-                <p className="text-xs font-mono text-white/70 leading-relaxed mt-1">
-                  Enter your avatar in the Beauty Contest! Each team submits one build and casts one vote. The most liked avatar wins the Beauty Crown and tops the leaderboard.
-                </p>
+              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-[#00FF66] transition-colors mb-2">
+                // 3D BATTLE ROYALE
+              </h3>
+              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
+                Enter the multi-biome cyber colosseum. Fight through Quarter-Finals, Semi-Finals, and Grand Finals with unique species combat arts, dynamic dodge leaps, and cinematic critical hits.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">3D Particle VFX</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Species Shields</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">+650🪙 Grand Prize</span>
               </div>
-              <Link
-                href="/contest"
-                className="hidden md:flex items-center gap-2 px-5 py-3 border border-[#FF69B4]/40 bg-[#FF69B4]/10 hover:bg-[#FF69B4] hover:text-white text-[#FF69B4] font-mono text-xs font-bold uppercase transition-all whitespace-nowrap"
-              >
-                <Heart size={14} />
-                <span>Enter Contest</span>
-                <ChevronRight size={14} />
-              </Link>
             </div>
+
+            <Link
+              href="/lobby"
+              className="w-full py-3 px-4 rounded-xl bg-[#00FF66] text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-emerald-300 transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)]"
+            >
+              <span>Deploy to Arena</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {/* Game 2: Cyber Ludo */}
+          <div className="hud-box glass-panel p-6 border border-cyan-500/30 flex flex-col justify-between group hover:border-cyan-400 hover:bg-black/90 transition-all shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                  <Dices size={24} />
+                </div>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold">
+                  4-Player Real-Time
+                </span>
+              </div>
+              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-cyan-400 transition-colors mb-2">
+                // CYBER LUDO COLOSSEUM
+              </h3>
+              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
+                Authentic 4-player board battle using your custom avatar builds as living pieces. Roll 6 to deploy from yard, capture rivals for bonus turns, and conquer power-up tiles.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Avatar Tokens</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Quantum Star Havens</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">+500🪙 1st Place</span>
+              </div>
+            </div>
+
+            <Link
+              href="/ludo"
+              className="w-full py-3 px-4 rounded-xl bg-cyan-400 text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan-300 transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+            >
+              <span>Enter Ludo Arena</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {/* Game 3: Beauty Contest */}
+          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/30 flex flex-col justify-between group hover:border-[#FF69B4] hover:bg-black/90 transition-all shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#FF69B4]/10 border border-[#FF69B4]/40 flex items-center justify-center text-[#FF69B4]">
+                  <Heart size={24} />
+                </div>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FF69B4]/20 border border-[#FF69B4]/40 text-[#FF69B4] font-bold">
+                  Community Showcase
+                </span>
+              </div>
+              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-[#FF69B4] transition-colors mb-2">
+                // BEAUTY RUNWAY CONTEST
+              </h3>
+              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
+                Submit your customized cyber avatar with personalized tagline. The global community casts live decentralized votes to crown the ultimate fashion icon and style champion.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Decentralized Voting</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Daily Runway</span>
+                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Prestige Trophies</span>
+              </div>
+            </div>
+
+            <Link
+              href="/contest"
+              className="w-full py-3 px-4 rounded-xl bg-[#FF69B4] text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-pink-300 transition-all shadow-[0_0_15px_rgba(255,105,180,0.3)]"
+            >
+              <span>Enter Beauty Contest</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ARCHETYPE SHOWCASE SECTION matching Image 2 "SELECTED WORK" layout */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* SECTION 2: OFFICIAL GAME RULES & PROTOCOLS CODEX            */}
+      {/* ═══════════════════════════════════════════════════════════ */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div>
-            <p className="text-xs font-mono font-bold uppercase tracking-widest text-[#00FF66] mb-2">_SELECTED_ARCHETYPES</p>
-            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              SELECT COMBAT LOADOUT
-            </h2>
-          </div>
-          <Link
-            href="/studio"
-            className="flex items-center gap-2 text-[#00FF66] hover:underline text-xs font-mono font-bold uppercase tracking-wider"
-          >
-            <span>&gt; OPEN CUSTOMIZER STUDIO_</span>
-            <ChevronRight size={16} />
-          </Link>
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <p className="text-xs font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// OFFICIAL_RULEBOOK_CODEX //</p>
+          <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            GAME RULES & COMBAT PROTOCOLS
+          </h2>
+          <p className="text-white/70 mt-3 text-xs sm:text-sm font-mono">
+            &gt; Master the official mechanics, combat scaling, evasion physics, and win conditions for all three game modes.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {PRESET_AVATARS.map((preset) => (
-            <div
-              key={preset.id}
-              className="hud-box glass-panel p-5 border border-[#00FF66]/20 flex flex-col justify-between group hover:border-[#00FF66] hover:bg-black/80 transition-all"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3 font-mono">
-                  <span className="text-[10px] uppercase text-black bg-[#00FF66] px-2 py-0.5 font-bold">
-                    {preset.role}
-                  </span>
-                  <span className="text-[10px] text-white/50">[SYS_0{preset.id}]</span>
-                </div>
-                <h4 className="text-xl font-black uppercase font-mono tracking-wider mb-2 text-white group-hover:text-[#00FF66] transition-colors">
-                  {preset.name}
-                </h4>
-                <p className="text-xs font-mono text-white/60 leading-relaxed mb-6">
-                  {preset.tagline}
-                </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Rules: Battle Royale */}
+          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col gap-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#00FF66]/20">
+              <Swords size={20} className="text-[#00FF66]" />
+              <h3 className="text-base font-black uppercase font-mono text-white">
+                Battle Royale Protocol
+              </h3>
+            </div>
+
+            <div className="space-y-3.5 text-xs font-mono text-white/80">
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">01.</span>
+                <p><strong className="text-white">Tournament Bracket:</strong> 8-fighter elimination bracket spanning Quarter-Finals, Semi-Finals, and Grand Finals.</p>
               </div>
 
-              <div className="flex flex-col gap-3 font-mono">
-                <div className="flex items-center justify-between text-[10px] text-white/50 border-t border-[#00FF66]/20 pt-3">
-                  <span>ARMOR: {preset.avatar.top.toUpperCase()}</span>
-                  <span>HAIR: {preset.avatar.hair.toUpperCase()}</span>
-                </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">02.</span>
+                <p><strong className="text-white">Species Combat Arts:</strong> Each species has 4 unique moves: Strike (Physical scaling), Magic (Arcane scaling), Shield (Damage absorption & counter-parry reflect), and Ultimate Overdrive (100% energy).</p>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleApplyPreset(preset)}
-                    className="flex-1 py-2 px-3 text-xs font-bold uppercase bg-white/5 hover:bg-[#00FF66] text-white hover:text-black border border-[#00FF66]/30 transition-all text-center"
-                  >
-                    [PREVIEW]
-                  </button>
-                  <Link
-                    href="/studio"
-                    onClick={() => handleApplyPreset(preset)}
-                    className="p-2 bg-[#00FF66] text-black hover:bg-white transition-all"
-                    title="Edit in Studio"
-                  >
-                    <ArrowRight size={14} />
-                  </Link>
-                </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">03.</span>
+                <p><strong className="text-white">Dodge & Critical Hits:</strong> High agility grants acrobatic evasive leap (taking 0 damage). Critical strikes bypass armor with cinematic impact shockwaves.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">04.</span>
+                <p><strong className="text-white">Nanite Medbay Cooldown:</strong> Damage sustained requires 30s–5m recovery before re-entering arena (or instant stimpack for 50🪙). Fairies heal 40% faster.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">05.</span>
+                <p><strong className="text-white">Coin Rewards:</strong> +150🪙 Quarter, +300🪙 Semi, +650🪙 Grand Champion prize.</p>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Rules: Cyber Ludo */}
+          <div className="hud-box glass-panel p-6 border border-cyan-500/30 flex flex-col gap-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-cyan-500/20">
+              <Dices size={20} className="text-cyan-400" />
+              <h3 className="text-base font-black uppercase font-mono text-white">
+                Cyber Ludo Protocol
+              </h3>
+            </div>
+
+            <div className="space-y-3.5 text-xs font-mono text-white/80">
+              <div className="flex items-start gap-2.5">
+                <span className="text-cyan-400 font-bold">01.</span>
+                <p><strong className="text-white">Base Deployment:</strong> 4 tokens per player. You must roll a <strong className="text-cyan-300">6</strong> on the quantum die to deploy a token onto the track. Rolling 6 grants an instant bonus roll.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-cyan-400 font-bold">02.</span>
+                <p><strong className="text-white">Capture & Bonus Turns:</strong> Landing on an opponent token on any regular track square captures it, sending it back to base and awarding a free bonus turn.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-cyan-400 font-bold">03.</span>
+                <p><strong className="text-white">Safe Star Havens:</strong> 8 tiles marked with golden Stars ⭐ are quantum-shielded sanctuaries where pieces cannot be captured.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-cyan-400 font-bold">04.</span>
+                <p><strong className="text-white">Cyber Power-Up Tiles:</strong> Special squares grant ⚡ Overdrive (+2 steps), 🛡️ Quantum Shield (safe from 1 capture), or 🌀 Warp Portal (+4 leap).</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-cyan-400 font-bold">05.</span>
+                <p><strong className="text-white">Singularity Nexus (Win):</strong> Exact roll required to reach the center Home. First player to guide all 4 avatars home wins 1st Place (+500🪙).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rules: Beauty Contest */}
+          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/30 flex flex-col gap-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#FF69B4]/20">
+              <Heart size={20} className="text-[#FF69B4]" />
+              <h3 className="text-base font-black uppercase font-mono text-white">
+                Beauty Runway Protocol
+              </h3>
+            </div>
+
+            <div className="space-y-3.5 text-xs font-mono text-white/80">
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#FF69B4] font-bold">01.</span>
+                <p><strong className="text-white">Entry Submission:</strong> Submit your customized avatar build with an expressive, personal tagline to enter the public contest pool.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#FF69B4] font-bold">02.</span>
+                <p><strong className="text-white">Decentralized Voting:</strong> Each player casts 1 vote per contest cycle to ensure balanced and fair community evaluation.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#FF69B4] font-bold">03.</span>
+                <p><strong className="text-white">Style Aesthetics:</strong> Avatars evaluated across color harmony, accessories, and thematic cybernetic cohesion.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#FF69B4] font-bold">04.</span>
+                <p><strong className="text-white">Podium Rankings:</strong> Live leaderboard tracks votes with top creators earning prestige badges and the coveted Beauty Crown 👑.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#FF69B4] font-bold">05.</span>
+                <p><strong className="text-white">Cycle Reset:</strong> Weekly cycles crown new champions, archive hall-of-fame entries, and reward bonus coin prizes.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
