@@ -29,8 +29,15 @@ interface Arena3DViewProps {
   opponentConfig: AvatarConfig;
   playerAction: CombatAction;
   opponentAction: CombatAction;
-  activeFx?: 'slash' | 'magic' | 'shield' | 'ultimate' | null;
+  activeFx?: 'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null;
   fxSource?: 'player' | 'opponent';
+  floatingCombatText?: {
+    id: number;
+    text: string;
+    target: 'player' | 'opponent';
+    isCrit?: boolean;
+    color?: string;
+  }[];
   className?: string;
 }
 

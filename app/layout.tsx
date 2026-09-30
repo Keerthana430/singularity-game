@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { ToastProvider } from '@/components/Toast';
+import { DeviceNoticeBanner } from '@/components/DeviceNoticeBanner';
 
 export const metadata: Metadata = {
   title: 'Singularity Avatar Builder',
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ToastProvider />
         <Navbar />
+        <DeviceNoticeBanner />
         <main className="min-h-screen">{children}</main>
       </body>
     </html>

@@ -18,6 +18,10 @@ interface AvatarStore {
   activeCategory: StudioCategory;
   // Recent colors
   recentColors: string[];
+  // Coin currency & unlocked items
+  coins: number;
+  unlockedItems: string[];
+  weaponLevels: Record<string, number>;
 
   // Actions
   updateAvatar: (partial: Partial<AvatarConfig>) => void;
@@ -35,6 +39,12 @@ interface AvatarStore {
   redo: () => void;
   setActiveCategory: (cat: StudioCategory) => void;
   addRecentColor: (color: string) => void;
+  // Economy actions
+  addCoins: (amount: number) => void;
+  spendCoins: (amount: number) => boolean;
+  unlockItem: (itemId: string, cost: number) => boolean;
+  upgradeWeapon: (weaponId: string, cost: number) => boolean;
+  isItemUnlocked: (itemId: string) => boolean;
 }
 
 const HAIR_OPTIONS = ['twintails', 'twin-buns', 'hime-cut', 'fluffy-short', 'short', 'long', 'spiky', 'curly', 'ponytail', 'anime', 'futuristic', 'bob'];
@@ -52,6 +62,15 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+const STARTER_UNLOCKED = [
+  'tshirt', 'hoodie', 'shirt', 'tank',
+  'shorts', 'jeans', 'joggers',
+  'sneakers',
+  'short', 'long', 'ponytail', 'bob', 'bald',
+  'glasses', 'cap',
+  'unarmed',
+];
+
 const DEFAULT_AVATAR = createDefaultAvatar();
 const INITIAL_SAVED_BUILDS = PRESET_AVATARS.map((p) => p.avatar);
 
@@ -64,6 +83,56 @@ export const useAvatarStore = create<AvatarStore>()(
       historyIndex: 0,
       activeCategory: 'body',
       recentColors: [],
+      coins: 350,
+      unlockedItems: STARTER_UNLOCKED,
+      weaponLevels: { unarmed: 1 },
+
+      addCoins: (amount) => {
+        set({ coins: Math.max(0, get().coins + amount) });
+      },
+
+      spendCoins: (amount) => {
+        const current = get().coins;
+        if (current >= amount) {
+          set({ coins: current - amount });
+          return true;
+        }
+        return false;
+      },
+
+      unlockItem: (itemId, cost) => {
+        const { coins, unlockedItems } = get();
+        if (unlockedItems.includes(itemId)) return true;
+        if (coins >= cost) {
+          set({
+            coins: coins - cost,
+            unlockedItems: [...unlockedItems, itemId],
+          });
+          return true;
+        }
+        return false;
+      },
+
+      upgradeWeapon: (weaponId, cost) => {
+        const { coins, weaponLevels } = get();
+        if (coins >= cost) {
+          const currentLevel = weaponLevels[weaponId] || 1;
+          set({
+            coins: coins - cost,
+            weaponLevels: {
+              ...weaponLevels,
+              [weaponId]: currentLevel + 1,
+            },
+          });
+          return true;
+        }
+        return false;
+      },
+
+      isItemUnlocked: (itemId) => {
+        const { unlockedItems } = get();
+        return unlockedItems.includes(itemId);
+      },
 
       updateAvatar: (partial) => {
         const updated = {

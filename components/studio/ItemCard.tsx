@@ -2,8 +2,11 @@
 // components/studio/ItemCard.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Lock } from 'lucide-react';
+import { Lock, Coins } from 'lucide-react';
 import { AvatarItem, Rarity } from '@/types/avatar';
+import { useAvatarStore } from '@/store/avatarStore';
+import { useToast } from '@/components/Toast';
+import { sound } from '@/lib/audio';
 
 const rarityLabel: Record<Rarity, string> = {
   common: 'Common',
@@ -19,8 +22,6 @@ const rarityDot: Record<Rarity, string> = {
   legendary: 'bg-amber-400',
 };
 
-import { sound } from '@/lib/audio';
-
 interface ItemCardProps {
   item: AvatarItem;
   selected: boolean;
@@ -29,15 +30,38 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProps) {
+  const { isItemUnlocked, unlockItem, coins } = useAvatarStore();
+  const { add: addToast } = useToast();
+
+  const cost = item.cost ?? 0;
+  const isUnlocked = cost === 0 || isItemUnlocked(item.id);
+
   const handleClick = (e: React.MouseEvent) => {
-    if (!item.locked) {
+    e.preventDefault();
+    if (isUnlocked) {
       sound.playEquip();
       onSelect(item.id);
+    } else {
+      // Purchase flow
+      if (coins >= cost) {
+        const success = unlockItem(item.id, cost);
+        if (success) {
+          sound.playWin();
+          onSelect(item.id);
+          addToast(`Unlocked ${item.name} for ${cost} Coins!`, 'success');
+        }
+      } else {
+        sound.playImpact();
+        addToast(
+          `Requires ${cost} Coins (You have ${coins}). Win more battles in the Arena to earn coins!`,
+          'error'
+        );
+      }
     }
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    if (item.locked) {
+    if (!isUnlocked) {
       e.preventDefault();
       return;
     }
@@ -52,17 +76,17 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
       layout
       initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={!item.locked ? { scale: 1.04, y: -2 } : undefined}
-      whileTap={!item.locked ? { scale: 0.97 } : undefined}
+      whileHover={{ scale: 1.04, y: -2 }}
+      whileTap={{ scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       onClick={handleClick}
-      draggable={!item.locked}
+      draggable={isUnlocked}
       onDragStartCapture={handleDragStart}
       aria-pressed={selected}
-      aria-label={`${item.name} — ${rarityLabel[item.rarity]}${item.locked ? ' (locked)' : ''}`}
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-200 cursor-grab active:cursor-grabbing text-left ${
-        item.locked
-          ? 'opacity-50 cursor-not-allowed border-white/5 bg-white/3'
+      aria-label={`${item.name} — ${rarityLabel[item.rarity]}${!isUnlocked ? ` (${cost} coins)` : ''}`}
+      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-200 cursor-pointer text-left ${
+        !isUnlocked
+          ? 'border-white/10 bg-black/40 hover:border-amber-400/40'
           : selected
           ? `rarity-${item.rarity}-bg border-[#00FF66]/80 shadow-[0_0_16px_rgba(0,255,102,0.45)]`
           : `rarity-${item.rarity}-bg hover:border-white/20`
@@ -77,7 +101,6 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
             : 'rgba(0,255,102,0.12)',
         }}
       >
-        {/* Simple geometric icon per category to give visual identity */}
         <div
           className="w-8 h-8 rounded-full opacity-70"
           style={{
@@ -86,12 +109,18 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
               : 'linear-gradient(135deg, #00FF66, #39FF14)',
           }}
         />
-        {item.locked && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
-            <Lock size={16} className="text-white/60" />
+
+        {/* Lock / Coin Overlay if not owned */}
+        {!isUnlocked && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 rounded-lg p-1 text-center">
+            <Lock size={14} className="text-amber-400 mb-0.5" />
+            <span className="text-[9px] font-black font-mono text-amber-300">
+              {cost} 🪙
+            </span>
           </div>
         )}
-        {selected && !item.locked && (
+
+        {selected && isUnlocked && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -105,12 +134,15 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
         {item.name}
       </span>
 
-      {/* Rarity indicator */}
-      <div className="flex items-center gap-1">
+      {/* Rarity & Cost indicator */}
+      <div className="flex items-center gap-1.5 text-[9px] font-mono">
         <div className={`w-1.5 h-1.5 rounded-full ${rarityDot[item.rarity]}`} />
-        <span className={`text-[9px] uppercase tracking-wide rarity-${item.rarity}`}>
+        <span className={`uppercase tracking-wide rarity-${item.rarity}`}>
           {rarityLabel[item.rarity]}
         </span>
+        {!isUnlocked && (
+          <span className="text-amber-400 font-bold ml-1">{cost}🪙</span>
+        )}
       </div>
     </motion.button>
   );

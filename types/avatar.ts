@@ -18,7 +18,7 @@ export interface AvatarFace {
   expression: string;
 }
 
-export type Species = 'human' | 'elf' | 'ogre' | 'robot' | 'alien' | 'fairie';
+export type Species = 'human' | 'elf' | 'fairy' | 'fairie' | 'dwarf' | 'dwarves' | 'ogre' | 'robot' | 'alien';
 export type ClassRole = 'warrior' | 'tank' | 'assassin' | 'mage';
 
 export interface AvatarAccessories {
@@ -60,6 +60,7 @@ export interface AvatarItem {
   color?: string;
   rarity: Rarity;
   locked: boolean;
+  cost?: number;
 }
 
 export type StudioCategory =

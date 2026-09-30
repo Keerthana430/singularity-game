@@ -35,7 +35,8 @@ export interface CalculatedStats {
 
 export function calculateAvatarStats(config: AvatarConfig): CalculatedStats {
   // 1. Resolve Species
-  const speciesKey = config.species || 'human';
+  const rawSpecies = config.species || 'human';
+  const speciesKey = rawSpecies === 'fairie' ? 'fairy' : rawSpecies === 'dwarves' ? 'dwarf' : rawSpecies;
   const species = SPECIES_LIST.find((s) => s.id === speciesKey) || SPECIES_LIST[0];
 
   // 2. Resolve Class Role

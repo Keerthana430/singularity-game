@@ -25,6 +25,7 @@ import {
   Wind,
   Layers,
   ChevronRight,
+  Coins as CoinsIcon,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { Arena3DView } from '@/components/arena/Arena3DView';
@@ -96,7 +97,7 @@ const TOURNAMENT_FORMATS = [
 ];
 
 export default function LobbyPage() {
-  const { currentAvatar } = useAvatarStore();
+  const { currentAvatar, coins, addCoins, spendCoins } = useAvatarStore();
   const { add: addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'tournament' | 'leaderboard'>('tournament');
@@ -129,7 +130,7 @@ export default function LobbyPage() {
   // 3D Battle Arena Animation States
   const [playerAction, setPlayerAction] = useState<CombatAction>('idle');
   const [opponentAction, setOpponentAction] = useState<CombatAction>('idle');
-  const [activeFx, setActiveFx] = useState<'slash' | 'magic' | 'shield' | 'ultimate' | null>(null);
+  const [activeFx, setActiveFx] = useState<'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null>(null);
   const [fxSource, setFxSource] = useState<'player' | 'opponent'>('player');
   const [isTurnAnimating, setIsTurnAnimating] = useState(false);
   const [overdriveEnergy, setOverdriveEnergy] = useState(30); // 0 to 100%
@@ -138,6 +139,22 @@ export default function LobbyPage() {
   const [showVersusScreen, setShowVersusScreen] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const autoFightIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Dynamic Damage-Dependent Healing Engine
+  const damageSustained = Math.max(0, playerFighter.maxHp - playerFighter.hp);
+  const isFairy = currentAvatar.species?.toLowerCase() === 'fairy';
+
+  // Dynamic formula: Base 3.0s + (Damage Sustained / 100) * 1.2s. Fairies heal 40% faster.
+  const calculateRecoveryTime = (damage: number) => {
+    if (damage <= 0) return 0;
+    const baseTime = 3.0 + (damage / 100) * 1.2;
+    const finalTime = isFairy ? baseTime * 0.6 : baseTime;
+    return Math.max(2.5, Math.round(finalTime * 10) / 10);
+  };
+
+  const [inCombatHealingRemaining, setInCombatHealingRemaining] = useState<number | null>(null);
+  const [medbayTimeRemaining, setMedbayTimeRemaining] = useState<number>(0);
+  const [isMedbayRegenerating, setIsMedbayRegenerating] = useState(false);
 
   // Fetch backend leaderboard
   useEffect(() => {
@@ -251,7 +268,7 @@ export default function LobbyPage() {
   };
 
   // Execute interactive player choice
-  const handlePlayerMove = (moveType: 'strike' | 'magic' | 'shield' | 'ultimate') => {
+  const handlePlayerMove = (moveType: 'strike' | 'magic' | 'shield' | 'healing' | 'ultimate') => {
     if (isTurnAnimating || !opponentFighter || opponentFighter.hp <= 0 || playerFighter.hp <= 0) return;
 
     setIsTurnAnimating(true);
@@ -286,6 +303,67 @@ export default function LobbyPage() {
       setTimeout(() => {
         resolveOpponentTurn(true);
       }, 700);
+      return;
+    }
+
+    if (moveType === 'healing') {
+      const curSustained = playerFighter.maxHp - playerFighter.hp;
+      if (curSustained <= 0) {
+        addToast('Avatar chassis integrity is at 100%! No damage sustained.', 'info');
+        setIsTurnAnimating(false);
+        return;
+      }
+
+      // Dynamic healing duration directly dependent on damage sustained:
+      // Base 3.0s + 1.2s per 100 damage (Fairies heal 40% faster!)
+      const healTimeSec = calculateRecoveryTime(curSustained);
+      setInCombatHealingRemaining(healTimeSec);
+      setPlayerAction('healing');
+      setActiveFx('healing');
+      setFxSource('player');
+      sound.playSweep();
+
+      addToast(`Engaging Nanite Bio-Repair (${healTimeSec.toFixed(1)}s recovery duration based on ${curSustained} sustained damage)...`, 'info');
+
+      const totalHeal = Math.min(curSustained, Math.round(curSustained * 0.75 + playerFighter.maxHp * 0.12));
+      let remaining = healTimeSec;
+      const step = 0.5;
+
+      const healInterval = setInterval(() => {
+        remaining = Math.max(0, remaining - step);
+        setInCombatHealingRemaining(Math.round(remaining * 10) / 10);
+
+        const tickHeal = Math.max(15, Math.round(totalHeal / (healTimeSec / step)));
+        setPlayerFighter((prev) => ({
+          ...prev,
+          hp: Math.min(prev.maxHp, prev.hp + tickHeal),
+        }));
+        addFloatingText(`+${tickHeal} REPAIR`, 'player', false, '#10B981');
+
+        if (remaining <= 0) {
+          clearInterval(healInterval);
+          setInCombatHealingRemaining(null);
+          setPlayerAction('idle');
+          setActiveFx(null);
+          sound.playEquip();
+
+          setBattleLogs((prev) => [
+            ...prev,
+            {
+              turn: currentRoundNumber,
+              attacker: playerFighter.name,
+              action: 'NANITE BIO-REPAIR',
+              damage: 0,
+              critical: false,
+              message: `${playerFighter.name} sustained ${curSustained} DMG and completed ${healTimeSec.toFixed(1)}s Nanite Repair, regenerating ${totalHeal} HP!`,
+            },
+          ]);
+
+          setTimeout(() => {
+            resolveOpponentTurn(false);
+          }, 600);
+        }
+      }, 500);
       return;
     }
 
@@ -473,7 +551,7 @@ export default function LobbyPage() {
     }, 380);
   };
 
-  // STEP 3: MATCH VICTORY
+  // STEP 3: MATCH VICTORY & COIN REWARDS
   const handleMatchVictory = () => {
     sound.playWin();
     setOpponentAction('hit');
@@ -494,14 +572,17 @@ export default function LobbyPage() {
 
     setTimeout(() => {
       if (tournamentStage === 'quarter') {
-        addToast('Quarter-Final Victory! Advancing to Semi-Finals!', 'success');
+        addCoins(150);
+        addToast('🪙 Quarter-Final Victory! +150 Cyber Coins earned! Advancing to Semi-Finals!', 'success');
         startStageBattle('semi');
       } else if (tournamentStage === 'semi') {
-        addToast('Semi-Final Victory! Advancing to Grand Finals!', 'success');
+        addCoins(300);
+        addToast('🪙 Semi-Final Victory! +300 Cyber Coins earned! Advancing to Grand Finals!', 'success');
         startStageBattle('final');
       } else if (tournamentStage === 'final') {
         setTournamentStage('champion');
-        addToast(`🏆 CHAMPION! ${playerFighter.name} won the ${tournamentFormat}!`, 'success');
+        addCoins(650);
+        addToast(`🏆 CHAMPION! +650 Cyber Coins earned! Won the ${tournamentFormat}!`, 'success');
 
         // Sync victory to Backend API
         fetch('/api/leaderboard', {
@@ -533,6 +614,58 @@ export default function LobbyPage() {
       setIsTurnAnimating(false);
     }, 1400);
   };
+
+  // Medbay Healing Protocol Handlers
+  const handleStartMedbayRest = () => {
+    if (damageSustained <= 0) {
+      addToast('Avatar HP is already at 100% capacity!', 'info');
+      return;
+    }
+    const recoverySec = calculateRecoveryTime(damageSustained);
+    setMedbayTimeRemaining(recoverySec);
+    setIsMedbayRegenerating(true);
+    sound.playSweep();
+    addToast(`Avatar entered Cyber Medbay. Regeneration time: ${recoverySec.toFixed(1)}s`, 'info');
+  };
+
+  const handleInstantMedbayRepair = () => {
+    if (damageSustained <= 0) {
+      addToast('Avatar is already fully repaired!', 'info');
+      return;
+    }
+    if (coins < 25) {
+      addToast('Insufficient Cyber Coins! Requires 25 Coins for Instant Nanite Stimpack.', 'error');
+      return;
+    }
+    spendCoins(25);
+    setPlayerFighter((prev) => ({ ...prev, hp: prev.maxHp }));
+    setMedbayTimeRemaining(0);
+    setIsMedbayRegenerating(false);
+    sound.playEquip();
+    addToast('⚡ Instant Nanite Stimpack injected! 100% HP restored instantly.', 'success');
+  };
+
+  // Medbay Live Timer Effect
+  useEffect(() => {
+    if (!isMedbayRegenerating || medbayTimeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setMedbayTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setIsMedbayRegenerating(false);
+          setPlayerFighter((pf) => ({ ...pf, hp: pf.maxHp }));
+          sound.playWin();
+          addToast('💚 Medbay Regeneration Complete! Avatar 100% restored.', 'success');
+          return 0;
+        }
+        setPlayerFighter((pf) => ({
+          ...pf,
+          hp: Math.min(pf.maxHp, pf.hp + Math.ceil(pf.maxHp / 8)),
+        }));
+        return Math.round((prev - 1) * 10) / 10;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isMedbayRegenerating, medbayTimeRemaining]);
 
   // Auto-fight continuous simulation
   const handleAutoFight = () => {
@@ -566,45 +699,52 @@ export default function LobbyPage() {
 
   return (
     <div className={`min-h-screen bg-[#020502] text-white pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans ${screenShake ? 'animate-bounce' : ''}`}>
-      {/* Header with Navigation Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#00FF66]/20">
+      {/* Header with Navigation Tabs & Wallet */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#00FF66]/15">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#00FF66] animate-pulse" />
-            <p className="text-xs font-bold uppercase tracking-widest text-[#00FF66] font-mono">
-              ARENA PROTOCOL &bull; 3D COLOSSEUM COMBAT ENGINE
+            <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[#00FF66] font-mono">
+              ARENA PROTOCOL &bull; 3D COLOSSEUM COMBAT
             </p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
             BATTLE ARENA & LEADERBOARD
           </h1>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex items-center gap-2 bg-[#041006] p-1.5 rounded-xl border border-[#00FF66]/30">
-          <button
-            onClick={() => setActiveTab('tournament')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-              activeTab === 'tournament'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.4)]'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <Swords size={15} />
-            <span>3D Tournament Arena</span>
-          </button>
+        {/* Right side: Cyber Coins Wallet & Tab Buttons */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.15)]">
+            <CoinsIcon size={15} className="text-amber-400 animate-pulse" />
+            <span>{coins} COINS</span>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('leaderboard')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-              activeTab === 'leaderboard'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.4)]'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <Trophy size={15} />
-            <span>Top Builds Leaderboard</span>
-          </button>
+          <div className="flex items-center gap-1 bg-[#041006] p-1 rounded-xl border border-[#00FF66]/20">
+            <button
+              onClick={() => setActiveTab('tournament')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === 'tournament'
+                  ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Swords size={14} />
+              <span>3D Arena</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('leaderboard')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === 'leaderboard'
+                  ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Trophy size={14} />
+              <span>Leaderboard</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -612,81 +752,90 @@ export default function LobbyPage() {
       {/* TAB 1: 3D TOURNAMENT ARENA                                    */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === 'tournament' && (
-        <div className="flex flex-col gap-6">
-          {/* Tournament Control Banner */}
-          <div className="glass-panel p-5 rounded-2xl border border-[#00FF66]/25 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#00FF66]/20 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
-                <Trophy size={24} />
+        <div className="flex flex-col gap-4">
+          {/* Streamlined Tournament Bar */}
+          <div className="glass-panel px-4 py-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66]">
+                <Trophy size={18} />
               </div>
               <div>
                 <span className="text-[10px] text-[#00FF66] font-bold font-mono tracking-widest uppercase">
                   ACTIVE TOURNAMENT
                 </span>
-                <h3 className="text-xl font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                <h3 className="text-base font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                   {tournamentFormat}
                 </h3>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {tournamentStage === 'idle' ? (
                 <button
                   onClick={handleStartTournament}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs text-black neon-green-button hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,255,102,0.4)]"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl font-black uppercase tracking-wider text-xs text-black neon-green-button hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,255,102,0.35)]"
                 >
-                  <Play size={16} />
-                  <span>Enter Colosseum Arena</span>
+                  <Play size={15} />
+                  <span>Enter Arena</span>
                 </button>
               ) : tournamentStage === 'champion' ? (
                 <button
                   onClick={handleStartTournament}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs text-black neon-green-button hover:scale-105 transition-all"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl font-black uppercase tracking-wider text-xs text-black neon-green-button hover:scale-105 transition-all"
                 >
-                  <Crown size={16} />
-                  <span>Start New Tournament</span>
+                  <Crown size={15} />
+                  <span>New Tournament</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleAutoFight}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00FF66]/40 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-xs font-black uppercase tracking-wider transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-xs font-bold uppercase tracking-wider transition-all"
                   >
-                    <FastForward size={15} />
+                    <FastForward size={14} />
                     <span>Auto-Fight</span>
                   </button>
                   <button
                     onClick={() => setTournamentStage('idle')}
-                    className="p-2.5 rounded-xl border border-white/10 hover:border-red-400/40 text-white/50 hover:text-red-400 transition-all"
+                    className="p-1.5 rounded-lg border border-white/10 hover:border-red-400/40 text-white/50 hover:text-red-400 transition-all"
                     title="Forfeit Match"
                   >
-                    <RotateCcw size={15} />
+                    <RotateCcw size={14} />
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Tournament Stage Indicator */}
-          <div className="grid grid-cols-4 gap-2">
+          {/* Clean Horizontal Stepper Progress */}
+          <div className="flex items-center justify-between gap-1 px-2 py-1">
             {[
-              { id: 'quarter', label: '1. Quarter-Finals' },
-              { id: 'semi', label: '2. Semi-Finals' },
-              { id: 'final', label: '3. Grand Final' },
-              { id: 'champion', label: '4. Champion Pod' },
-            ].map((st) => {
+              { id: 'quarter', label: 'Quarter-Finals' },
+              { id: 'semi', label: 'Semi-Finals' },
+              { id: 'final', label: 'Grand Finals' },
+              { id: 'champion', label: 'Champion' },
+            ].map((st, i) => {
               const active = tournamentStage === st.id;
               return (
-                <div
-                  key={st.id}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    active
-                      ? 'border-[#00FF66] bg-[#00FF66]/15 text-[#00FF66] font-bold shadow-[0_0_15px_rgba(0,255,102,0.3)]'
-                      : 'border-white/10 bg-black/40 text-white/40'
-                  }`}
-                >
-                  <span className="text-xs uppercase font-mono tracking-wider">{st.label}</span>
-                </div>
+                <React.Fragment key={st.id}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        active
+                          ? 'bg-[#00FF66] shadow-[0_0_8px_#00FF66]'
+                          : 'bg-white/20'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-mono uppercase tracking-wider ${
+                        active ? 'text-[#00FF66] font-bold' : 'text-white/40'
+                      }`}
+                    >
+                      {st.label}
+                    </span>
+                  </div>
+                  {i < 3 && <div className="flex-1 h-px bg-white/10 mx-2 hidden sm:block" />}
+                </React.Fragment>
               );
             })}
           </div>
@@ -695,24 +844,23 @@ export default function LobbyPage() {
           {/* LIVE 3D ARENA VIEWPORT & FIGHT SYSTEM                         */}
           {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage !== 'idle' && opponentFighter && (
-            <div className="flex flex-col gap-5">
-              {/* Dual Health Gauges & Telemetry Bar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Player Health HUD */}
-                <div className="glass-panel p-4 rounded-2xl border border-[#00FF66]/30 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-[#00FF66] font-mono font-bold uppercase">
-                        {currentAvatar.species?.toUpperCase() || 'HUMAN'} &bull; {playerFighter.archetype}
+            <div className="flex flex-col gap-4">
+              {/* Unified Fighting-Game Style Health HUD */}
+              <div className="glass-panel p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-4">
+                {/* Left: Player Fighter */}
+                <div className="flex-1 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black uppercase tracking-wider text-white">
+                      {playerFighter.name}{' '}
+                      <span className="text-[#00FF66] text-[10px] font-mono font-normal">
+                        ({currentAvatar.species || 'Human'})
                       </span>
-                      <h3 className="text-lg font-black uppercase text-white tracking-wide">{playerFighter.name}</h3>
-                    </div>
-                    <span className="text-sm font-black font-mono text-[#00FF66]">
+                    </span>
+                    <span className="font-mono font-bold text-[#00FF66]">
                       {playerFighter.hp} / {playerFighter.maxHp} HP
                     </span>
                   </div>
-
-                  <div className="w-full h-3 rounded-full bg-black/80 border border-white/10 overflow-hidden">
+                  <div className="w-full h-2.5 rounded-full bg-black/80 border border-white/10 overflow-hidden">
                     <motion.div
                       className="h-full bg-gradient-to-r from-[#00FF66] to-[#39FF14]"
                       initial={false}
@@ -720,55 +868,58 @@ export default function LobbyPage() {
                       transition={{ duration: 0.3 }}
                     />
                   </div>
-
-                  {/* Overdrive Super Meter */}
-                  <div className="flex items-center gap-2 pt-1 text-[11px] font-mono">
-                    <span className="text-amber-400 font-bold flex items-center gap-1">
-                      <Flame size={12} />
-                      OVERDRIVE:
-                    </span>
-                    <div className="flex-1 h-1.5 rounded-full bg-black border border-white/10 overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-amber-500 to-yellow-300"
-                        animate={{ width: `${overdriveEnergy}%` }}
+                  {/* Slim Overdrive Bar */}
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400">
+                    <span>OVERDRIVE:</span>
+                    <div className="flex-1 h-1 rounded-full bg-black overflow-hidden border border-white/10">
+                      <div
+                        className="h-full bg-amber-400 transition-all"
+                        style={{ width: `${overdriveEnergy}%` }}
                       />
                     </div>
-                    <span className="text-white/60 font-bold">{overdriveEnergy}%</span>
+                    <span>{overdriveEnergy}%</span>
                   </div>
                 </div>
 
-                {/* Opponent Health HUD */}
-                <div className="glass-panel p-4 rounded-2xl border border-red-500/30 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-red-400 font-mono font-bold uppercase">
-                        ARENA RIVAL &bull; {opponentFighter.archetype}
-                      </span>
-                      <h3 className="text-lg font-black uppercase text-white tracking-wide">{opponentFighter.name}</h3>
-                    </div>
-                    <span className="text-sm font-black font-mono text-red-400">
+                {/* Center: VS Badge & Round */}
+                <div className="flex flex-col items-center justify-center px-2">
+                  <div className="w-8 h-8 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-xs font-black font-mono text-white/80">
+                    VS
+                  </div>
+                  <span className="text-[10px] font-mono text-white/40 mt-1 uppercase">
+                    RND {currentRoundNumber}
+                  </span>
+                </div>
+
+                {/* Right: Opponent Fighter */}
+                <div className="flex-1 flex flex-col gap-1 text-right">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono font-bold text-red-400">
                       {opponentFighter.hp} / {opponentFighter.maxHp} HP
                     </span>
+                    <span className="font-black uppercase tracking-wider text-white">
+                      <span className="text-red-400 text-[10px] font-mono font-normal mr-1">
+                        ({opponentFighter.archetype})
+                      </span>
+                      {opponentFighter.name}
+                    </span>
                   </div>
-
-                  <div className="w-full h-3 rounded-full bg-black/80 border border-white/10 overflow-hidden">
+                  <div className="w-full h-2.5 rounded-full bg-black/80 border border-white/10 overflow-hidden flex justify-end">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-red-500 to-amber-500"
+                      className="h-full bg-gradient-to-l from-red-500 to-amber-500"
                       initial={false}
                       animate={{ width: `${Math.max(0, (opponentFighter.hp / opponentFighter.maxHp) * 100)}%` }}
                       transition={{ duration: 0.3 }}
                     />
                   </div>
-
-                  <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-white/40">
-                    <span>PWR: {opponentFighter.power} | DEF: {opponentFighter.defense}</span>
-                    <span>ROUND: {currentRoundNumber}</span>
+                  <div className="text-[10px] font-mono text-white/40">
+                    PWR: {opponentFighter.power} | DEF: {opponentFighter.defense}
                   </div>
                 </div>
               </div>
 
               {/* Unified 3D Colosseum Arena Viewport */}
-              <div className="relative w-full rounded-3xl overflow-hidden border border-[#00FF66]/30 shadow-2xl">
+              <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
                 <Arena3DView
                   playerConfig={playerFighter.avatarConfig}
                   opponentConfig={opponentFighter.avatarConfig}
@@ -776,6 +927,7 @@ export default function LobbyPage() {
                   opponentAction={opponentAction}
                   activeFx={activeFx}
                   fxSource={fxSource}
+                  floatingCombatText={floatingTexts}
                 />
 
                 {/* Floating Damage & Combat Numbers Overlay */}
@@ -821,7 +973,7 @@ export default function LobbyPage() {
                   </div>
                 </div>
 
-                {/* Dramatic Cinematic Intro Cutscene Overlay */}
+                {/* Cinematic Round Cutscene Overlay */}
                 <AnimatePresence>
                   {showCutscene && (
                     <motion.div
@@ -831,66 +983,58 @@ export default function LobbyPage() {
                       className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none"
                     >
                       <motion.div
-                        initial={{ scale: 0.8, y: -30 }}
+                        initial={{ scale: 0.8, y: -20 }}
                         animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 1.1, opacity: 0 }}
-                        className="flex flex-col items-center gap-3"
+                        exit={{ scale: 1.05, opacity: 0 }}
+                        className="flex flex-col items-center gap-2"
                       >
-                        <div className="px-4 py-1 rounded-full bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] font-mono text-xs font-bold tracking-widest uppercase">
-                          MATCH INITIALIZATION // ARENA ENGAGE
-                        </div>
-
-                        <h2 className="text-3xl sm:text-5xl font-black uppercase text-white tracking-wider" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                          ROUND {currentRoundNumber}
-                        </h2>
-
-                        <div className="flex items-center gap-4 text-xl sm:text-2xl font-black uppercase mt-2">
+                        <span className="px-3 py-1 rounded-full bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] font-mono text-xs font-bold uppercase tracking-wider">
+                          ROUND {currentRoundNumber} ENGAGE
+                        </span>
+                        <div className="flex items-center gap-3 text-2xl font-black uppercase text-white mt-1">
                           <span className="text-[#00FF66]">{playerFighter.name}</span>
-                          <span className="text-white/40 text-sm font-mono font-bold">VS</span>
+                          <span className="text-white/40 text-sm">VS</span>
                           <span className="text-red-400">{opponentFighter.name}</span>
                         </div>
-
-                        <p className="text-xs text-white/60 font-mono mt-1">
-                          SPECIES INNATE BUFFS SYNCHRONIZED &bull; COMMENCE DUEL
-                        </p>
                       </motion.div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* Interactive Player Move Selection Deck */}
-              <div className="glass-panel p-5 rounded-3xl border border-[#00FF66]/30 flex flex-col gap-3">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              {/* Decluttered 5-Move Combat Deck */}
+              <div className="glass-panel p-3.5 rounded-2xl border border-white/10 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between pb-1.5 border-b border-white/10 text-xs">
                   <div className="flex items-center gap-2">
-                    <Activity size={16} className="text-[#00FF66]" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">
-                      CHOOSE COMBAT MOVE &bull; ROUND {currentRoundNumber}
-                    </h3>
+                    <Activity size={14} className="text-[#00FF66]" />
+                    <span className="font-black uppercase tracking-wider text-white">
+                      Select Action
+                    </span>
                   </div>
                   <span className="text-[10px] font-mono text-white/50">
-                    {isTurnAnimating ? 'RESOLVING COMBAT TURN...' : 'SELECT AN ACTION'}
+                    {inCombatHealingRemaining !== null
+                      ? `⏳ Nanite Repairing: ${inCombatHealingRemaining.toFixed(1)}s remaining...`
+                      : isTurnAnimating
+                      ? 'Resolving Combat Turn...'
+                      : 'Ready for Command'}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {/* Move 1: Weapon Strike */}
                   <button
                     onClick={() => handlePlayerMove('strike')}
                     disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-3.5 rounded-2xl border border-white/10 bg-white/5 hover:border-[#00FF66] hover:bg-[#00FF66]/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-[#00FF66] hover:bg-[#00FF66]/10 text-left transition-all group disabled:opacity-40"
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-black uppercase text-white group-hover:text-[#00FF66]">
-                        Photon Strike
+                        Strike
                       </span>
-                      <Swords size={16} className="text-[#00FF66]" />
+                      <Swords size={14} className="text-[#00FF66]" />
                     </div>
-                    <p className="text-[11px] text-white/60 leading-tight">
-                      Fast physical blade strike scaled from Base Power ({playerFighter.power} ATK).
-                    </p>
-                    <span className="text-[10px] font-mono text-[#00FF66] font-bold mt-2 block">
-                      High Accuracy &bull; 100% Hit Rate
+                    <span className="text-[10px] font-mono text-[#00FF66] block">
+                      {playerFighter.power} ATK &bull; 100% Hit
                     </span>
                   </button>
 
@@ -898,19 +1042,16 @@ export default function LobbyPage() {
                   <button
                     onClick={() => handlePlayerMove('magic')}
                     disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-3.5 rounded-2xl border border-white/10 bg-white/5 hover:border-violet-400 hover:bg-violet-600/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-violet-400 hover:bg-violet-600/10 text-left transition-all group disabled:opacity-40"
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-black uppercase text-white group-hover:text-violet-300">
-                        Elemental Blast
+                        Blast
                       </span>
-                      <Sparkles size={16} className="text-violet-400" />
+                      <Sparkles size={14} className="text-violet-400" />
                     </div>
-                    <p className="text-[11px] text-white/60 leading-tight">
-                      Arcane pulse bypassing armor ({playerFighter.magic} MAG).
-                    </p>
-                    <span className="text-[10px] font-mono text-violet-300 font-bold mt-2 block">
-                      +8% Bonus Critical Rate
+                    <span className="text-[10px] font-mono text-violet-300 block">
+                      {playerFighter.magic} MAG &bull; +8% Crit
                     </span>
                   </button>
 
@@ -918,50 +1059,99 @@ export default function LobbyPage() {
                   <button
                     onClick={() => handlePlayerMove('shield')}
                     disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-3.5 rounded-2xl border border-white/10 bg-white/5 hover:border-sky-400 hover:bg-sky-600/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-sky-400 hover:bg-sky-600/10 text-left transition-all group disabled:opacity-40"
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-black uppercase text-white group-hover:text-sky-300">
-                        Aegis Shield
+                        Shield
                       </span>
-                      <Shield size={16} className="text-sky-400" />
+                      <Shield size={14} className="text-sky-400" />
                     </div>
-                    <p className="text-[11px] text-white/60 leading-tight">
-                      Deploys barrier: reduces next hit by 65% + recovers 80 HP.
-                    </p>
-                    <span className="text-[10px] font-mono text-sky-300 font-bold mt-2 block">
-                      Defensive Guard
+                    <span className="text-[10px] font-mono text-sky-300 block">
+                      -65% Next Hit +80 HP
                     </span>
                   </button>
 
-                  {/* Move 4: Singularity Overdrive */}
+                  {/* Move 4: Nanite Bio-Repair (Damage Dependent Healing) */}
+                  <button
+                    onClick={() => handlePlayerMove('healing')}
+                    disabled={isTurnAnimating || playerFighter.hp >= playerFighter.maxHp || opponentFighter.hp <= 0}
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-emerald-400 hover:bg-emerald-600/10 text-left transition-all group disabled:opacity-40"
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-black uppercase text-white group-hover:text-emerald-300">
+                        Bio-Repair
+                      </span>
+                      <Heart size={14} className="text-emerald-400" />
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400 block">
+                      {damageSustained > 0
+                        ? `Heal (~${calculateRecoveryTime(damageSustained).toFixed(1)}s)`
+                        : 'Full HP (100%)'}
+                    </span>
+                  </button>
+
+                  {/* Move 5: Singularity Overdrive */}
                   <button
                     onClick={() => handlePlayerMove('ultimate')}
                     disabled={isTurnAnimating || overdriveEnergy < 100 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden group disabled:opacity-30 ${
+                    className={`p-2.5 rounded-xl border text-left transition-all group disabled:opacity-30 ${
                       overdriveEnergy >= 100
-                        ? 'border-amber-400 bg-amber-500/20 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-pulse'
+                        ? 'border-amber-400 bg-amber-500/20 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse'
                         : 'border-white/10 bg-white/5 text-white/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-black uppercase text-white group-hover:text-amber-300">
-                        Singularity Ultimate
+                        Ultimate
                       </span>
-                      <Flame size={16} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
+                      <Flame size={14} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
                     </div>
-                    <p className="text-[11px] text-white/60 leading-tight">
-                      Unleashes catastrophic cosmic power for 2.5x critical smash!
-                    </p>
-                    <span className="text-[10px] font-mono text-amber-300 font-bold mt-2 block">
-                      {overdriveEnergy >= 100 ? '★ READY TO UNLEASH ★' : `CHARGE: ${overdriveEnergy}% / 100%`}
+                    <span className="text-[10px] font-mono text-amber-300 block">
+                      {overdriveEnergy >= 100 ? '★ UNLEASH ★' : `${overdriveEnergy}% / 100%`}
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* Combat Telemetry Action Log */}
-              <div className="glass-panel p-4 rounded-2xl border border-white/10">
+              {/* Clean Medbay Recovery Hub (Displayed when damaged) */}
+              {damageSustained > 0 && (
+                <div className="glass-panel px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <Heart size={16} className="text-emerald-400 animate-pulse" />
+                    <div>
+                      <span className="text-white font-bold">
+                        Chassis Integrity: {playerFighter.hp}/{playerFighter.maxHp} HP{' '}
+                        <span className="text-rose-400 font-mono">(-{damageSustained} DMG)</span>
+                      </span>
+                      <p className="text-[10px] font-mono text-white/50">
+                        Required Medbay Regeneration Time: {calculateRecoveryTime(damageSustained).toFixed(1)}s
+                        {isFairy && ' (Fairy Passive: -40% recovery time)'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleStartMedbayRest}
+                      disabled={isMedbayRegenerating}
+                      className="px-3 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[11px] font-mono uppercase transition-all"
+                    >
+                      {isMedbayRegenerating ? `Regen (${medbayTimeRemaining}s)` : 'Rest in Medbay'}
+                    </button>
+                    <button
+                      onClick={handleInstantMedbayRepair}
+                      className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-bold uppercase transition-all flex items-center gap-1"
+                    >
+                      <span>⚡ Instant Stimpack</span>
+                      <span className="text-[10px] font-mono">(25 🪙)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Compact Combat Telemetry Log */}
+              <div className="glass-panel p-3 rounded-2xl border border-white/10 max-h-36 overflow-y-auto">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-mono text-[#00FF66] uppercase font-bold">
                     COMBAT LOG TELEMETRY

@@ -16,7 +16,10 @@ import { accessories } from '@/data/accessories';
 import { faceShapes, eyeStyles, expressionStyles, skinTones } from '@/data/faces';
 import { SPECIES_LIST, SpeciesData } from '@/data/species';
 import { weapons, WeaponItem } from '@/data/weapons';
-import { Zap, Shield, Flame, Wind, Sparkles, Swords, Check } from 'lucide-react';
+import Link from 'next/link';
+import { useToast } from '@/components/Toast';
+import { sound } from '@/lib/audio';
+import { Zap, Shield, Flame, Wind, Sparkles, Swords, Check, Dices, Coins, Hammer, ChevronDown, ChevronUp } from 'lucide-react';
 
 const BODY_TYPES = [
   { id: 'slim', label: 'Slim', desc: 'Lean build' },
@@ -173,7 +176,24 @@ function AccessoriesPanel() {
 
 function SpeciesPanel() {
   const { currentAvatar, updateAvatar } = useAvatarStore();
+  const [showOtherSpecies, setShowOtherSpecies] = React.useState(false);
+
+  const CORE_SPECIES_IDS = ['human', 'elf', 'fairy', 'dwarf'];
   const selectedSpecies = SPECIES_LIST.find((s) => s.id === (currentAvatar.species || 'human')) || SPECIES_LIST[0];
+
+  const handleRollRandomSpecies = () => {
+    const chosenId = CORE_SPECIES_IDS[Math.floor(Math.random() * CORE_SPECIES_IDS.length)];
+    const chosen = SPECIES_LIST.find((s) => s.id === chosenId) || SPECIES_LIST[0];
+    sound.playSweep();
+    useAvatarStore.getState().updateAvatar({
+      species: chosen.id,
+      skinTone: chosen.defaultSkinTone,
+      classRole: chosen.roles[0].id,
+    });
+  };
+
+  const coreList = SPECIES_LIST.filter((s) => CORE_SPECIES_IDS.includes(s.id));
+  const otherList = SPECIES_LIST.filter((s) => !CORE_SPECIES_IDS.includes(s.id));
 
   return (
     <div className="flex flex-col gap-6">
@@ -181,12 +201,24 @@ function SpeciesPanel() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-white/50 uppercase tracking-widest">Choose Species (6 Innate Races)</p>
-          <span className="text-[10px] text-[#00FF66] font-mono">Specialized Domains</span>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-widest font-bold">Core Species (4 Races)</p>
+            <span className="text-[10px] text-[#00FF66] font-mono">Specialized Combat Domains</span>
+          </div>
+
+          {/* Random Species Roller */}
+          <button
+            onClick={handleRollRandomSpecies}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-sm"
+          >
+            <Dices size={14} className="text-amber-400" />
+            <span>Roll Random</span>
+          </button>
         </div>
 
+        {/* 4 Core Species */}
         <div className="grid grid-cols-1 gap-2.5">
-          {SPECIES_LIST.map((sp) => {
+          {coreList.map((sp) => {
             const isSelected = (currentAvatar.species || 'human') === sp.id;
             return (
               <button
@@ -225,7 +257,7 @@ function SpeciesPanel() {
                 <p className="text-xs text-white/60 mt-1">{sp.tagline}</p>
 
                 <div
-                  className="mt-2.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-medium flex items-center gap-1.5"
+                  className="mt-2 px-2.5 py-1.5 rounded-xl border text-[11px] font-medium flex items-center gap-1.5"
                   style={{
                     borderColor: `${sp.accentColor}30`,
                     backgroundColor: `${sp.accentColor}10`,
@@ -247,6 +279,51 @@ function SpeciesPanel() {
               </button>
             );
           })}
+        </div>
+
+        {/* Bonus Species Accordion */}
+        <div className="mt-3">
+          <button
+            onClick={() => setShowOtherSpecies(!showOtherSpecies)}
+            className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-mono text-white/70"
+          >
+            <span>Additional Sci-Fi Species ({otherList.length})</span>
+            {showOtherSpecies ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+
+          {showOtherSpecies && (
+            <div className="grid grid-cols-1 gap-2 mt-2">
+              {otherList.map((sp) => {
+                const isSelected = (currentAvatar.species || 'human') === sp.id;
+                return (
+                  <button
+                    key={sp.id}
+                    onClick={() => {
+                      useAvatarStore.getState().updateAvatar({
+                        species: sp.id,
+                        skinTone: sp.defaultSkinTone,
+                        classRole: sp.roles[0].id,
+                      });
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      isSelected
+                        ? 'border-[#00FF66] bg-[#00FF66]/10'
+                        : 'border-white/10 bg-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: sp.accentColor }} />
+                        <span className="text-xs font-black text-white">{sp.name}</span>
+                        <span className="text-[10px] font-mono text-white/60">({sp.domain})</span>
+                      </div>
+                      {isSelected && <Check size={14} className="text-[#00FF66]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -311,47 +388,129 @@ function SpeciesPanel() {
 }
 
 function WeaponsPanel() {
-  const { currentAvatar, updateAvatar } = useAvatarStore();
+  const { currentAvatar, updateAvatar, coins, unlockedItems, weaponLevels, unlockItem, upgradeWeapon } = useAvatarStore();
+  const { add: addToast } = useToast();
   const selectedWeapon = currentAvatar.weapon || 'unarmed';
+
+  const handleUnlockWeapon = (w: WeaponItem) => {
+    const cost = w.cost ?? 0;
+    if (coins >= cost) {
+      const ok = unlockItem(w.id, cost);
+      if (ok) {
+        sound.playWin();
+        updateAvatar({ weapon: w.id });
+        addToast(`Unlocked and equipped ${w.name} for ${cost} Coins!`, 'success');
+      }
+    } else {
+      sound.playImpact();
+      addToast(`Requires ${cost} Coins (You have ${coins}). Win more Arena battles to earn coins!`, 'error');
+    }
+  };
+
+  const handleUpgradeWeapon = (weaponId: string) => {
+    const curLevel = weaponLevels[weaponId] || 1;
+    const upgradeCost = curLevel * 100;
+    if (coins >= upgradeCost) {
+      const ok = upgradeWeapon(weaponId, upgradeCost);
+      if (ok) {
+        sound.playWin();
+        addToast(`Upgraded weapon to Level ${curLevel + 1}! (+12 ATK, +6 DEF)`, 'success');
+      }
+    } else {
+      sound.playImpact();
+      addToast(`Requires ${upgradeCost} Coins for upgrade (You have ${coins}). Win battles to earn coins!`, 'error');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <StatsPreviewCard config={currentAvatar} />
 
       <div>
-        <p className="text-xs text-white/50 uppercase tracking-widest mb-3">Equipped Weapon</p>
-        <div className="grid grid-cols-1 gap-2.5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-white/50 uppercase tracking-widest font-bold">Weapon Armory</p>
+          <span className="text-[10px] font-mono text-amber-400">Battle & Upgrade</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
           {weapons.map((w) => {
-            const isSelected = selectedWeapon === w.id;
+            const isEquipped = selectedWeapon === w.id;
+            const cost = w.cost ?? 0;
+            const isUnlocked = cost === 0 || unlockedItems.includes(w.id);
+            const level = weaponLevels[w.id] || 1;
+            const upgradeCost = level * 100;
+
             return (
-              <button
+              <div
                 key={w.id}
-                onClick={() => updateAvatar({ weapon: w.id })}
-                className={`p-3 rounded-2xl border text-left transition-all ${
-                  isSelected
+                className={`p-3.5 rounded-2xl border transition-all flex flex-col gap-2 ${
+                  isEquipped
                     ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_15px_rgba(0,255,102,0.15)]'
-                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                    : 'border-white/10 bg-white/5'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Swords size={15} className="text-[#00FF66]" />
+                    <Swords size={16} className={isEquipped ? 'text-[#00FF66]' : 'text-white/60'} />
                     <span className="text-xs font-black uppercase text-white">{w.name}</span>
+                    {isUnlocked && (
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Lv.{level}
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/10 text-white/70">
                     {w.type}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-white/60 mt-1">{w.specialEffect}</p>
+                <p className="text-[11px] text-white/60 leading-tight">{w.specialEffect}</p>
 
-                <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-white/50">
-                  {w.powerBonus > 0 && <span className="text-rose-400">ATK +{w.powerBonus}</span>}
+                <div className="flex items-center gap-3 text-[10px] font-mono text-white/50">
+                  {w.powerBonus > 0 && <span className="text-rose-400">ATK +{w.powerBonus + (level - 1) * 12}</span>}
                   {w.magicBonus > 0 && <span className="text-violet-400">MAG +{w.magicBonus}</span>}
                   {w.agilityBonus > 0 && <span className="text-amber-400">AGI +{w.agilityBonus}</span>}
-                  {w.defenseBonus > 0 && <span className="text-cyan-400">DEF +{w.defenseBonus}</span>}
+                  {w.defenseBonus > 0 && <span className="text-cyan-400">DEF +{w.defenseBonus + (level - 1) * 6}</span>}
                 </div>
-              </button>
+
+                {/* Equip / Unlock / Upgrade Action Buttons */}
+                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                  {isUnlocked ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          sound.playEquip();
+                          updateAvatar({ weapon: w.id });
+                        }}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                          isEquipped
+                            ? 'bg-[#00FF66] text-black font-extrabold'
+                            : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`}
+                      >
+                        {isEquipped ? '✓ Equipped' : 'Equip Weapon'}
+                      </button>
+
+                      <button
+                        onClick={() => handleUpgradeWeapon(w.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 text-xs font-mono font-bold uppercase transition-all"
+                        title={`Upgrade for ${upgradeCost} Coins`}
+                      >
+                        <Hammer size={12} />
+                        <span>Forge (+12 ATK) {upgradeCost}🪙</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleUnlockWeapon(w)}
+                      className="w-full py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-black uppercase font-mono tracking-wider transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔒 Unlock Weapon</span>
+                      <span className="font-extrabold">({cost} 🪙 Coins)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -380,88 +539,107 @@ function ColorsPanel() {
 }
 
 export function CustomizationPanel() {
-  const { activeCategory, currentAvatar, updateAvatar } = useAvatarStore();
+  const { activeCategory, currentAvatar, updateAvatar, coins } = useAvatarStore();
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeCategory}
-        id={`category-panel-${activeCategory}`}
-        role="tabpanel"
-        initial={{ opacity: 0, x: 16 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -16 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="h-full overflow-y-auto p-4"
-      >
-        {activeCategory === 'species' && <SpeciesPanel />}
+    <div className="flex flex-col h-full">
+      {/* Sleek Cyber Wallet Bar */}
+      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-2 mx-4 flex-shrink-0 text-xs">
+        <div className="flex items-center gap-1.5 font-mono text-amber-300 font-bold">
+          <span>🪙</span>
+          <span>{coins} COINS</span>
+        </div>
+        <Link
+          href="/lobby"
+          className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider font-mono border border-amber-500/30 transition-all flex items-center gap-1"
+        >
+          <Swords size={11} />
+          <span>Battle Arena</span>
+        </Link>
+      </div>
 
-        {activeCategory === 'weapons' && <WeaponsPanel />}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            id={`category-panel-${activeCategory}`}
+            role="tabpanel"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="p-4"
+          >
+            {activeCategory === 'species' && <SpeciesPanel />}
 
-        {activeCategory === 'body' && <BodyPanel />}
+            {activeCategory === 'weapons' && <WeaponsPanel />}
 
-        {activeCategory === 'face' && <FacePanel />}
+            {activeCategory === 'body' && <BodyPanel />}
 
-        {activeCategory === 'hair' && (
-          <div className="grid grid-cols-3 gap-2">
-            {hairStyles.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                selected={currentAvatar.hair === item.id}
-                onSelect={(id) => updateAvatar({ hair: id })}
-                accentColor={currentAvatar.hairColor}
-              />
-            ))}
-          </div>
-        )}
+            {activeCategory === 'face' && <FacePanel />}
 
-        {activeCategory === 'tops' && (
-          <div className="grid grid-cols-3 gap-2">
-            {tops.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                selected={currentAvatar.top === item.id}
-                onSelect={(id) => updateAvatar({ top: id })}
-                accentColor={currentAvatar.topColor}
-              />
-            ))}
-          </div>
-        )}
+            {activeCategory === 'hair' && (
+              <div className="grid grid-cols-3 gap-2">
+                {hairStyles.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    selected={currentAvatar.hair === item.id}
+                    onSelect={(id) => updateAvatar({ hair: id })}
+                    accentColor={currentAvatar.hairColor}
+                  />
+                ))}
+              </div>
+            )}
 
-        {activeCategory === 'bottoms' && (
-          <div className="grid grid-cols-3 gap-2">
-            {bottoms.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                selected={currentAvatar.bottom === item.id}
-                onSelect={(id) => updateAvatar({ bottom: id })}
-                accentColor={currentAvatar.bottomColor}
-              />
-            ))}
-          </div>
-        )}
+            {activeCategory === 'tops' && (
+              <div className="grid grid-cols-3 gap-2">
+                {tops.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    selected={currentAvatar.top === item.id}
+                    onSelect={(id) => updateAvatar({ top: id })}
+                    accentColor={currentAvatar.topColor}
+                  />
+                ))}
+              </div>
+            )}
 
-        {activeCategory === 'shoes' && (
-          <div className="grid grid-cols-3 gap-2">
-            {shoes.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                selected={currentAvatar.shoes === item.id}
-                onSelect={(id) => updateAvatar({ shoes: id })}
-                accentColor={currentAvatar.shoeColor}
-              />
-            ))}
-          </div>
-        )}
+            {activeCategory === 'bottoms' && (
+              <div className="grid grid-cols-3 gap-2">
+                {bottoms.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    selected={currentAvatar.bottom === item.id}
+                    onSelect={(id) => updateAvatar({ bottom: id })}
+                    accentColor={currentAvatar.bottomColor}
+                  />
+                ))}
+              </div>
+            )}
 
-        {activeCategory === 'accessories' && <AccessoriesPanel />}
+            {activeCategory === 'shoes' && (
+              <div className="grid grid-cols-3 gap-2">
+                {shoes.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    selected={currentAvatar.shoes === item.id}
+                    onSelect={(id) => updateAvatar({ shoes: id })}
+                    accentColor={currentAvatar.shoeColor}
+                  />
+                ))}
+              </div>
+            )}
 
-        {activeCategory === 'colors' && <ColorsPanel />}
-      </motion.div>
-    </AnimatePresence>
+            {activeCategory === 'accessories' && <AccessoriesPanel />}
+
+            {activeCategory === 'colors' && <ColorsPanel />}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
