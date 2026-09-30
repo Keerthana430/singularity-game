@@ -5,10 +5,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
-  RotateCcw,
-  Undo2,
-  Redo2,
-  Dices,
   Save,
   Download,
   Share2,
@@ -231,61 +227,6 @@ export default function StudioPage() {
           </div>
         </div>
 
-        {/* Center: Presets & Quick Actions */}
-        <div className="hidden md:flex items-center gap-1 bg-black/60 border border-[#00FF66]/20 rounded-xl px-2 py-1 shadow-[0_0_15px_rgba(0,255,102,0.1)]">
-          <button
-            onClick={() => setPresetModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#00FF66] hover:bg-[#00FF66]/15 transition-all uppercase tracking-wider"
-          >
-            <Sparkles size={14} />
-            <span>Archetypes</span>
-          </button>
-
-          <button
-            onClick={() => setVaultModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-[#00FF66] hover:bg-[#00FF66]/10 transition-all uppercase tracking-wider"
-          >
-            <FolderOpen size={14} />
-            <span>Loadouts ({savedAvatars.length})</span>
-          </button>
-
-          <div className="h-4 w-px bg-white/10 mx-1" />
-
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            title="Undo"
-            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all touch-target"
-          >
-            <Undo2 size={15} />
-          </button>
-
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            title="Redo"
-            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all touch-target"
-          >
-            <Redo2 size={15} />
-          </button>
-
-          <button
-            onClick={handleRandomize}
-            title="Randomize Look"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
-          >
-            <Dices size={15} className="text-amber-400" />
-            <span className="hidden lg:inline text-xs uppercase tracking-wider">Random</span>
-          </button>
-
-          <button
-            onClick={() => setResetModalOpen(true)}
-            title="Reset Avatar"
-            className="p-2 rounded-lg text-white/50 hover:text-red-400 hover:bg-white/10 transition-all touch-target"
-          >
-            <RotateCcw size={15} />
-          </button>
-        </div>
 
         {/* Right: Export & Save */}
         <div className="flex items-center gap-2">
