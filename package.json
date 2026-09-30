@@ -9,18 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-three/drei": "^9.115.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.16.3",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
     "next": "16.3.7",
+    "postprocessing": "^6.36.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "three": "^0.169.0",
-    "@react-three/fiber": "^8.17.10",
-    "@react-three/drei": "^9.115.0",
-    "@react-three/postprocessing": "^2.16.3",
-    "framer-motion": "^11.11.17",
-    "zustand": "^5.0.1",
-    "lucide-react": "^0.460.0",
-    "postprocessing": "^6.36.3",
-    "uuid": "^10.0.0"
+    "uuid": "^14.0.2",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -105,6 +105,33 @@ export default function LobbyPage() {
   const [currentRoundNumber, setCurrentRoundNumber] = useState(1);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(INITIAL_LEADERBOARD);
 
+  // Fetch backend leaderboard on mount
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const res = await fetch('/api/leaderboard');
+        const json = await res.json();
+        if (json.success && json.data) {
+          const apiLeaderboard: LeaderboardEntry[] = json.data.map((item: any) => ({
+            rank: item.rank,
+            name: item.name,
+            creator: item.name === currentAvatar.name ? 'YOU' : 'CyberSystem',
+            archetype: item.classRole || 'Cyber Fighter',
+            topGear: 'Cyber Plating',
+            accessory: 'Photon Visor',
+            wins: item.victories,
+            losses: item.losses,
+            rating: item.rating,
+          }));
+          setLeaderboard(apiLeaderboard);
+        }
+      } catch (err) {
+        console.warn('Using local leaderboard fallback', err);
+      }
+    }
+    fetchLeaderboard();
+  }, [currentAvatar.name]);
+
   // Setup opponent based on stage
   const startStageBattle = (stage: 'quarter' | 'semi' | 'final') => {
     let rivalPreset = PRESET_AVATARS[0];
@@ -196,7 +223,19 @@ export default function LobbyPage() {
         } else if (tournamentStage === 'final') {
           setTournamentStage('champion');
           addToast(`🏆 CHAMPION! ${playerFighter.name} won the ${tournamentFormat}!`, 'success');
-          // Add to leaderboard
+
+          // Sync victory to Backend API
+          fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: playerFighter.name,
+              isVictory: true,
+              classRole: playerFighter.archetype,
+            }),
+          }).catch((err) => console.warn('Leaderboard sync error', err));
+
+          // Add to leaderboard state
           setLeaderboard((prev) => [
             {
               rank: 1,
