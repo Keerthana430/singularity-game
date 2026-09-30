@@ -9,8 +9,32 @@ import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { AvatarConfig } from '@/types/avatar';
 import { AvatarModel } from '@/components/avatar/AvatarModel';
+import {
+  PhantomDodgeEffect,
+  CriticalHitImpactScene,
+  PhotonBladeEffect,
+  PlasmaBurstEffect,
+  SingularityOverdriveEffect,
+  SylphArrowEffect,
+  NatureSurgeEffect,
+  CelestialTempestEffect,
+  StardustStrikeEffect,
+  CosmicBloomEffect,
+  AstralAscensionEffect,
+  RuneHammerEffect,
+  MagmaBoltEffect,
+  ForgeEruptionEffect,
+  TitanSmashEffect,
+  EarthTremorEffect,
+  CataclysmEffect,
+  HumanIronBastion,
+  ElfWindBarrier,
+  FairyPetalShield,
+  DwarfStoneFortress,
+  OgreBoulderGuard,
+} from './Attack3DEffects';
 
-export type CombatAction = 'idle' | 'attack' | 'hit' | 'defend' | 'victory' | 'healing';
+export type CombatAction = 'idle' | 'attack' | 'hit' | 'defend' | 'dodge' | 'crit-hit' | 'victory' | 'healing';
 export type BiomeType = 'grassland' | 'volcano' | 'mystic';
 
 interface Arena3DCanvasProps {
@@ -22,6 +46,12 @@ interface Arena3DCanvasProps {
   roundKey?: number | string;
   activeFx?: 'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null;
   fxSource?: 'player' | 'opponent';
+  attackId?: string;
+  vfxColor?: string;
+  vfxAccent?: string;
+  vfxSpark?: string;
+  isCrit?: boolean;
+  isDodge?: boolean;
   floatingCombatText?: {
     id: number;
     text: string;
@@ -794,50 +824,94 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
   const groupRef = useRef<THREE.Group>(null);
   const isPlayer = side === 'player';
   const targetXRef = useRef(homeX);
+  const targetYRef = useRef(-0.6);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
 
-    // Determine dynamic target X position based on combat action
+    // Determine dynamic target X and Y positions based on combat action
     if (action === 'attack') {
-      // Lunge forward into the opposing fighter's face!
-      targetXRef.current = isPlayer ? (homeX + 0.85) : (homeX - 0.85);
+      // Aggressive lunge forward into the opponent
+      targetXRef.current = isPlayer ? (homeX + 0.95) : (homeX - 0.95);
+      targetYRef.current = -0.55;
+    } else if (action === 'crit-hit') {
+      // Violent critical knockback: launched upwards into the air and pushed far back!
+      targetXRef.current = isPlayer ? (homeX - 0.7) : (homeX + 0.7);
+      targetYRef.current = -0.22;
     } else if (action === 'hit') {
       // Stagger and fly backwards from the hit
-      targetXRef.current = isPlayer ? (homeX - 0.35) : (homeX + 0.35);
+      targetXRef.current = isPlayer ? (homeX - 0.4) : (homeX + 0.4);
+      targetYRef.current = -0.6;
+    } else if (action === 'dodge') {
+      // Acrobatic evasive backstep / sidestep hop!
+      targetXRef.current = isPlayer ? (homeX - 0.65) : (homeX + 0.65);
+      targetYRef.current = -0.42;
     } else {
       // Idle / defend / healing: stand firm on home dais
       targetXRef.current = homeX;
+      targetYRef.current = -0.6;
     }
 
-    // Smooth physics lerp
+    // Smooth physics lerp for position X and Y
     groupRef.current.position.x = THREE.MathUtils.lerp(
       groupRef.current.position.x,
       targetXRef.current,
       delta * 14
     );
+    groupRef.current.position.y = THREE.MathUtils.lerp(
+      groupRef.current.position.y,
+      targetYRef.current,
+      delta * 12
+    );
 
-    // Hit recoil tilt
-    if (action === 'hit') {
+    // Dynamic rotation recoil, dodge lean, and attack surge
+    if (action === 'crit-hit') {
+      // Severe backward recoil tilt + violent twist
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(
+        groupRef.current.rotation.z,
+        isPlayer ? -0.55 : 0.55,
+        delta * 18
+      );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, delta * 14);
+    } else if (action === 'hit') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.35 : 0.35,
         delta * 16
       );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
+    } else if (action === 'dodge') {
+      // Agile backward evasion arch
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(
+        groupRef.current.rotation.z,
+        isPlayer ? -0.42 : 0.42,
+        delta * 18
+      );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, delta * 14);
     } else if (action === 'attack') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? 0.15 : -0.15,
+        isPlayer ? 0.2 : -0.2,
         delta * 12
       );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.15, delta * 10);
     } else {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         0,
         delta * 10
       );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
     }
   });
+
+  // Map extended actions to AvatarModel actions
+  const modelAction =
+    action === 'crit-hit'
+      ? 'hit'
+      : action === 'dodge' || action === 'healing'
+      ? 'idle'
+      : action;
 
   return (
     <group
@@ -847,7 +921,7 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
     >
       <AvatarModel
         config={config}
-        action={action === 'healing' ? 'idle' : action}
+        action={modelAction}
         animate={true}
       />
     </group>
@@ -865,23 +939,27 @@ export function Arena3DCanvas({
   roundKey,
   activeFx,
   fxSource = 'player',
+  attackId,
+  vfxColor,
+  vfxAccent,
+  vfxSpark,
+  isCrit,
+  isDodge,
   floatingCombatText = [],
 }: Arena3DCanvasProps) {
   const playerHomeX = -1.45;
   const opponentHomeX = 1.45;
 
+  const playerSpecies = (playerConfig.species || 'human').toLowerCase();
+  const opponentSpecies = (opponentConfig.species || 'human').toLowerCase();
+
+  const sourcePos: [number, number, number] = fxSource === 'player' ? [-0.8, 0.4, 0] : [0.8, 0.4, 0];
+  const targetPos: [number, number, number] = fxSource === 'player' ? [opponentHomeX, 0.4, 0] : [playerHomeX, 0.4, 0];
+  const facingDir: 'right' | 'left' = fxSource === 'player' ? 'right' : 'left';
+
   // Biome Lighting & Fog Atmosphere with Bright High-Tech Contrast
   const lighting = useMemo(() => {
     switch (biome) {
-      case 'grassland':
-        return {
-          bg: '#07150e',
-          fog: '#07150e',
-          ambientColor: '#a7f3d0',
-          ambientInt: 1.1,
-          sunColor: '#ecfdf5',
-          sunInt: 2.2,
-        };
       case 'volcano':
         return {
           bg: '#1c0808',
@@ -892,13 +970,22 @@ export function Arena3DCanvas({
           sunInt: 2.4,
         };
       case 'mystic':
-      default:
         return {
           bg: '#0e0b1f',
           fog: '#0e0b1f',
           ambientColor: '#ddd6fe',
           ambientInt: 1.1,
           sunColor: '#38bdf8',
+          sunInt: 2.2,
+        };
+      case 'grassland':
+      default:
+        return {
+          bg: '#07150e',
+          fog: '#07150e',
+          ambientColor: '#a7f3d0',
+          ambientInt: 1.1,
+          sunColor: '#ecfdf5',
           sunInt: 2.2,
         };
     }
@@ -931,16 +1018,16 @@ export function Arena3DCanvas({
           target-position={[playerHomeX, -0.6, 0]}
           angle={0.65}
           penumbra={0.7}
-          intensity={playerAction === 'hit' ? 6.0 : 3.2}
-          color={playerAction === 'hit' ? '#EF4444' : '#00FF66'}
+          intensity={playerAction === 'hit' || playerAction === 'crit-hit' ? 7.0 : 3.2}
+          color={playerAction === 'crit-hit' ? '#DC2626' : playerAction === 'hit' ? '#EF4444' : '#00FF66'}
         />
         <spotLight
           position={[2.5, 4, 2]}
           target-position={[opponentHomeX, -0.6, 0]}
           angle={0.65}
           penumbra={0.7}
-          intensity={opponentAction === 'hit' ? 6.0 : 3.2}
-          color={opponentAction === 'hit' ? '#EF4444' : '#F59E0B'}
+          intensity={opponentAction === 'hit' || opponentAction === 'crit-hit' ? 7.0 : 3.2}
+          color={opponentAction === 'crit-hit' ? '#DC2626' : opponentAction === 'hit' ? '#EF4444' : '#F59E0B'}
         />
 
         {/* ─── REALISTIC BIOME ENVIRONMENT ─── */}
@@ -983,46 +1070,114 @@ export function Arena3DCanvas({
           homeX={opponentHomeX}
         />
 
-        {/* ─── 3D VISUAL COMBAT EFFECTS ─── */}
-
-        {/* 1. Weapon Slashing Arc */}
-        {activeFx === 'slash' && fxSource === 'player' && (
-          <SlashArcEffect position={[0.4, 0.4, 0]} color="#00FF66" facing="right" />
+        {/* ─── 1. PHANTOM DODGE EVASION EFFECTS ─── */}
+        {playerAction === 'dodge' && (
+          <PhantomDodgeEffect position={[playerHomeX, -0.4, 0]} facing="left" />
         )}
-        {activeFx === 'slash' && fxSource === 'opponent' && (
-          <SlashArcEffect position={[-0.4, 0.4, 0]} color="#EF4444" facing="left" />
+        {opponentAction === 'dodge' && (
+          <PhantomDodgeEffect position={[opponentHomeX, -0.4, 0]} facing="right" />
         )}
 
-        {/* 2. Hit Sparks Impact Burst */}
+        {/* ─── 2. DRAMATIC CRITICAL HIT IMPACT SCENE ─── */}
+        {opponentAction === 'crit-hit' && (
+          <CriticalHitImpactScene position={[opponentHomeX, 0.4, 0]} color={vfxSpark || '#F59E0B'} />
+        )}
+        {playerAction === 'crit-hit' && (
+          <CriticalHitImpactScene position={[playerHomeX, 0.4, 0]} color={vfxSpark || '#EF4444'} />
+        )}
+
+        {/* ─── 3. STANDARD HIT IMPACT SPARKS ─── */}
         {opponentAction === 'hit' && (
-          <HitSparks position={[opponentHomeX, 0.5, 0]} color="#F59E0B" />
+          <HitSparks position={[opponentHomeX, 0.5, 0]} color={vfxSpark || '#F59E0B'} />
         )}
         {playerAction === 'hit' && (
-          <HitSparks position={[playerHomeX, 0.5, 0]} color="#EF4444" />
+          <HitSparks position={[playerHomeX, 0.5, 0]} color={vfxSpark || '#EF4444'} />
         )}
 
-        {/* 3. Shield Barriers */}
-        {playerAction === 'defend' && <ShieldDome position={[playerHomeX, 0.4, 0]} />}
-        {opponentAction === 'defend' && <ShieldDome position={[opponentHomeX, 0.4, 0]} />}
+        {/* ─── 4. SPECIES-SPECIFIC 3D DEFENSIVE SHIELDS ─── */}
+        {playerAction === 'defend' && (
+          playerSpecies === 'elf' ? <ElfWindBarrier position={[playerHomeX, -0.4, 0]} /> :
+          playerSpecies === 'fairy' ? <FairyPetalShield position={[playerHomeX, -0.4, 0]} /> :
+          playerSpecies === 'dwarf' ? <DwarfStoneFortress position={[playerHomeX, -0.4, 0]} /> :
+          playerSpecies === 'ogre' ? <OgreBoulderGuard position={[playerHomeX, -0.4, 0]} /> :
+          <HumanIronBastion position={[playerHomeX, -0.4, 0]} />
+        )}
 
-        {/* 4. Healing Nanite Auras */}
+        {opponentAction === 'defend' && (
+          opponentSpecies === 'elf' ? <ElfWindBarrier position={[opponentHomeX, -0.4, 0]} /> :
+          opponentSpecies === 'fairy' ? <FairyPetalShield position={[opponentHomeX, -0.4, 0]} /> :
+          opponentSpecies === 'dwarf' ? <DwarfStoneFortress position={[opponentHomeX, -0.4, 0]} /> :
+          opponentSpecies === 'ogre' ? <OgreBoulderGuard position={[opponentHomeX, -0.4, 0]} /> :
+          <HumanIronBastion position={[opponentHomeX, -0.4, 0]} />
+        )}
+
+        {/* ─── 5. HEALING NANITE AURA ─── */}
         {playerAction === 'healing' && <HealingAuraEffect position={[playerHomeX, -0.6, 0]} />}
         {opponentAction === 'healing' && <HealingAuraEffect position={[opponentHomeX, -0.6, 0]} />}
 
-        {/* 5. Magic Projectile Beams */}
-        {(activeFx === 'magic' || activeFx === 'ultimate') && fxSource === 'player' && (
-          <MagicEnergyProjectile
-            source={[-0.8, 0.4, 0]}
-            target={[opponentHomeX, 0.4, 0]}
-            type={activeFx}
-          />
+        {/* ─── 6. SPECIES-SPECIFIC ATTACK 3D VISUAL SCENES ─── */}
+
+        {/* HUMAN ATTACKS */}
+        {attackId === 'human-photon-blade' && activeFx && (
+          <PhotonBladeEffect position={targetPos} facing={facingDir} />
         )}
-        {(activeFx === 'magic' || activeFx === 'ultimate') && fxSource === 'opponent' && (
-          <MagicEnergyProjectile
-            source={[0.8, 0.4, 0]}
-            target={[playerHomeX, 0.4, 0]}
-            type={activeFx}
-          />
+        {attackId === 'human-plasma-burst' && activeFx && (
+          <PlasmaBurstEffect source={sourcePos} target={targetPos} />
+        )}
+        {attackId === 'human-singularity-overdrive' && activeFx && (
+          <SingularityOverdriveEffect source={sourcePos} target={targetPos} />
+        )}
+
+        {/* ELF ATTACKS */}
+        {attackId === 'elf-sylph-arrow' && activeFx && (
+          <SylphArrowEffect source={sourcePos} target={targetPos} />
+        )}
+        {attackId === 'elf-nature-surge' && activeFx && (
+          <NatureSurgeEffect position={targetPos} />
+        )}
+        {attackId === 'elf-celestial-tempest' && activeFx && (
+          <CelestialTempestEffect position={targetPos} />
+        )}
+
+        {/* FAIRY ATTACKS */}
+        {attackId === 'fairy-stardust-strike' && activeFx && (
+          <StardustStrikeEffect source={sourcePos} target={targetPos} />
+        )}
+        {attackId === 'fairy-cosmic-bloom' && activeFx && (
+          <CosmicBloomEffect position={targetPos} />
+        )}
+        {attackId === 'fairy-astral-ascension' && activeFx && (
+          <AstralAscensionEffect position={targetPos} />
+        )}
+
+        {/* DWARF ATTACKS */}
+        {attackId === 'dwarf-rune-hammer' && activeFx && (
+          <RuneHammerEffect position={targetPos} />
+        )}
+        {attackId === 'dwarf-magma-bolt' && activeFx && (
+          <MagmaBoltEffect source={sourcePos} target={targetPos} />
+        )}
+        {attackId === 'dwarf-forge-eruption' && activeFx && (
+          <ForgeEruptionEffect position={targetPos} />
+        )}
+
+        {/* OGRE ATTACKS */}
+        {attackId === 'ogre-titan-smash' && activeFx && (
+          <TitanSmashEffect position={targetPos} />
+        )}
+        {attackId === 'ogre-earth-tremor' && activeFx && (
+          <EarthTremorEffect source={sourcePos} target={targetPos} />
+        )}
+        {attackId === 'ogre-cataclysm' && activeFx && (
+          <CataclysmEffect position={targetPos} />
+        )}
+
+        {/* FALLBACK GENERIC ATTACK FX (If attackId is not specifically matched) */}
+        {!attackId && activeFx === 'slash' && (
+          <SlashArcEffect position={targetPos} color={vfxColor || (fxSource === 'player' ? '#00FF66' : '#EF4444')} facing={facingDir} />
+        )}
+        {!attackId && (activeFx === 'magic' || activeFx === 'ultimate') && (
+          <MagicEnergyProjectile source={sourcePos} target={targetPos} type={activeFx} />
         )}
 
         {/* 6. In-Canvas 3D Floating Combat Text */}

@@ -33,6 +33,12 @@ interface Arena3DViewProps {
   roundKey?: number | string;
   activeFx?: 'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null;
   fxSource?: 'player' | 'opponent';
+  attackId?: string;
+  vfxColor?: string;
+  vfxAccent?: string;
+  vfxSpark?: string;
+  isCrit?: boolean;
+  isDodge?: boolean;
   floatingCombatText?: {
     id: number;
     text: string;

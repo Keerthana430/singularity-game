@@ -153,6 +153,12 @@ export default function LobbyPage() {
   const [activeFx, setActiveFx] = useState<'slash' | 'magic' | 'shield' | 'ultimate' | 'healing' | null>(null);
   const [fxSource, setFxSource] = useState<'player' | 'opponent'>('player');
   const [isTurnAnimating, setIsTurnAnimating] = useState(false);
+  const [currentAttackId, setCurrentAttackId] = useState<string | undefined>(undefined);
+  const [attackVfxColor, setAttackVfxColor] = useState<string | undefined>(undefined);
+  const [attackVfxAccent, setAttackVfxAccent] = useState<string | undefined>(undefined);
+  const [attackVfxSpark, setAttackVfxSpark] = useState<string | undefined>(undefined);
+  const [isAttackCrit, setIsAttackCrit] = useState<boolean>(false);
+  const [isAttackDodge, setIsAttackDodge] = useState<boolean>(false);
   const [overdriveEnergy, setOverdriveEnergy] = useState(30); // 0 to 100%
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [showCutscene, setShowCutscene] = useState(false);
@@ -437,8 +443,11 @@ export default function LobbyPage() {
       setPlayerAction('idle');
       setOpponentAction('idle');
       setActiveFx(null);
+      setCurrentAttackId(undefined);
+      setIsAttackCrit(false);
+      setIsAttackDodge(false);
       setIsTurnAnimating(false);
-    }, 400);
+    }, 450);
   };
 
   // Execute interactive player choice — SPECIES-SPECIFIC ATTACKS
@@ -556,21 +565,34 @@ export default function LobbyPage() {
     setPlayerAction('attack');
     setActiveFx(fxType);
     setFxSource('player');
+    setCurrentAttackId(currentAttack.id);
+    setAttackVfxColor(currentAttack.vfxColor);
+    setAttackVfxAccent(currentAttack.vfxAccent);
+    setAttackVfxSpark(currentAttack.vfxSpark);
+    setIsAttackCrit(isCrit);
+    setIsAttackDodge(false);
 
     // Impact after 350ms
     setTimeout(() => {
-      sound.playImpact();
-      setOpponentAction('hit');
-      if (isCrit) triggerShake();
-
       // Check Opponent Evasion
       const opponentEvaded = Math.random() * 100 < opponentFighter.evasionRate;
       const finalDmg = opponentEvaded ? 0 : baseDmg;
 
       if (opponentEvaded) {
-        addFloatingText('EVADED!', 'opponent', false, '#FCD34D');
+        sound.playSweep();
+        setOpponentAction('dodge');
+        setIsAttackDodge(true);
+        addFloatingText('💨 EVADED!', 'opponent', false, '#38BDF8');
       } else {
-        addFloatingText(isCrit ? `-${finalDmg} CRIT!` : `-${finalDmg}`, 'opponent', isCrit);
+        sound.playImpact();
+        if (isCrit) {
+          setOpponentAction('crit-hit');
+          triggerShake();
+          addFloatingText(`💥 -${finalDmg} CRIT!`, 'opponent', true, currentAttack.vfxSpark);
+        } else {
+          setOpponentAction('hit');
+          addFloatingText(`-${finalDmg}`, 'opponent', false, currentAttack.vfxColor);
+        }
       }
 
       const newOppHp = Math.max(0, opponentFighter.hp - finalDmg);
@@ -686,30 +708,47 @@ export default function LobbyPage() {
       return;
     }
 
-    // AI Offensive Attack
+    // AI Offensive Attack with species-specific attack data
     const isAiUltimate = aiMove === 'ultimate';
     const isMagicMove = aiMove === 'magic' || isAiUltimate;
+    const oppAttack = getAttackByType(opponentFighter.avatarConfig.species, aiMove);
     const oppFx: 'slash' | 'magic' | 'ultimate' = isAiUltimate ? 'ultimate' : isMagicMove ? 'magic' : 'slash';
 
     setPlayerAction('idle');
     setOpponentAction('attack');
     setActiveFx(oppFx);
     setFxSource('opponent');
+    setCurrentAttackId(oppAttack.id);
+    setAttackVfxColor(oppAttack.vfxColor);
+    setAttackVfxAccent(oppAttack.vfxAccent);
+    setAttackVfxSpark(oppAttack.vfxSpark);
+    setIsAttackDodge(false);
     sound.playSlash();
 
     setTimeout(() => {
-      sound.playImpact();
-      setPlayerAction(playerWasShielding ? 'defend' : 'hit');
-
       // Check Player Evasion
       const playerEvaded = Math.random() * 100 < playerFighter.evasionRate;
       let isOppCrit = Math.random() * 100 < opponentFighter.criticalRate;
+      setIsAttackCrit(isOppCrit);
+
+      if (playerEvaded) {
+        sound.playSweep();
+        setPlayerAction('dodge');
+        setIsAttackDodge(true);
+      } else {
+        sound.playImpact();
+        if (isOppCrit) {
+          setPlayerAction('crit-hit');
+          triggerShake();
+        } else {
+          setPlayerAction(playerWasShielding ? 'defend' : 'hit');
+        }
+      }
 
       // Calculate Damage with spread
       const spread = 0.88 + Math.random() * 0.24;
       let oppBase = ((isMagicMove ? opponentFighter.magic : opponentFighter.power) * 2.0 - playerFighter.defense * 0.65) * spread;
       if (isAiUltimate) oppBase *= 1.4;
-
 
       let oppDmg = Math.max(25, Math.round(isOppCrit ? oppBase * 1.6 : oppBase));
 
@@ -724,13 +763,12 @@ export default function LobbyPage() {
 
       if (playerEvaded) {
         oppDmg = 0;
-        addFloatingText('DODGED!', 'player', false, '#34D399');
+        addFloatingText('💨 EVADED!', 'player', false, '#38BDF8');
       } else {
-        if (isOppCrit) triggerShake();
         if (playerWasShielding) {
           addFloatingText(`PARRY BLOCKED -${oppDmg}`, 'player', false, activeShieldAttack?.vfxColor || '#38BDF8');
         } else {
-          addFloatingText(isOppCrit ? `-${oppDmg} CRIT!` : `-${oppDmg}`, 'player', isOppCrit);
+          addFloatingText(isOppCrit ? `💥 -${oppDmg} CRIT!` : `-${oppDmg}`, 'player', isOppCrit);
         }
       }
 
@@ -1061,6 +1099,12 @@ export default function LobbyPage() {
                   roundKey={battleRoundKey}
                   activeFx={activeFx}
                   fxSource={fxSource}
+                  attackId={currentAttackId}
+                  vfxColor={attackVfxColor}
+                  vfxAccent={attackVfxAccent}
+                  vfxSpark={attackVfxSpark}
+                  isCrit={isAttackCrit}
+                  isDodge={isAttackDodge}
                   floatingCombatText={floatingTexts}
                 />
 
