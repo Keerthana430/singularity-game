@@ -288,28 +288,28 @@ function ArenaBattleDais({
     switch (biome) {
       case 'grassland':
         return {
-          baseColor: '#273444',
-          topColor: '#1e293b',
-          rimColor: isPlayer ? '#059669' : '#b45309',
-          lightColor: isPlayer ? '#10B981' : '#F59E0B',
-          lightIntensity: 1.8,
+          baseColor: '#1e293b',
+          topColor: '#0f172a',
+          rimColor: isPlayer ? '#00FF66' : '#f59e0b',
+          lightColor: isPlayer ? '#00FF66' : '#f59e0b',
+          lightIntensity: 2.5,
         };
       case 'volcano':
         return {
-          baseColor: '#1c1917',
-          topColor: '#292524',
+          baseColor: '#261313',
+          topColor: '#190a0a',
           rimColor: isPlayer ? '#ea580c' : '#dc2626',
           lightColor: isPlayer ? '#f97316' : '#ef4444',
-          lightIntensity: 2.4,
+          lightIntensity: 2.8,
         };
       case 'mystic':
       default:
         return {
           baseColor: '#1e1b4b',
-          topColor: '#2e1065',
-          rimColor: isPlayer ? '#06b6d4' : '#a855f7',
-          lightColor: isPlayer ? '#22d3ee' : '#c084fc',
-          lightIntensity: 2.0,
+          topColor: '#150f2e',
+          rimColor: isPlayer ? '#06b6d4' : '#c084fc',
+          lightColor: isPlayer ? '#22d3ee' : '#a855f7',
+          lightIntensity: 2.6,
         };
     }
   }, [biome, isPlayer]);
@@ -318,24 +318,24 @@ function ArenaBattleDais({
     <group position={position}>
       {/* Lower solid stone tier */}
       <mesh position={[0, -0.16, 0]} receiveShadow castShadow>
-        <cylinderGeometry args={[1.42, 1.6, 0.22, 32]} />
-        <meshStandardMaterial color={daisConfig.baseColor} roughness={0.7} metalness={0.4} />
+        <cylinderGeometry args={[1.05, 1.2, 0.22, 32]} />
+        <meshStandardMaterial color={daisConfig.baseColor} roughness={0.7} metalness={0.5} />
       </mesh>
 
       {/* Upper chamfered stone tier */}
       <mesh position={[0, 0.01, 0]} receiveShadow castShadow>
-        <cylinderGeometry args={[1.32, 1.4, 0.12, 32]} />
-        <meshStandardMaterial color={daisConfig.topColor} roughness={0.6} metalness={0.5} />
+        <cylinderGeometry args={[0.96, 1.05, 0.12, 32]} />
+        <meshStandardMaterial color={daisConfig.topColor} roughness={0.5} metalness={0.6} />
       </mesh>
 
-      {/* Solid engraved rim bevel (solid 3D torus, not a thin flat 2D slice) */}
+      {/* Solid engraved neon rim bevel */}
       <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.3, 0.025, 8, 36]} />
+        <torusGeometry args={[0.96, 0.028, 8, 36]} />
         <meshStandardMaterial
           color={daisConfig.rimColor}
           emissive={daisConfig.rimColor}
-          emissiveIntensity={1.2}
-          roughness={0.3}
+          emissiveIntensity={2.2}
+          roughness={0.2}
         />
       </mesh>
 
@@ -343,9 +343,96 @@ function ArenaBattleDais({
       <pointLight
         color={daisConfig.lightColor}
         intensity={daisConfig.lightIntensity}
-        distance={3.2}
-        position={[0, 0.35, 0]}
+        distance={3.5}
+        position={[0, 0.4, 0]}
       />
+    </group>
+  );
+}
+
+// ─── Cyber Colosseum Holographic Infrastructure ────────────────────────────
+
+function CyberColosseumInfrastructure({ biome = 'grassland' }: { biome: BiomeType }) {
+  const pylonColor = biome === 'volcano' ? '#f97316' : biome === 'mystic' ? '#00e5ff' : '#00FF66';
+  const ringColor = biome === 'volcano' ? '#ef4444' : biome === 'mystic' ? '#a855f7' : '#00FF66';
+
+  const pylons = useMemo(() => [
+    { x: -2.8, z: -1.6 },
+    { x: 0, z: -2.4 },
+    { x: 2.8, z: -1.6 },
+    { x: 2.8, z: 1.6 },
+    { x: 0, z: 2.2 },
+    { x: -2.8, z: 1.6 },
+  ], []);
+
+  return (
+    <group position={[0, -0.71, 0]}>
+      {/* Central Holographic Ring Grid */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <ringGeometry args={[1.9, 1.96, 48]} />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.65} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <ringGeometry args={[2.9, 2.95, 48]} />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.35} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Central Crosshair */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <ringGeometry args={[0.25, 0.28, 24]} />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.5} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Perimeter Pylons with Vertical Laser Beams */}
+      {pylons.map((p, idx) => (
+        <group key={idx} position={[p.x, 0, p.z]}>
+          <mesh position={[0, 0.15, 0]} castShadow>
+            <cylinderGeometry args={[0.16, 0.22, 0.3, 6]} />
+            <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+          </mesh>
+          <mesh position={[0, 0.32, 0]}>
+            <sphereGeometry args={[0.07, 8, 8]} />
+            <meshStandardMaterial color={pylonColor} emissive={pylonColor} emissiveIntensity={3.2} />
+          </mesh>
+          <mesh position={[0, 1.6, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 2.8, 8]} />
+            <meshBasicMaterial color={pylonColor} transparent opacity={0.5} />
+          </mesh>
+          <pointLight color={pylonColor} intensity={0.8} distance={2.5} position={[0, 0.4, 0]} />
+        </group>
+      ))}
+
+      {/* Floating Holo-Spectator Drones */}
+      <FloatingDrone position={[-2.0, 2.0, -1.4]} color={pylonColor} />
+      <FloatingDrone position={[2.0, 2.2, -1.1]} color={pylonColor} />
+    </group>
+  );
+}
+
+function FloatingDrone({ position, color }: { position: [number, number, number]; color: string }) {
+  const droneRef = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!droneRef.current) return;
+    const t = clock.getElapsedTime();
+    droneRef.current.position.y = position[1] + Math.sin(t * 2 + position[0]) * 0.12;
+    droneRef.current.rotation.y = t * 0.7;
+  });
+
+  return (
+    <group ref={droneRef} position={position}>
+      <mesh>
+        <boxGeometry args={[0.22, 0.08, 0.22]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.2} />
+      </mesh>
+      <mesh position={[0, 0, 0.12]}>
+        <sphereGeometry args={[0.04, 8, 8]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
+      <mesh position={[0, -0.5, 0.15]} rotation={[0.25, 0, 0]}>
+        <coneGeometry args={[0.26, 1.0, 8, 1, true]} />
+        <meshBasicMaterial color={color} transparent opacity={0.14} side={THREE.DoubleSide} />
+      </mesh>
+      <pointLight color={color} intensity={1.2} distance={2.8} />
     </group>
   );
 }
@@ -714,10 +801,10 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
     // Determine dynamic target X position based on combat action
     if (action === 'attack') {
       // Lunge forward into the opposing fighter's face!
-      targetXRef.current = isPlayer ? 0.7 : -0.7;
+      targetXRef.current = isPlayer ? (homeX + 0.85) : (homeX - 0.85);
     } else if (action === 'hit') {
       // Stagger and fly backwards from the hit
-      targetXRef.current = isPlayer ? -2.7 : 2.7;
+      targetXRef.current = isPlayer ? (homeX - 0.35) : (homeX + 0.35);
     } else {
       // Idle / defend / healing: stand firm on home dais
       targetXRef.current = homeX;
@@ -780,39 +867,39 @@ export function Arena3DCanvas({
   fxSource = 'player',
   floatingCombatText = [],
 }: Arena3DCanvasProps) {
-  const playerHomeX = -2.1;
-  const opponentHomeX = 2.1;
+  const playerHomeX = -1.45;
+  const opponentHomeX = 1.45;
 
-  // Biome Lighting & Fog Atmosphere
+  // Biome Lighting & Fog Atmosphere with Bright High-Tech Contrast
   const lighting = useMemo(() => {
     switch (biome) {
       case 'grassland':
         return {
-          bg: '#050a06',
-          fog: '#050a06',
+          bg: '#07150e',
+          fog: '#07150e',
           ambientColor: '#a7f3d0',
-          ambientInt: 0.7,
-          sunColor: '#fffbeb',
-          sunInt: 1.5,
+          ambientInt: 1.1,
+          sunColor: '#ecfdf5',
+          sunInt: 2.2,
         };
       case 'volcano':
         return {
-          bg: '#0f0505',
-          fog: '#1a0606',
-          ambientColor: '#fecdd3',
-          ambientInt: 0.5,
+          bg: '#1c0808',
+          fog: '#1c0808',
+          ambientColor: '#fed7aa',
+          ambientInt: 1.0,
           sunColor: '#f97316',
-          sunInt: 1.8,
+          sunInt: 2.4,
         };
       case 'mystic':
       default:
         return {
-          bg: '#05040d',
-          fog: '#080614',
-          ambientColor: '#c4b5fd',
-          ambientInt: 0.6,
+          bg: '#0e0b1f',
+          fog: '#0e0b1f',
+          ambientColor: '#ddd6fe',
+          ambientInt: 1.1,
           sunColor: '#38bdf8',
-          sunInt: 1.4,
+          sunInt: 2.2,
         };
     }
   }, [biome]);
@@ -821,12 +908,12 @@ export function Arena3DCanvas({
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 1.4, 6.2], fov: 42 }}
+      camera={{ position: [0, 1.25, 4.8], fov: 46 }}
       className="w-full h-full"
     >
       <Suspense fallback={null}>
         <color attach="background" args={[lighting.bg]} />
-        <fog attach="fog" args={[lighting.fog, 6, 17]} />
+        <fog attach="fog" args={[lighting.fog, 6, 20]} />
 
         <ambientLight color={lighting.ambientColor} intensity={lighting.ambientInt} />
         <directionalLight
@@ -840,19 +927,19 @@ export function Arena3DCanvas({
 
         {/* Dynamic Dual Fighter Spotlights */}
         <spotLight
-          position={[-3, 4, 2]}
+          position={[-2.5, 4, 2]}
           target-position={[playerHomeX, -0.6, 0]}
           angle={0.65}
-          penumbra={0.8}
-          intensity={playerAction === 'hit' ? 5.5 : 2.5}
+          penumbra={0.7}
+          intensity={playerAction === 'hit' ? 6.0 : 3.2}
           color={playerAction === 'hit' ? '#EF4444' : '#00FF66'}
         />
         <spotLight
-          position={[3, 4, 2]}
+          position={[2.5, 4, 2]}
           target-position={[opponentHomeX, -0.6, 0]}
           angle={0.65}
-          penumbra={0.8}
-          intensity={opponentAction === 'hit' ? 5.5 : 2.5}
+          penumbra={0.7}
+          intensity={opponentAction === 'hit' ? 6.0 : 3.2}
           color={opponentAction === 'hit' ? '#EF4444' : '#F59E0B'}
         />
 
@@ -861,7 +948,10 @@ export function Arena3DCanvas({
         {biome === 'volcano' && <VolcanoBiome />}
         {biome === 'mystic' && <MysticBiome />}
 
-        {/* ─── SOLID 3D COMBAT DAIS (NO 2D WIRE RINGS) ─── */}
+        {/* ─── CYBER COLOSSEUM ARENA INFRASTRUCTURE ─── */}
+        <CyberColosseumInfrastructure biome={biome} />
+
+        {/* ─── SOLID 3D COMBAT DAIS ─── */}
         <ArenaBattleDais position={[playerHomeX, -0.68, 0]} biome={biome} side="player" />
         <ArenaBattleDais position={[opponentHomeX, -0.68, 0]} biome={biome} side="opponent" />
 
@@ -897,40 +987,40 @@ export function Arena3DCanvas({
 
         {/* 1. Weapon Slashing Arc */}
         {activeFx === 'slash' && fxSource === 'player' && (
-          <SlashArcEffect position={[0.7, 0.4, 0]} color="#00FF66" facing="right" />
+          <SlashArcEffect position={[0.4, 0.4, 0]} color="#00FF66" facing="right" />
         )}
         {activeFx === 'slash' && fxSource === 'opponent' && (
-          <SlashArcEffect position={[-0.7, 0.4, 0]} color="#EF4444" facing="left" />
+          <SlashArcEffect position={[-0.4, 0.4, 0]} color="#EF4444" facing="left" />
         )}
 
         {/* 2. Hit Sparks Impact Burst */}
         {opponentAction === 'hit' && (
-          <HitSparks position={[1.8, 0.5, 0]} color="#F59E0B" />
+          <HitSparks position={[opponentHomeX, 0.5, 0]} color="#F59E0B" />
         )}
         {playerAction === 'hit' && (
-          <HitSparks position={[-1.8, 0.5, 0]} color="#EF4444" />
+          <HitSparks position={[playerHomeX, 0.5, 0]} color="#EF4444" />
         )}
 
         {/* 3. Shield Barriers */}
-        {playerAction === 'defend' && <ShieldDome position={[-2.1, 0.4, 0]} />}
-        {opponentAction === 'defend' && <ShieldDome position={[2.1, 0.4, 0]} />}
+        {playerAction === 'defend' && <ShieldDome position={[playerHomeX, 0.4, 0]} />}
+        {opponentAction === 'defend' && <ShieldDome position={[opponentHomeX, 0.4, 0]} />}
 
         {/* 4. Healing Nanite Auras */}
-        {playerAction === 'healing' && <HealingAuraEffect position={[-2.1, -0.6, 0]} />}
-        {opponentAction === 'healing' && <HealingAuraEffect position={[2.1, -0.6, 0]} />}
+        {playerAction === 'healing' && <HealingAuraEffect position={[playerHomeX, -0.6, 0]} />}
+        {opponentAction === 'healing' && <HealingAuraEffect position={[opponentHomeX, -0.6, 0]} />}
 
         {/* 5. Magic Projectile Beams */}
         {(activeFx === 'magic' || activeFx === 'ultimate') && fxSource === 'player' && (
           <MagicEnergyProjectile
-            source={[-1.2, 0.4, 0]}
-            target={[1.6, 0.4, 0]}
+            source={[-0.8, 0.4, 0]}
+            target={[opponentHomeX, 0.4, 0]}
             type={activeFx}
           />
         )}
         {(activeFx === 'magic' || activeFx === 'ultimate') && fxSource === 'opponent' && (
           <MagicEnergyProjectile
-            source={[1.2, 0.4, 0]}
-            target={[-1.6, 0.4, 0]}
+            source={[0.8, 0.4, 0]}
+            target={[playerHomeX, 0.4, 0]}
             type={activeFx}
           />
         )}
@@ -939,7 +1029,7 @@ export function Arena3DCanvas({
         {floatingCombatText.map((f) => (
           <group
             key={f.id}
-            position={[f.target === 'player' ? -2.1 : 2.1, 1.8, 0]}
+            position={[f.target === 'player' ? playerHomeX : opponentHomeX, 1.8, 0]}
           >
             <Html center distanceFactor={8}>
               <div
