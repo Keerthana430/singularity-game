@@ -8,8 +8,6 @@ import { Canvas, useThree } from '@react-three/fiber';
 import {
   OrbitControls,
   ContactShadows,
-  Environment,
-  useGLTF,
   PerspectiveCamera,
 } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
@@ -78,7 +76,7 @@ function StarField() {
   return (
     <points>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={points} count={200} itemSize={3} />
+        <bufferAttribute attach="attributes-position" args={[points, 3]} />
       </bufferGeometry>
       <pointsMaterial size={0.04} color="#ffffff" transparent opacity={0.6} sizeAttenuation />
     </points>
@@ -140,15 +138,13 @@ function SceneContent({ config, animate, autoRotate }: SceneContentProps) {
       <directionalLight position={[-3, 2, 2]} intensity={0.8} color="#22D3EE" />
       {/* Rim / back light */}
       <directionalLight position={[0, 1, -4]} intensity={1.4} color="#FF5C93" />
-      {/* Ambient */}
+      {/* Ambient & Hemisphere Lighting */}
       <ambientLight intensity={0.4} color="#1A103A" />
+      <hemisphereLight args={['#2A1B4E', '#050C06', 0.8]} />
 
       {/* Point lights for glow atmosphere */}
-      <pointLight position={[0, -1.5, 0]} intensity={2} color="#7C5CFF" distance={4} decay={2} />
-      <pointLight position={[3, 2, 1]} intensity={0.6} color="#22D3EE" distance={6} decay={2} />
-
-      {/* Environment */}
-      <Environment preset="night" />
+      <pointLight position={[0, -1.5, 0]} intensity={2.5} color="#00FF66" distance={5} decay={2} />
+      <pointLight position={[3, 2, 1]} intensity={0.8} color="#22D3EE" distance={6} decay={2} />
 
       {/* Scene elements */}
       <StarField />

@@ -2,17 +2,19 @@
 // components/studio/CategoryTabs.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, Smile, Scissors, Shirt, ShoppingBag, Footprints, Star, Palette } from 'lucide-react';
+import { User, Smile, Scissors, Shirt, ShoppingBag, Footprints, Star, Palette, Sparkles, Swords } from 'lucide-react';
 import { StudioCategory } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
 
 import { sound } from '@/lib/audio';
 
 const CATEGORIES: { id: StudioCategory; label: string; icon: React.ReactNode }[] = [
+  { id: 'species', label: 'Species & Class', icon: <Sparkles size={15} /> },
+  { id: 'weapons', label: 'Weapons', icon: <Swords size={15} /> },
   { id: 'body', label: 'Body', icon: <User size={15} /> },
   { id: 'face', label: 'Face', icon: <Smile size={15} /> },
   { id: 'hair', label: 'Hair', icon: <Scissors size={15} /> },
-  { id: 'tops', label: 'Tops', icon: <Shirt size={15} /> },
+  { id: 'tops', label: 'Tops & Dresses', icon: <Shirt size={15} /> },
   { id: 'bottoms', label: 'Bottoms', icon: <ShoppingBag size={15} /> },
   { id: 'shoes', label: 'Shoes', icon: <Footprints size={15} /> },
   { id: 'accessories', label: 'Accessories', icon: <Star size={15} /> },

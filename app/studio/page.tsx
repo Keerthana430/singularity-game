@@ -83,9 +83,9 @@ export default function StudioPage() {
       else if (category === 'bottoms') updateAvatar({ bottom: id });
       else if (category === 'shoes') updateAvatar({ shoes: id });
       else if (category === 'accessories') {
-        const headItems = ['glasses', 'hat', 'cap', 'headphones', 'crown'];
-        const faceItems = ['mask', 'visor'];
-        const backItems = ['backpack', 'wings', 'jetpack'];
+        const headItems = ['cat-ears', 'bunny-ears', 'bow', 'halo', 'glasses', 'hat', 'cap', 'headphones', 'crown'];
+        const faceItems = ['ribbon-choker', 'mask', 'visor'];
+        const backItems = ['angel-wings', 'fairy-wings', 'backpack', 'wings', 'jetpack'];
         const shoulderItems = ['shoulder-pads', 'pauldrons'];
 
         if (headItems.includes(id)) {

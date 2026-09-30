@@ -9,19 +9,25 @@ export const faceShapes: AvatarItem[] = [
 ];
 
 export const eyeStyles: AvatarItem[] = [
-  { id: 'normal', name: 'Normal', category: 'eyes', rarity: 'common', locked: false },
-  { id: 'wide', name: 'Wide', category: 'eyes', rarity: 'common', locked: false },
-  { id: 'narrow', name: 'Narrow', category: 'eyes', rarity: 'rare', locked: false },
-  { id: 'anime', name: 'Anime', category: 'eyes', rarity: 'epic', locked: false },
-  { id: 'cyber', name: 'Cyber', category: 'eyes', rarity: 'legendary', locked: false },
+  { id: 'sparkle', name: 'Sparkle Star', category: 'eyes', rarity: 'legendary', locked: false },
+  { id: 'heart', name: 'Kawaii Heart', category: 'eyes', rarity: 'epic', locked: false },
+  { id: 'wink', name: 'Playful Wink', category: 'eyes', rarity: 'rare', locked: false },
+  { id: 'anime', name: 'Anime Glitter', category: 'eyes', rarity: 'epic', locked: false },
+  { id: 'wide', name: 'Wide Cute', category: 'eyes', rarity: 'common', locked: false },
+  { id: 'normal', name: 'Classic', category: 'eyes', rarity: 'common', locked: false },
+  { id: 'cyber', name: 'Cyber Neon', category: 'eyes', rarity: 'legendary', locked: false },
+  { id: 'narrow', name: 'Focused', category: 'eyes', rarity: 'rare', locked: false },
 ];
 
 export const expressionStyles: AvatarItem[] = [
-  { id: 'neutral', name: 'Neutral', category: 'expression', rarity: 'common', locked: false },
-  { id: 'happy', name: 'Happy', category: 'expression', rarity: 'common', locked: false },
-  { id: 'serious', name: 'Serious', category: 'expression', rarity: 'common', locked: false },
-  { id: 'fierce', name: 'Fierce', category: 'expression', rarity: 'rare', locked: false },
-  { id: 'cool', name: 'Cool', category: 'expression', rarity: 'rare', locked: false },
+  { id: 'blushing', name: 'Rosy Blush', category: 'expression', rarity: 'rare', locked: false },
+  { id: 'uwu', name: 'Cat Smile :3', category: 'expression', rarity: 'epic', locked: false },
+  { id: 'happy', name: 'Happy Beam', category: 'expression', rarity: 'common', locked: false },
+  { id: 'pout', name: 'Cute Pout', category: 'expression', rarity: 'rare', locked: false },
+  { id: 'neutral', name: 'Calm', category: 'expression', rarity: 'common', locked: false },
+  { id: 'cool', name: 'Smug Grin', category: 'expression', rarity: 'rare', locked: false },
+  { id: 'fierce', name: 'Battle Ready', category: 'expression', rarity: 'rare', locked: false },
+  { id: 'serious', name: 'Stoic', category: 'expression', rarity: 'common', locked: false },
 ];
 
 export const skinTones = [

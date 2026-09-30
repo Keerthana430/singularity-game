@@ -1,0 +1,105 @@
+// data/weapons.ts
+import { AvatarItem } from '@/types/avatar';
+
+export interface WeaponItem extends AvatarItem {
+  type: 'melee' | 'magic' | 'ranged' | 'heavy';
+  powerBonus: number;
+  defenseBonus: number;
+  agilityBonus: number;
+  magicBonus: number;
+  specialEffect: string;
+}
+
+export const weapons: WeaponItem[] = [
+  {
+    id: 'photon-blade',
+    name: 'Photon Saber',
+    category: 'weapons',
+    rarity: 'rare',
+    locked: false,
+    type: 'melee',
+    powerBonus: 45,
+    defenseBonus: 5,
+    agilityBonus: 15,
+    magicBonus: 10,
+    specialEffect: 'High-speed laser slashes with armor piercing.',
+  },
+  {
+    id: 'cyber-staff',
+    name: 'Quantum Arcane Staff',
+    category: 'weapons',
+    rarity: 'epic',
+    locked: false,
+    type: 'magic',
+    powerBonus: 15,
+    defenseBonus: 15,
+    agilityBonus: 5,
+    magicBonus: 55,
+    specialEffect: 'Amplifies particle spells and deploys energy barriers.',
+  },
+  {
+    id: 'plasma-blaster',
+    name: 'Dual Plasma Blasters',
+    category: 'weapons',
+    rarity: 'epic',
+    locked: false,
+    type: 'ranged',
+    powerBonus: 42,
+    defenseBonus: 0,
+    agilityBonus: 25,
+    magicBonus: 20,
+    specialEffect: 'Rapid twin energy bursts with high critical rate.',
+  },
+  {
+    id: 'void-scythe',
+    name: 'Void Soul Scythe',
+    category: 'weapons',
+    rarity: 'legendary',
+    locked: false,
+    type: 'melee',
+    powerBonus: 60,
+    defenseBonus: 10,
+    agilityBonus: 12,
+    magicBonus: 25,
+    specialEffect: 'Drains enemy vitality on critical strikes.',
+  },
+  {
+    id: 'star-wand',
+    name: 'Kawaii Star Wand',
+    category: 'weapons',
+    rarity: 'legendary',
+    locked: false,
+    type: 'magic',
+    powerBonus: 20,
+    defenseBonus: 10,
+    agilityBonus: 20,
+    magicBonus: 55,
+    specialEffect: 'Sparkle star showers that mend allies and blind foes.',
+  },
+  {
+    id: 'energy-hammer',
+    name: 'Titan Force Hammer',
+    category: 'weapons',
+    rarity: 'epic',
+    locked: false,
+    type: 'heavy',
+    powerBonus: 70,
+    defenseBonus: 30,
+    agilityBonus: -10,
+    magicBonus: 5,
+    specialEffect: 'Ground-shattering seismic shockwaves with stun chance.',
+  },
+  {
+    id: 'unarmed',
+    name: 'Unarmed Martial Arts',
+    category: 'weapons',
+    rarity: 'common',
+    locked: false,
+    type: 'melee',
+    powerBonus: 15,
+    defenseBonus: 10,
+    agilityBonus: 15,
+    magicBonus: 5,
+    specialEffect: 'Nimble martial punches with zero equip weight.',
+  },
+];

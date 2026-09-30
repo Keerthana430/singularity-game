@@ -37,10 +37,10 @@ interface AvatarStore {
   addRecentColor: (color: string) => void;
 }
 
-const HAIR_OPTIONS = ['short', 'long', 'spiky', 'curly', 'ponytail', 'anime', 'futuristic', 'bob', 'mohawk', 'bald'];
-const TOP_OPTIONS = ['tshirt', 'hoodie', 'jacket', 'shirt', 'armor', 'futuristic-suit', 'tank', 'crop'];
-const BOTTOM_OPTIONS = ['jeans', 'shorts', 'cargo', 'skirt', 'armor-pants', 'joggers', 'leggings'];
-const SHOE_OPTIONS = ['sneakers', 'boots', 'futuristic-shoes', 'sandals', 'heels', 'combat-boots'];
+const HAIR_OPTIONS = ['twintails', 'twin-buns', 'hime-cut', 'fluffy-short', 'short', 'long', 'spiky', 'curly', 'ponytail', 'anime', 'futuristic', 'bob'];
+const TOP_OPTIONS = ['lolita-dress', 'maid-dress', 'magical-dress', 'sundress', 'princess-gown', 'cyber-dress', 'hoodie-dress', 'tshirt', 'hoodie', 'jacket', 'armor', 'futuristic-suit', 'crop'];
+const BOTTOM_OPTIONS = ['skirt', 'frill-skirt', 'tutu', 'maid-apron-skirt', 'shorts', 'jeans', 'cargo', 'armor-pants', 'joggers', 'leggings'];
+const SHOE_OPTIONS = ['sneakers', 'boots', 'futuristic-shoes', 'combat-boots'];
 const BODY_TYPES = ['slim', 'regular', 'broad', 'chibi'] as const;
 const HAIR_COLORS = ['#2C1810', '#8B4513', '#FFD700', '#FF6B6B', '#4A90D9', '#9B59B6', '#2ECC71', '#1A1A1A', '#FF69B4'];
 const TOP_COLORS = ['#7C5CFF', '#22D3EE', '#FF5C93', '#FF6B35', '#2ECC71', '#F39C12', '#E74C3C', '#1A1A2E'];

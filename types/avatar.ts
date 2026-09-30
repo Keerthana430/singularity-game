@@ -18,6 +18,9 @@ export interface AvatarFace {
   expression: string;
 }
 
+export type Species = 'human' | 'elf' | 'ogre' | 'robot' | 'alien' | 'fairie';
+export type ClassRole = 'warrior' | 'tank' | 'assassin' | 'mage';
+
 export interface AvatarAccessories {
   head?: string;
   face?: string;
@@ -28,6 +31,10 @@ export interface AvatarAccessories {
 export interface AvatarConfig {
   id: string;
   name: string;
+  species?: Species;
+  classRole?: ClassRole;
+  weapon?: string;
+  weaponColor?: string;
   createdAt: string;
   updatedAt: string;
   body: AvatarBody;
@@ -56,12 +63,14 @@ export interface AvatarItem {
 }
 
 export type StudioCategory =
+  | 'species'
   | 'body'
   | 'face'
   | 'hair'
   | 'tops'
   | 'bottoms'
   | 'shoes'
+  | 'weapons'
   | 'accessories'
   | 'colors';
 

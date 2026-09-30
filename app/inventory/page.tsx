@@ -85,9 +85,9 @@ export default function InventoryPage() {
     else if (item.category === 'bottoms') updateAvatar({ bottom: item.id });
     else if (item.category === 'shoes') updateAvatar({ shoes: item.id });
     else if (item.category === 'accessories') {
-      const headItems = ['glasses', 'hat', 'cap', 'headphones', 'crown'];
-      const faceItems = ['mask', 'visor'];
-      const backItems = ['backpack', 'wings', 'jetpack'];
+      const headItems = ['cat-ears', 'bunny-ears', 'bow', 'halo', 'glasses', 'hat', 'cap', 'headphones', 'crown'];
+      const faceItems = ['ribbon-choker', 'mask', 'visor'];
+      const backItems = ['angel-wings', 'fairy-wings', 'backpack', 'wings', 'jetpack'];
       const shoulderItems = ['shoulder-pads', 'pauldrons'];
 
       if (headItems.includes(item.id)) {
