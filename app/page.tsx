@@ -407,7 +407,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* COMBINED OVERALL LEADERBOARD SECTION                       */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
+      <section id="rankings" className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <p className="text-xs font-mono font-bold uppercase tracking-widest text-[#00FF66] mb-2">// GLOBAL_RANKINGS //</p>
@@ -682,10 +682,11 @@ export default function HomePage() {
               <span>[ BEAUTY CONTEST ]</span>
             </Link>
             <Link
-              href="/avatars"
+              href="/lobby"
               className="cyber-button-outline flex items-center gap-2 px-6 py-4 text-sm font-bold uppercase text-[#00FF66]"
             >
-              <span>[ VIEW SAVED VAULT ]</span>
+              <Swords size={18} />
+              <span>[ ENTER BATTLE ARENA ]</span>
             </Link>
           </div>
         </div>

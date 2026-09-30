@@ -19,7 +19,10 @@ import {
   Layers,
   Settings2,
   Sliders,
-  Maximize2
+  Maximize2,
+  FolderOpen,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { AvatarViewer } from '@/components/avatar/AvatarViewer';
@@ -39,6 +42,10 @@ export default function StudioPage() {
     randomizeAvatar,
     resetAvatar,
     saveAvatar,
+    savedAvatars,
+    loadAvatar,
+    deleteAvatar,
+    createNewAvatar,
     undo,
     redo,
     activeCategory,
@@ -49,6 +56,7 @@ export default function StudioPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [vaultModalOpen, setVaultModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [avatarName, setAvatarName] = useState(currentAvatar.name);
@@ -231,6 +239,14 @@ export default function StudioPage() {
           >
             <Sparkles size={14} />
             <span>Archetypes</span>
+          </button>
+
+          <button
+            onClick={() => setVaultModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-[#00FF66] hover:bg-[#00FF66]/10 transition-all uppercase tracking-wider"
+          >
+            <FolderOpen size={14} />
+            <span>Loadouts ({savedAvatars.length})</span>
           </button>
 
           <div className="h-4 w-px bg-white/10 mx-1" />
@@ -493,6 +509,119 @@ export default function StudioPage() {
               </div>
             </div>
           ))}
+        </div>
+      </Modal>
+      {/* LOADOUT VAULT MODAL */}
+      <Modal open={vaultModalOpen} onClose={() => setVaultModalOpen(false)} title="Avatar Loadout Vault" size="lg">
+        <div className="flex flex-col gap-4 font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#00FF66]/20">
+            <p className="text-xs text-white/60">
+              // Manage stored rigs. Equip any loadout directly into your 3D workspace.
+            </p>
+            <button
+              onClick={() => {
+                createNewAvatar();
+                setVaultModalOpen(false);
+                addToast('Created fresh baseline avatar!', 'success');
+              }}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/40 bg-[#00FF66]/10 text-[#00FF66] text-xs font-bold uppercase hover:bg-[#00FF66]/20 transition-all flex-shrink-0"
+            >
+              <Plus size={14} />
+              <span>New Build</span>
+            </button>
+          </div>
+
+          {savedAvatars.length === 0 ? (
+            <div className="text-center py-10 px-4 bg-white/5 rounded-xl border border-white/10">
+              <FolderOpen size={40} className="mx-auto text-[#00FF66]/50 mb-3" />
+              <p className="text-sm font-bold text-white mb-1">No Saved Builds In Vault</p>
+              <p className="text-xs text-white/50 mb-4 max-w-sm mx-auto">
+                Save your current character build to keep it stored in your team locker.
+              </p>
+              <button
+                onClick={() => {
+                  handleSave();
+                  setVaultModalOpen(false);
+                }}
+                className="px-5 py-2.5 bg-[#00FF66] text-black text-xs font-black uppercase tracking-wider rounded hover:bg-white transition-all shadow-[0_0_15px_rgba(0,255,102,0.4)]"
+              >
+                Save Current Avatar
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+              {savedAvatars.map((avatar) => {
+                const isActive = currentAvatar.id === avatar.id;
+                return (
+                  <div
+                    key={avatar.id}
+                    className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                      isActive
+                        ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_15px_rgba(0,255,102,0.15)]'
+                        : 'border-white/10 bg-white/5 hover:border-[#00FF66]/30'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-xl border border-[#00FF66]/40 flex-shrink-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${avatar.topColor}, ${avatar.hairColor})`,
+                          }}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{avatar.name}</h4>
+                            {isActive && (
+                              <span className="text-[9px] font-black uppercase text-black bg-[#00FF66] px-1.5 py-0.5 rounded">
+                                ACTIVE
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-white/40">
+                            Role: {(avatar.classRole || 'Operative').toUpperCase()} • Gear: {avatar.top}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteAvatar(avatar.id);
+                          addToast(`Deleted "${avatar.name}"`, 'info');
+                        }}
+                        className="p-1.5 text-white/30 hover:text-red-400 transition-colors"
+                        title="Delete Loadout"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <span className="text-[10px] text-white/30">
+                        {new Date(avatar.updatedAt || avatar.createdAt || Date.now()).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={() => {
+                          loadAvatar(avatar.id);
+                          setVaultModalOpen(false);
+                          addToast(`Equipped "${avatar.name}"!`, 'success');
+                        }}
+                        className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider transition-all ${
+                          isActive
+                            ? 'bg-white/10 text-white/50 cursor-default'
+                            : 'bg-[#00FF66] text-black hover:bg-white'
+                        }`}
+                        disabled={isActive}
+                      >
+                        {isActive ? 'Current Rig' : 'Equip Build >'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </Modal>
     </div>

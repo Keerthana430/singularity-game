@@ -28,6 +28,7 @@ import {
   Coins as CoinsIcon,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
+import { useAuthStore } from '@/store/authStore';
 import { AvatarConfig } from '@/types/avatar';
 import { Arena3DView } from '@/components/arena/Arena3DView';
 import { VersusScreen } from '@/components/arena/VersusScreen';
@@ -99,6 +100,8 @@ const TOURNAMENT_FORMATS = [
 
 export default function LobbyPage() {
   const { currentAvatar, coins, addCoins, spendCoins } = useAvatarStore();
+  const { team } = useAuthStore();
+  const activeCombatantName = team?.displayName || currentAvatar.name;
   const { add: addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'tournament' | 'leaderboard'>('tournament');
@@ -110,7 +113,7 @@ export default function LobbyPage() {
 
   const [playerFighter, setPlayerFighter] = useState<Combatant>({
     id: 'player',
-    name: currentAvatar.name,
+    name: activeCombatantName,
     archetype: calculatedPlayerStats.className,
     maxHp: calculatedPlayerStats.maxHp,
     hp: calculatedPlayerStats.maxHp,
@@ -234,7 +237,7 @@ export default function LobbyPage() {
     const freshPlayerStats = calculateAvatarStats(currentAvatar);
     setPlayerFighter({
       id: 'player',
-      name: currentAvatar.name,
+      name: activeCombatantName,
       archetype: freshPlayerStats.className,
       maxHp: freshPlayerStats.maxHp,
       hp: freshPlayerStats.maxHp,
@@ -541,6 +544,18 @@ export default function LobbyPage() {
       if (newPlayerHp <= 0) {
         setPlayerAction('hit');
         setOpponentAction('victory');
+
+        // Sync defeat to Backend API
+        fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: playerFighter.name,
+            isVictory: false,
+            classRole: playerFighter.archetype,
+          }),
+        }).catch((err) => console.warn('Leaderboard sync error', err));
+
         setBattleLogs((prev) => [
           ...prev,
           {

@@ -28,6 +28,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/inventory',
+        destination: '/studio',
+        permanent: false,
+      },
+      {
+        source: '/avatars',
+        destination: '/studio',
+        permanent: false,
+      },
+      {
+        source: '/profile',
+        destination: '/#rankings',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

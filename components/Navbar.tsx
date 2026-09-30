@@ -4,18 +4,16 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Package, Layers, ChevronRight, Menu, X, Star, Swords, Heart, LogIn, LogOut } from 'lucide-react';
+import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
 
 const navLinks = [
   { href: '/studio', label: '// STUDIO', icon: Layers },
-  { href: '/avatars', label: '// VAULT', icon: User },
-  { href: '/inventory', label: '// LOCKER', icon: Package },
   { href: '/lobby', label: '// ARENA', icon: Swords },
   { href: '/contest', label: '// CONTEST', icon: Heart },
-  { href: '/profile', label: '// PROFILE', icon: Star },
+  { href: '/#rankings', label: '// RANKINGS', icon: Trophy },
 ];
 
 export function Navbar() {
@@ -54,7 +52,7 @@ export function Navbar() {
             {/* Desktop nav links */}
             <div className="hidden md:flex items-center gap-1 font-mono">
               {navLinks.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href;
+                const active = href.startsWith('/#') ? false : pathname === href;
                 return (
                   <Link
                     key={href}
@@ -148,7 +146,7 @@ export function Navbar() {
           >
             <div className="flex flex-col gap-2">
               {navLinks.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href;
+                const active = href.startsWith('/#') ? false : pathname === href;
                 return (
                   <Link
                     key={href}
