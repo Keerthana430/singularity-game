@@ -23,6 +23,14 @@ interface AvatarStore {
   unlockedItems: string[];
   weaponLevels: Record<string, number>;
 
+  // Post-battle healing timer
+  /** Epoch timestamp (ms) when the last battle ended */
+  lastBattleEndTime: number;
+  /** Damage sustained as percentage of max HP (0–1) in last battle */
+  lastBattleDamagePct: number;
+  /** Healing duration in seconds calculated for the last battle */
+  healingDurationSec: number;
+
   // Actions
   updateAvatar: (partial: Partial<AvatarConfig>) => void;
   updateBody: (partial: Partial<AvatarConfig['body']>) => void;
@@ -46,6 +54,14 @@ interface AvatarStore {
   upgradeWeapon: (weaponId: string, cost: number) => boolean;
   isItemUnlocked: (itemId: string) => boolean;
   topUpCoins: () => void;
+  // Post-battle healing
+  recordBattleEnd: (damagePct: number, isFairy: boolean) => void;
+  /** Returns remaining healing seconds, 0 if healed */
+  getRemainingHealTime: () => number;
+  /** Returns true if avatar is still healing */
+  isHealing: () => boolean;
+  /** Instantly heal (costs coins) */
+  instantHeal: () => void;
 }
 
 const HAIR_OPTIONS = ['twintails', 'twin-buns', 'hime-cut', 'fluffy-short', 'short', 'long', 'spiky', 'curly', 'ponytail', 'anime', 'futuristic', 'bob'];
@@ -88,6 +104,10 @@ export const useAvatarStore = create<AvatarStore>()(
       coins: 9999999,
       unlockedItems: STARTER_UNLOCKED,
       weaponLevels: { unarmed: 1 },
+      // Post-battle healing timer state
+      lastBattleEndTime: 0,
+      lastBattleDamagePct: 0,
+      healingDurationSec: 0,
 
       topUpCoins: () => {
         set({ coins: 9999999 });
@@ -130,6 +150,43 @@ export const useAvatarStore = create<AvatarStore>()(
       isItemUnlocked: (itemId) => {
         const { unlockedItems } = get();
         return unlockedItems.includes(itemId);
+      },
+
+      // ─── Post-Battle Healing Timer Actions ──────────────────────
+      recordBattleEnd: (damagePct: number, isFairy: boolean) => {
+        if (damagePct <= 0) {
+          set({ lastBattleEndTime: 0, lastBattleDamagePct: 0, healingDurationSec: 0 });
+          return;
+        }
+        // Formula: linear scale from 30s (0% damage) to 300s (100% damage)
+        // damagePct is 0–1 representing how much of maxHP was lost
+        const rawDuration = 30 + damagePct * 270; // 30s to 300s (5 min)
+        const duration = isFairy ? rawDuration * 0.6 : rawDuration; // Fairy heals 40% faster
+        const finalDuration = Math.max(30, Math.min(300, Math.round(duration)));
+        set({
+          lastBattleEndTime: Date.now(),
+          lastBattleDamagePct: damagePct,
+          healingDurationSec: finalDuration,
+        });
+      },
+
+      getRemainingHealTime: () => {
+        const { lastBattleEndTime, healingDurationSec } = get();
+        if (!lastBattleEndTime || !healingDurationSec) return 0;
+        const elapsed = (Date.now() - lastBattleEndTime) / 1000;
+        return Math.max(0, Math.round(healingDurationSec - elapsed));
+      },
+
+      isHealing: () => {
+        return get().getRemainingHealTime() > 0;
+      },
+
+      instantHeal: () => {
+        set({
+          lastBattleEndTime: 0,
+          lastBattleDamagePct: 0,
+          healingDurationSec: 0,
+        });
       },
 
       updateAvatar: (partial) => {
@@ -287,6 +344,9 @@ export const useAvatarStore = create<AvatarStore>()(
         currentAvatar: state.currentAvatar,
         savedAvatars: state.savedAvatars,
         recentColors: state.recentColors,
+        lastBattleEndTime: state.lastBattleEndTime,
+        lastBattleDamagePct: state.lastBattleDamagePct,
+        healingDurationSec: state.healingDurationSec,
       }),
     }
   )

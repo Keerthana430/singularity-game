@@ -26,6 +26,8 @@ import {
   Layers,
   ChevronRight,
   Coins as CoinsIcon,
+  Clock,
+  Timer,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
@@ -37,6 +39,7 @@ import { calculateAvatarStats } from '@/lib/statsCalculator';
 import { useToast } from '@/components/Toast';
 import { PRESET_AVATARS } from '@/data/presets';
 import { sound } from '@/lib/audio';
+import { getSpeciesAttacks, getAttackByType, type SpeciesAttack } from '@/data/speciesAttacks';
 
 interface Combatant {
   id: string;
@@ -99,10 +102,21 @@ const TOURNAMENT_FORMATS = [
 ];
 
 export default function LobbyPage() {
-  const { currentAvatar, coins, addCoins, spendCoins } = useAvatarStore();
+  const { currentAvatar, coins, addCoins, spendCoins, recordBattleEnd, getRemainingHealTime, isHealing, instantHeal } = useAvatarStore();
   const { team } = useAuthStore();
   const activeCombatantName = team?.displayName || currentAvatar.name;
   const { add: addToast } = useToast();
+
+  // Species-specific attack set
+  const speciesAttackSet = getSpeciesAttacks(currentAvatar.species);
+  const strikeAttack = getAttackByType(currentAvatar.species, 'strike');
+  const magicAttack = getAttackByType(currentAvatar.species, 'magic');
+  const shieldAttack = getAttackByType(currentAvatar.species, 'shield');
+  const ultimateAttack = getAttackByType(currentAvatar.species, 'ultimate');
+
+  // Post-battle healing timer
+  const [healTimeLeft, setHealTimeLeft] = useState(0);
+  const avatarIsHealing = isHealing();
 
   const [activeTab, setActiveTab] = useState<'tournament' | 'leaderboard'>('tournament');
   const [tournamentFormat, setTournamentFormat] = useState(TOURNAMENT_FORMATS[0]);
@@ -146,28 +160,20 @@ export default function LobbyPage() {
   const [screenShake, setScreenShake] = useState(false);
   const autoFightIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Dynamic Damage-Dependent Healing Engine
-  const damageSustained = Math.max(0, playerFighter.maxHp - playerFighter.hp);
   const isFairy = currentAvatar.species?.toLowerCase() === 'fairy';
 
-  // Dynamic formula: Base 3.0s + (Damage Sustained / 100) * 1.2s. Fairies heal 40% faster.
-  const calculateRecoveryTime = (damage: number) => {
-    if (damage <= 0) return 0;
-    const baseTime = 3.0 + (damage / 100) * 1.2;
-    const finalTime = isFairy ? baseTime * 0.6 : baseTime;
-    return Math.max(2.5, Math.round(finalTime * 10) / 10);
-  };
+  // Post-battle healing timer tick
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setHealTimeLeft(getRemainingHealTime());
+    }, 1000);
+    setHealTimeLeft(getRemainingHealTime());
+    return () => clearInterval(tick);
+  }, [getRemainingHealTime]);
 
-  const [inCombatHealingRemaining, setInCombatHealingRemaining] = useState<number | null>(null);
-  const [medbayTimeRemaining, setMedbayTimeRemaining] = useState<number>(0);
-  const [isMedbayRegenerating, setIsMedbayRegenerating] = useState(false);
-
-  // Strategic Combat Balancing & Cooldown Engine
+  // Strategic Combat Balancing & Cooldown Engine (Bio-Repair REMOVED)
   const [magicCooldown, setMagicCooldown] = useState(0);
   const [shieldCooldown, setShieldCooldown] = useState(0);
-  const [healingCooldown, setHealingCooldown] = useState(0);
-  const [healingCharges, setHealingCharges] = useState(2); // Max 2 heals per match
-  const [playerVulnerable, setPlayerVulnerable] = useState(false);
   const [playerParryActive, setPlayerParryActive] = useState(false);
 
   // Dynamic Status Effects
@@ -290,12 +296,9 @@ export default function LobbyPage() {
     setOpponentAction('idle');
     setActiveFx(null);
 
-    // Reset Tactical Combat Mechanics
+    // Reset Tactical Combat Mechanics (Bio-Repair removed)
     setMagicCooldown(0);
     setShieldCooldown(0);
-    setHealingCooldown(0);
-    setHealingCharges(2);
-    setPlayerVulnerable(false);
     setPlayerParryActive(false);
     setPlayerBurnTurns(0);
     setOpponentBurnTurns(0);
@@ -308,6 +311,11 @@ export default function LobbyPage() {
   };
 
   const handleStartTournament = () => {
+    // Block if still healing
+    if (healTimeLeft > 0) {
+      addToast(`⏳ Avatar still healing! ${healTimeLeft}s remaining. Use Instant Stimpack to skip.`, 'error');
+      return;
+    }
     const randomFmt = TOURNAMENT_FORMATS[Math.floor(Math.random() * TOURNAMENT_FORMATS.length)];
     setTournamentFormat(randomFmt);
     addToast(`Entering: ${randomFmt}`, 'info');
@@ -385,11 +393,9 @@ export default function LobbyPage() {
     const pCurrentHp = newPlayerHp !== undefined ? newPlayerHp : playerFighter.hp;
     setCurrentRoundNumber((r) => r + 1);
 
-    // Cooldown decrements
+    // Cooldown decrements (Bio-Repair removed)
     setMagicCooldown((c) => Math.max(0, c - 1));
     setShieldCooldown((c) => Math.max(0, c - 1));
-    setHealingCooldown((c) => Math.max(0, c - 1));
-    setPlayerVulnerable(false);
     setPlayerParryActive(false);
 
     // Check Defeat
@@ -406,6 +412,10 @@ export default function LobbyPage() {
         }),
       }).catch((err) => console.warn('Leaderboard sync error', err));
 
+      // Record post-battle healing timer on defeat
+      const defeatDmgPct = 1.0; // Full damage on defeat
+      recordBattleEnd(defeatDmgPct, isFairy);
+
       setBattleLogs((prev) => [
         ...prev,
         {
@@ -414,7 +424,7 @@ export default function LobbyPage() {
           action: 'DEFEAT',
           damage: 0,
           critical: false,
-          message: `${playerFighter.name} was eliminated! Refit your avatar build in the Studio.`,
+          message: `${playerFighter.name} was eliminated! Avatar needs healing before next battle.`,
         },
       ]);
       addToast('Tournament eliminated! Refit your build in the Studio.', 'error');
@@ -431,16 +441,19 @@ export default function LobbyPage() {
     }, 400);
   };
 
-  // Execute interactive player choice
-  const handlePlayerMove = (moveType: 'strike' | 'magic' | 'shield' | 'healing' | 'ultimate') => {
+  // Execute interactive player choice — SPECIES-SPECIFIC ATTACKS
+  const handlePlayerMove = (moveType: 'strike' | 'magic' | 'shield' | 'ultimate') => {
     if (isTurnAnimating || !opponentFighter || opponentFighter.hp <= 0 || playerFighter.hp <= 0) return;
 
+    // Get the species-specific attack data for this move
+    const currentAttack = getAttackByType(currentAvatar.species, moveType);
+
     // ─────────────────────────────────────────────────────────────
-    // MOVE 1: AEGIS SHIELD (Tactical Barrier + Reflective Parry)
+    // SHIELD: Species-Specific Barrier
     // ─────────────────────────────────────────────────────────────
     if (moveType === 'shield') {
       if (shieldCooldown > 0) {
-        addToast(`Aegis Shield cooling down (${shieldCooldown} turns remaining)!`, 'info');
+        addToast(`${currentAttack.name} cooling down (${shieldCooldown} turns remaining)!`, 'info');
         return;
       }
       setIsTurnAnimating(true);
@@ -448,133 +461,95 @@ export default function LobbyPage() {
       setPlayerAction('defend');
       setActiveFx('shield');
       setFxSource('player');
-      setShieldCooldown(3);
+      setShieldCooldown(currentAttack.cooldown);
       setPlayerParryActive(true);
 
-      const barrierAmt = Math.min(playerFighter.maxHp - playerFighter.hp, 50);
+      const barrierHeal = currentAttack.barrierHealPercent || 0.05;
+      const barrierAmt = Math.min(playerFighter.maxHp - playerFighter.hp, Math.round(playerFighter.maxHp * barrierHeal));
       const newPlayerHp = playerFighter.hp + barrierAmt;
       setPlayerFighter((prev) => ({ ...prev, hp: newPlayerHp, shieldActive: true }));
-      if (barrierAmt > 0) addFloatingText(`+${barrierAmt} BARRIER`, 'player', false, '#38BDF8');
+      if (barrierAmt > 0) addFloatingText(`+${barrierAmt} BARRIER`, 'player', false, currentAttack.vfxColor);
 
       const shieldLog: MatchLog = {
         turn: currentRoundNumber,
         attacker: playerFighter.name,
-        action: 'AEGIS PARRY-SHIELD',
+        action: currentAttack.name.toUpperCase(),
         damage: 0,
         critical: false,
-        message: `${playerFighter.name} raised Aegis Nano-Shield! 70% damage reduction + 40% reflective parry counter-attack active.`,
+        message: `${playerFighter.name} raised ${currentAttack.name}! ${Math.round((currentAttack.shieldReduction || 0.7) * 100)}% damage reduction + ${Math.round((currentAttack.reflectPercent || 0.4) * 100)}% reflective parry active.`,
       };
       setBattleLogs((prev) => [...prev, shieldLog]);
-      setOverdriveEnergy((prev) => Math.min(100, prev + 15));
+      setOverdriveEnergy((prev) => Math.min(100, prev + currentAttack.overdriveGain));
 
       setTimeout(() => {
-        resolveOpponentTurn(true);
+        resolveOpponentTurn(true, currentAttack);
       }, 700);
       return;
     }
 
     // ─────────────────────────────────────────────────────────────
-    // MOVE 2: NANITE BIO-REPAIR (Strategic, Limited Charges, Leaves Vulnerable)
-    // ─────────────────────────────────────────────────────────────
-    if (moveType === 'healing') {
-      if (healingCharges <= 0) {
-        addToast('Nanite Bio-Repair charges depleted! Max 2 uses per match.', 'error');
-        return;
-      }
-      if (healingCooldown > 0) {
-        addToast(`Bio-Repair cooling down (${healingCooldown} turns remaining)!`, 'info');
-        return;
-      }
-      if (playerFighter.hp >= playerFighter.maxHp) {
-        addToast('Chassis integrity is at 100%! Save repairs for combat damage.', 'info');
-        return;
-      }
-
-      setIsTurnAnimating(true);
-      setHealingCharges((c) => c - 1);
-      setHealingCooldown(3);
-      setPlayerVulnerable(true); // Vulnerable to enemy retaliation!
-
-      sound.playSweep();
-      setPlayerAction('healing');
-      setActiveFx('healing');
-      setFxSource('player');
-
-      // Balanced recovery: 35% of max HP (45% for Fairies)
-      const healPercentage = isFairy ? 0.45 : 0.35;
-      const healAmt = Math.round(playerFighter.maxHp * healPercentage);
-      const newHp = Math.min(playerFighter.maxHp, playerFighter.hp + healAmt);
-      setPlayerFighter((prev) => ({ ...prev, hp: newHp }));
-
-      addFloatingText(`+${healAmt} REPAIR`, 'player', false, '#10B981');
-      addToast(`Bio-Repair restored ${healAmt} HP! ⚠️ Chassis left VULNERABLE this round!`, 'info');
-
-      setBattleLogs((prev) => [
-        ...prev,
-        {
-          turn: currentRoundNumber,
-          attacker: playerFighter.name,
-          action: 'NANITE BIO-REPAIR',
-          damage: 0,
-          critical: false,
-          message: `${playerFighter.name} repaired +${healAmt} HP (${healingCharges - 1} charges left). Chassis left VULNERABLE (+25% opponent crit damage)!`,
-        },
-      ]);
-
-      setTimeout(() => {
-        resolveOpponentTurn(false);
-      }, 750);
-      return;
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // OFFENSIVE MOVES (Strike, Magic Blast, Ultimate)
+    // OFFENSIVE MOVES — Species-Specific (Strike, Magic, Ultimate)
     // ─────────────────────────────────────────────────────────────
     let baseDmg = 0;
     let isCrit = false;
-    let actionLabel = 'ATTACK';
+    const actionLabel = currentAttack.name.toUpperCase();
     let fxType: 'slash' | 'magic' | 'ultimate' = 'slash';
 
     if (moveType === 'magic') {
       if (magicCooldown > 0) {
-        addToast(`Elemental Blast cooling down (${magicCooldown} turns remaining)!`, 'info');
+        addToast(`${currentAttack.name} cooling down (${magicCooldown} turns remaining)!`, 'info');
         return;
       }
-      setMagicCooldown(2);
+      setMagicCooldown(currentAttack.cooldown);
       sound.playSweep();
       fxType = 'magic';
-      actionLabel = 'ELEMENTAL BLAST';
       isCrit = Math.random() * 100 < (playerFighter.criticalRate + 8);
-      // Armor-piercing: ignores 35% of defense, with 12% random variance
       const spread = 0.88 + Math.random() * 0.24;
-      const raw = (playerFighter.magic * 2.3 - opponentFighter.defense * 0.35) * spread;
+      const scalingStat = currentAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power;
+      const raw = (scalingStat * currentAttack.damageMultiplier - opponentFighter.defense * currentAttack.armorPen) * spread;
       baseDmg = Math.max(45, Math.round(isCrit ? raw * 1.6 : raw));
-      setOverdriveEnergy((prev) => Math.min(100, prev + 25));
+      setOverdriveEnergy((prev) => Math.min(100, prev + currentAttack.overdriveGain));
 
-      // 40% chance of Burn DoT
-      if (Math.random() < 0.40) {
-        setOpponentBurnTurns(2);
-        addFloatingText('🔥 BURN INFUSED!', 'opponent', false, '#F97316');
+      // Status effect chance
+      if (currentAttack.statusChance > 0 && Math.random() < currentAttack.statusChance) {
+        const effectName = (currentAttack.statusEffect || 'burn').toUpperCase();
+        const effectEmoji = currentAttack.statusEffect === 'burn' ? '🔥' : currentAttack.statusEffect === 'poison' ? '☠️' : currentAttack.statusEffect === 'freeze' ? '❄️' : '⚡';
+        setOpponentBurnTurns(currentAttack.statusDuration || 2);
+        addFloatingText(`${effectEmoji} ${effectName}!`, 'opponent', false, currentAttack.vfxAccent);
       }
     } else if (moveType === 'strike') {
       sound.playSlash();
       fxType = 'slash';
-      actionLabel = 'PHOTON STRIKE';
       isCrit = Math.random() * 100 < playerFighter.criticalRate;
       const spread = 0.88 + Math.random() * 0.24;
-      const raw = (playerFighter.power * 2.0 - opponentFighter.defense * 0.55) * spread;
+      const scalingStat = currentAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power;
+      const raw = (scalingStat * currentAttack.damageMultiplier - opponentFighter.defense * currentAttack.armorPen) * spread;
       baseDmg = Math.max(35, Math.round(isCrit ? raw * 1.6 : raw));
-      setOverdriveEnergy((prev) => Math.min(100, prev + 15));
+      setOverdriveEnergy((prev) => Math.min(100, prev + currentAttack.overdriveGain));
+
+      // Status effect chance for strikes
+      if (currentAttack.statusChance > 0 && Math.random() < currentAttack.statusChance) {
+        const effectName = (currentAttack.statusEffect || 'bleed').toUpperCase();
+        const effectEmoji = currentAttack.statusEffect === 'bleed' ? '🩸' : currentAttack.statusEffect === 'stun' ? '💫' : currentAttack.statusEffect === 'freeze' ? '❄️' : '⚡';
+        setOpponentBurnTurns(currentAttack.statusDuration || 2);
+        addFloatingText(`${effectEmoji} ${effectName}!`, 'opponent', false, currentAttack.vfxAccent);
+      }
     } else if (moveType === 'ultimate') {
       if (overdriveEnergy < 100) return;
       sound.playImpact();
       fxType = 'ultimate';
-      actionLabel = 'SINGULARITY OVERDRIVE';
       isCrit = true;
       triggerShake();
-      const raw = (playerFighter.power + playerFighter.magic) * 1.9;
+      const raw = (playerFighter.power + playerFighter.magic) * (currentAttack.damageMultiplier / 2);
       baseDmg = Math.max(100, Math.round(raw));
       setOverdriveEnergy(0);
+
+      // Ultimate always applies status
+      if (currentAttack.statusEffect) {
+        const effectName = currentAttack.statusEffect.toUpperCase();
+        setOpponentBurnTurns(currentAttack.statusDuration || 2);
+        addFloatingText(`💥 ${effectName}!`, 'opponent', true, currentAttack.vfxSpark);
+      }
     }
 
     setIsTurnAnimating(true);
@@ -635,7 +610,7 @@ export default function LobbyPage() {
   // ─────────────────────────────────────────────────────────────
   // STEP 2: OPPONENT AI COUNTER-MOVE (Smart Tactical AI)
   // ─────────────────────────────────────────────────────────────
-  const resolveOpponentTurn = (playerWasShielding: boolean) => {
+  const resolveOpponentTurn = (playerWasShielding: boolean, activeShieldAttack?: SpeciesAttack) => {
     if (!opponentFighter || opponentFighter.hp <= 0) {
       setIsTurnAnimating(false);
       return;
@@ -735,19 +710,16 @@ export default function LobbyPage() {
       let oppBase = ((isMagicMove ? opponentFighter.magic : opponentFighter.power) * 2.0 - playerFighter.defense * 0.65) * spread;
       if (isAiUltimate) oppBase *= 1.4;
 
-      // Vulnerability multiplier if player repaired this turn!
-      if (playerVulnerable) {
-        oppBase *= 1.25;
-        isOppCrit = true;
-      }
 
       let oppDmg = Math.max(25, Math.round(isOppCrit ? oppBase * 1.6 : oppBase));
 
-      // Shield Mitigation & PARRY REFLECT
+      // Shield Mitigation & PARRY REFLECT — uses species-specific shield stats
       let parryReflectDmg = 0;
       if (playerWasShielding) {
-        parryReflectDmg = Math.round(oppDmg * 0.40);
-        oppDmg = Math.round(oppDmg * 0.30); // 70% reduction!
+        const shieldReduce = activeShieldAttack?.shieldReduction || 0.7;
+        const reflectPct = activeShieldAttack?.reflectPercent || 0.4;
+        parryReflectDmg = Math.round(oppDmg * reflectPct);
+        oppDmg = Math.round(oppDmg * (1 - shieldReduce));
       }
 
       if (playerEvaded) {
@@ -755,10 +727,8 @@ export default function LobbyPage() {
         addFloatingText('DODGED!', 'player', false, '#34D399');
       } else {
         if (isOppCrit) triggerShake();
-        if (playerVulnerable) {
-          addFloatingText(`PUNISHED! -${oppDmg}`, 'player', true, '#EF4444');
-        } else if (playerWasShielding) {
-          addFloatingText(`PARRY BLOCKED -${oppDmg}`, 'player', false, '#38BDF8');
+        if (playerWasShielding) {
+          addFloatingText(`PARRY BLOCKED -${oppDmg}`, 'player', false, activeShieldAttack?.vfxColor || '#38BDF8');
         } else {
           addFloatingText(isOppCrit ? `-${oppDmg} CRIT!` : `-${oppDmg}`, 'player', isOppCrit);
         }
@@ -785,9 +755,7 @@ export default function LobbyPage() {
         message: playerEvaded
           ? `${playerFighter.name} agilely evaded ${opponentFighter.name}'s counterattack!`
           : playerWasShielding
-          ? `Aegis Shield absorbed 70% impact (-${oppDmg}) and counter-parried ${parryReflectDmg} reflective damage back!`
-          : playerVulnerable
-          ? `VULNERABILITY EXPLOITED! ${opponentFighter.name} punished repair stance with ${oppDmg} CRITICAL damage!`
+          ? `Shield absorbed impact (-${oppDmg}) and counter-parried ${parryReflectDmg} reflective damage back!`
           : `${opponentFighter.name} struck for ${oppDmg} damage.`,
       };
 
@@ -797,57 +765,18 @@ export default function LobbyPage() {
   };
 
 
-  // Medbay Healing Protocol Handlers
-  const handleStartMedbayRest = () => {
-    if (damageSustained <= 0) {
-      addToast('Avatar HP is already at 100% capacity!', 'info');
+  // Post-Battle Instant Heal Handler
+  const handleInstantHealPurchase = () => {
+    if (healTimeLeft <= 0) {
+      addToast('Avatar is already fully healed!', 'info');
       return;
     }
-    const recoverySec = calculateRecoveryTime(damageSustained);
-    setMedbayTimeRemaining(recoverySec);
-    setIsMedbayRegenerating(true);
-    sound.playSweep();
-    addToast(`Avatar entered Cyber Medbay. Regeneration time: ${recoverySec.toFixed(1)}s`, 'info');
-  };
-
-  const handleInstantMedbayRepair = () => {
-    if (damageSustained <= 0) {
-      addToast('Avatar is already fully repaired!', 'info');
-      return;
-    }
-    if (coins < 25) {
-      addToast('Insufficient Cyber Coins! Requires 25 Coins for Instant Nanite Stimpack.', 'error');
-      return;
-    }
-    spendCoins(25);
+    spendCoins(50);
+    instantHeal();
     setPlayerFighter((prev) => ({ ...prev, hp: prev.maxHp }));
-    setMedbayTimeRemaining(0);
-    setIsMedbayRegenerating(false);
     sound.playEquip();
-    addToast('⚡ Instant Nanite Stimpack injected! 100% HP restored instantly.', 'success');
+    addToast('⚡ Instant Nanite Stimpack! Healing cooldown bypassed.', 'success');
   };
-
-  // Medbay Live Timer Effect
-  useEffect(() => {
-    if (!isMedbayRegenerating || medbayTimeRemaining <= 0) return;
-    const interval = setInterval(() => {
-      setMedbayTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setIsMedbayRegenerating(false);
-          setPlayerFighter((pf) => ({ ...pf, hp: pf.maxHp }));
-          sound.playWin();
-          addToast('💚 Medbay Regeneration Complete! Avatar 100% restored.', 'success');
-          return 0;
-        }
-        setPlayerFighter((pf) => ({
-          ...pf,
-          hp: Math.min(pf.maxHp, pf.hp + Math.ceil(pf.maxHp / 8)),
-        }));
-        return Math.round((prev - 1) * 10) / 10;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isMedbayRegenerating, medbayTimeRemaining]);
 
   // Auto-fight continuous simulation
   const handleAutoFight = () => {
@@ -1066,12 +995,7 @@ export default function LobbyPage() {
                   <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                     {playerParryActive && (
                       <span className="px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400 text-sky-300 text-[9px] font-mono font-bold animate-pulse">
-                        🛡️ PARRY (70% + REFLECT)
-                      </span>
-                    )}
-                    {playerVulnerable && (
-                      <span className="px-1.5 py-0.5 rounded bg-red-500/20 border border-red-500 text-red-300 text-[9px] font-mono font-bold animate-pulse">
-                        ⚠️ VULNERABLE (+25% CRIT)
+                        🛡️ {shieldAttack.name.toUpperCase()} ACTIVE
                       </span>
                     )}
                     {playerBurnTurns > 0 && (
@@ -1212,102 +1136,80 @@ export default function LobbyPage() {
                 </AnimatePresence>
               </div>
 
-              {/* Decluttered 5-Move Combat Deck */}
+              {/* Species-Specific 4-Move Combat Deck */}
               <div className="glass-panel p-3.5 rounded-2xl border border-white/10 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between pb-1.5 border-b border-white/10 text-xs">
                   <div className="flex items-center gap-2">
                     <Activity size={14} className="text-[#00FF66]" />
                     <span className="font-black uppercase tracking-wider text-white">
-                      Select Action
+                      {speciesAttackSet.speciesName} Combat Arts
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-white/50">
-                    {inCombatHealingRemaining !== null
-                      ? `⏳ Nanite Repairing: ${inCombatHealingRemaining.toFixed(1)}s remaining...`
-                      : isTurnAnimating
-                      ? 'Resolving Combat Turn...'
-                      : 'Ready for Command'}
+                    {isTurnAnimating ? 'Resolving Combat Turn...' : 'Ready for Command'}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {/* Move 1: Weapon Strike */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {/* Move 1: Species Strike */}
                   <button
                     onClick={() => handlePlayerMove('strike')}
                     disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-[#00FF66] hover:bg-[#00FF66]/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${strikeAttack.vfxColor}30` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white group-hover:text-[#00FF66]">
-                        Strike
+                      <span className="text-xs font-black uppercase text-white" style={{ color: strikeAttack.vfxColor }}>
+                        {strikeAttack.name}
                       </span>
-                      <Swords size={14} className="text-[#00FF66]" />
+                      <Swords size={14} style={{ color: strikeAttack.vfxColor }} />
                     </div>
-                    <span className="text-[10px] font-mono text-[#00FF66] block">
-                      {playerFighter.power} ATK &bull; +15 AP
+                    <span className="text-[10px] font-mono block" style={{ color: strikeAttack.vfxAccent }}>
+                      {strikeAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power} {strikeAttack.scalingStat.toUpperCase()} &bull; {strikeAttack.statusEffect ? `${Math.round(strikeAttack.statusChance * 100)}% ${strikeAttack.statusEffect}` : `+${strikeAttack.overdriveGain} AP`}
                     </span>
                   </button>
 
-                  {/* Move 2: Magic Blast */}
+                  {/* Move 2: Species Magic */}
                   <button
                     onClick={() => handlePlayerMove('magic')}
                     disabled={isTurnAnimating || magicCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-violet-400 hover:bg-violet-600/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${magicAttack.vfxColor}30` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white group-hover:text-violet-300">
-                        Blast
+                      <span className="text-xs font-black uppercase text-white" style={{ color: magicAttack.vfxColor }}>
+                        {magicAttack.name}
                       </span>
-                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-violet-500/20 text-violet-300'}`}>
+                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : ''}`} style={magicCooldown <= 0 ? { backgroundColor: `${magicAttack.vfxColor}20`, color: magicAttack.vfxColor } : undefined}>
                         {magicCooldown > 0 ? `${magicCooldown}T CD` : 'READY'}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-violet-300 block">
-                      {playerFighter.magic} MAG &bull; 40% Burn
+                    <span className="text-[10px] font-mono block" style={{ color: magicAttack.vfxAccent }}>
+                      {magicAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power} {magicAttack.scalingStat.toUpperCase()} &bull; {Math.round(magicAttack.statusChance * 100)}% {magicAttack.statusEffect}
                     </span>
                   </button>
 
-                  {/* Move 3: Shield Guard */}
+                  {/* Move 3: Species Shield */}
                   <button
                     onClick={() => handlePlayerMove('shield')}
                     disabled={isTurnAnimating || shieldCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-sky-400 hover:bg-sky-600/10 text-left transition-all group disabled:opacity-40"
+                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${shieldAttack.vfxColor}30` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white group-hover:text-sky-300">
-                        Shield
+                      <span className="text-xs font-black uppercase text-white" style={{ color: shieldAttack.vfxColor }}>
+                        {shieldAttack.name}
                       </span>
-                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-sky-500/20 text-sky-300'}`}>
+                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : ''}`} style={shieldCooldown <= 0 ? { backgroundColor: `${shieldAttack.vfxColor}20`, color: shieldAttack.vfxColor } : undefined}>
                         {shieldCooldown > 0 ? `${shieldCooldown}T CD` : 'READY'}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-sky-300 block">
-                      -70% Dmg + 40% Parry
+                    <span className="text-[10px] font-mono block" style={{ color: shieldAttack.vfxAccent }}>
+                      -{Math.round((shieldAttack.shieldReduction || 0.7) * 100)}% Dmg + {Math.round((shieldAttack.reflectPercent || 0.4) * 100)}% Parry
                     </span>
                   </button>
 
-                  {/* Move 4: Nanite Bio-Repair (Balanced: 35% HP, Limited 2 Charges, Leaves Vulnerable) */}
-                  <button
-                    onClick={() => handlePlayerMove('healing')}
-                    disabled={isTurnAnimating || healingCharges <= 0 || healingCooldown > 0 || playerFighter.hp >= playerFighter.maxHp || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-emerald-400 hover:bg-emerald-600/10 text-left transition-all group disabled:opacity-40"
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white group-hover:text-emerald-300">
-                        Bio-Repair
-                      </span>
-                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${
-                        healingCharges <= 0 ? 'bg-red-500/20 text-red-300' : healingCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-emerald-500/20 text-emerald-300'
-                      }`}>
-                        {healingCharges <= 0 ? '0/2 USES' : healingCooldown > 0 ? `${healingCooldown}T CD` : `${healingCharges}/2 USES`}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-emerald-400 block">
-                      +{Math.round(playerFighter.maxHp * (isFairy ? 0.45 : 0.35))} HP &bull; ⚠️ Vulnerable
-                    </span>
-                  </button>
-
-                  {/* Move 5: Singularity Overdrive */}
+                  {/* Move 4: Species Ultimate */}
                   <button
                     onClick={() => handlePlayerMove('ultimate')}
                     disabled={isTurnAnimating || overdriveEnergy < 100 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
@@ -1318,8 +1220,8 @@ export default function LobbyPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white group-hover:text-amber-300">
-                        Ultimate
+                      <span className="text-xs font-black uppercase text-white" style={overdriveEnergy >= 100 ? { color: ultimateAttack.vfxColor } : undefined}>
+                        {ultimateAttack.name}
                       </span>
                       <Flame size={14} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
                     </div>
@@ -1329,42 +1231,6 @@ export default function LobbyPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Clean Medbay Recovery Hub (Displayed when damaged) */}
-              {damageSustained > 0 && (
-                <div className="glass-panel px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-3">
-                    <Heart size={16} className="text-emerald-400 animate-pulse" />
-                    <div>
-                      <span className="text-white font-bold">
-                        Chassis Integrity: {playerFighter.hp}/{playerFighter.maxHp} HP{' '}
-                        <span className="text-rose-400 font-mono">(-{damageSustained} DMG)</span>
-                      </span>
-                      <p className="text-[10px] font-mono text-white/50">
-                        Required Medbay Regeneration Time: {calculateRecoveryTime(damageSustained).toFixed(1)}s
-                        {isFairy && ' (Fairy Passive: -40% recovery time)'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleStartMedbayRest}
-                      disabled={isMedbayRegenerating}
-                      className="px-3 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[11px] font-mono uppercase transition-all"
-                    >
-                      {isMedbayRegenerating ? `Regen (${medbayTimeRemaining}s)` : 'Rest in Medbay'}
-                    </button>
-                    <button
-                      onClick={handleInstantMedbayRepair}
-                      className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-bold uppercase transition-all flex items-center gap-1"
-                    >
-                      <span>⚡ Instant Stimpack</span>
-                      <span className="text-[10px] font-mono">(25 🪙)</span>
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Compact Combat Telemetry Log */}
               <div className="glass-panel p-3 rounded-2xl border border-white/10 max-h-36 overflow-y-auto">

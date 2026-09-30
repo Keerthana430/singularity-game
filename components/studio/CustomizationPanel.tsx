@@ -214,16 +214,6 @@ const SPECIES_ANATOMICAL_PRESETS: Record<string, { body: { type: 'slim' | 'regul
 
 function SpeciesPanel() {
   const { currentAvatar, updateAvatar } = useAvatarStore();
-  const [filter, setFilter] = React.useState<'all' | 'core' | 'scifi'>('all');
-
-  const CORE_SPECIES_IDS = ['human', 'elf', 'fairy', 'dwarf'];
-  const SCIFI_SPECIES_IDS = ['ogre', 'robot', 'alien'];
-
-  const displayedSpecies = SPECIES_LIST.filter((sp) => {
-    if (filter === 'core') return CORE_SPECIES_IDS.includes(sp.id);
-    if (filter === 'scifi') return SCIFI_SPECIES_IDS.includes(sp.id);
-    return true;
-  });
 
   const selectedSpecies = SPECIES_LIST.find((s) => s.id === (currentAvatar.species || 'human')) || SPECIES_LIST[0];
 
@@ -246,153 +236,128 @@ function SpeciesPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <StatsPreviewCard config={currentAvatar} />
-
-      {/* ── CARD DECK HEADER & CONTROLS ── */}
-      <div>
-        <div className="flex items-center justify-between mb-2.5">
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              <span>Species Cards</span>
-              <span className="text-[10px] text-[#00FF66] font-mono px-1.5 py-0.2 rounded bg-[#00FF66]/10 border border-[#00FF66]/30">
-                {SPECIES_LIST.length}
-              </span>
-            </h3>
-            <p className="text-[10px] text-white/50 font-mono">Collectible RPG race blueprints</p>
-          </div>
-
-          {/* Draw Random Card Button */}
-          <button
-            onClick={handleRollRandomSpecies}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-[11px] font-bold font-mono uppercase tracking-wider transition-all shadow-sm hover:scale-105 active:scale-95"
-            title="Draw a random species card from the deck"
-          >
-            <Dices size={13} className="text-amber-400" />
-            <span>Draw Card</span>
-          </button>
+    <div className="flex flex-col gap-4">
+      {/* ── CARD DECK HEADER: Streamlined 1-row control ── */}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-wider text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            Character Species
+          </h3>
+          <p className="text-[10px] text-white/50 font-mono">Select your combat archetype</p>
         </div>
 
-        {/* Deck Filter Tabs */}
-        <div className="flex items-center gap-1.5 mb-3 p-1 rounded-xl bg-black/60 border border-white/10">
-          <button
-            onClick={() => setFilter('all')}
-            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
-              filter === 'all'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            All ({SPECIES_LIST.length})
-          </button>
-          <button
-            onClick={() => setFilter('core')}
-            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
-              filter === 'core'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Core (4)
-          </button>
-          <button
-            onClick={() => setFilter('scifi')}
-            className={`flex-1 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all ${
-              filter === 'scifi'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Sci-Fi (3)
-          </button>
-        </div>
-
-        {/* ── 2-COLUMN COLLECTIBLE CARD GRID ── */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {displayedSpecies.map((sp) => (
-            <SpeciesCard
-              key={sp.id}
-              species={sp}
-              isSelected={(currentAvatar.species || 'human') === sp.id}
-              onSelect={() => handleSelectSpecies(sp)}
-            />
-          ))}
-        </div>
+        <button
+          onClick={handleRollRandomSpecies}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-[10px] font-bold font-mono uppercase tracking-wider transition-all shadow-sm active:scale-95"
+          title="Draw random card"
+        >
+          <Dices size={13} className="text-amber-400" />
+          <span>Roll Random</span>
+        </button>
       </div>
 
-      {/* ── SUB-CLASS ROLE SPECIALIZATION DECK ── */}
-      <div className="pt-2 border-t border-white/10">
-        <div className="flex items-center justify-between mb-2.5">
-          <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              {selectedSpecies.name} Sub-Class Deck
-            </h4>
-            <p className="text-[10px] text-white/50 font-mono">Specialized role combat mastery</p>
+      {/* ── 2-COLUMN COLLECTIBLE CARD GRID (CLEAN & SPACIOUS) ── */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {SPECIES_LIST.map((sp) => (
+          <SpeciesCard
+            key={sp.id}
+            species={sp}
+            isSelected={(currentAvatar.species || 'human') === sp.id}
+            onSelect={() => handleSelectSpecies(sp)}
+          />
+        ))}
+      </div>
+
+      {/* ── ACTIVE CARD DOSSIER & SUB-CLASS DECK ── */}
+      <div className="pt-3 border-t border-white/10 flex flex-col gap-3">
+        <div className="p-3 rounded-xl border border-white/10 bg-white/3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: selectedSpecies.accentColor }} />
+              <span className="text-xs font-black uppercase text-white tracking-wider" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                {selectedSpecies.name} Combat Traits
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-white/50">{selectedSpecies.domain}</span>
           </div>
-          <span className="text-[10px] text-violet-400 font-mono font-bold px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/30">
-            {(currentAvatar.classRole || selectedSpecies.roles[0].id).toUpperCase()}
-          </span>
+
+          <p className="text-[11px] text-white/80 leading-relaxed font-sans">
+            <strong className="text-emerald-400">Innate Buff: </strong>{selectedSpecies.innateBuff}
+          </p>
+
+          <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-white/10 text-center font-mono text-[10px]">
+            <div className="bg-white/5 rounded py-1">
+              <span className="text-white/40 block text-[9px]">HP</span>
+              <span className="font-bold text-emerald-400">{selectedSpecies.baseHp}</span>
+            </div>
+            <div className="bg-white/5 rounded py-1">
+              <span className="text-white/40 block text-[9px]">ATK</span>
+              <span className="font-bold text-rose-400">{selectedSpecies.basePower}</span>
+            </div>
+            <div className="bg-white/5 rounded py-1">
+              <span className="text-white/40 block text-[9px]">DEF</span>
+              <span className="font-bold text-cyan-400">{selectedSpecies.baseDefense}</span>
+            </div>
+            <div className="bg-white/5 rounded py-1">
+              <span className="text-white/40 block text-[9px]">AGI</span>
+              <span className="font-bold text-amber-400">{selectedSpecies.baseAgility}</span>
+            </div>
+            <div className="bg-white/5 rounded py-1">
+              <span className="text-white/40 block text-[9px]">MAG</span>
+              <span className="font-bold text-violet-400">{selectedSpecies.baseMagic}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {selectedSpecies.roles.map((role) => {
-            const isRoleSelected = (currentAvatar.classRole || selectedSpecies.roles[0].id) === role.id;
-            return (
-              <button
-                key={role.id}
-                onClick={() => {
-                  sound.playClick();
-                  updateAvatar({ classRole: role.id });
-                }}
-                className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between select-none ${
-                  isRoleSelected
-                    ? 'border-violet-400 bg-violet-950/40 text-white shadow-[0_0_15px_rgba(167,139,250,0.3)] scale-[1.02]'
-                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-black uppercase text-white truncate mr-1">
-                      {role.name}
-                    </span>
-                    {isRoleSelected && (
-                      <span className="w-3.5 h-3.5 rounded-full bg-violet-400 text-black flex items-center justify-center shrink-0">
-                        <Check size={9} className="stroke-[3]" />
+        {/* 4 Sub-Class Roles */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono uppercase text-white/50 tracking-wider font-bold">
+              Sub-Class Specializations (4)
+            </span>
+            <span className="text-[9px] font-mono text-violet-300 uppercase px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/30">
+              Active: {currentAvatar.classRole || selectedSpecies.roles[0].id}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {selectedSpecies.roles.map((role) => {
+              const isRoleSelected = (currentAvatar.classRole || selectedSpecies.roles[0].id) === role.id;
+              return (
+                <button
+                  key={role.id}
+                  onClick={() => {
+                    sound.playClick();
+                    updateAvatar({ classRole: role.id });
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between select-none ${
+                    isRoleSelected
+                      ? 'border-violet-400 bg-violet-950/40 text-white shadow-[0_0_12px_rgba(167,139,250,0.3)]'
+                      : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-black uppercase text-white truncate">{role.name}</span>
+                      {isRoleSelected && <Check size={10} className="text-violet-400" />}
+                    </div>
+                    <span className="text-[8px] font-mono uppercase text-violet-300">[{role.id}]</span>
+                    <p className="text-[10px] text-white/50 leading-tight mt-1 line-clamp-2">{role.roleDesc}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2 pt-1 border-t border-white/10 text-[9px] font-mono">
+                    {role.hpMod !== 0 && (
+                      <span className={role.hpMod > 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                        HP {role.hpMod > 0 ? `+${role.hpMod}` : role.hpMod}
                       </span>
                     )}
+                    {role.powerMod !== 0 && <span className="text-rose-400">ATK +{role.powerMod}</span>}
+                    {role.defenseMod !== 0 && <span className="text-cyan-400">DEF +{role.defenseMod}</span>}
+                    {role.magicMod !== 0 && <span className="text-violet-400">MAG +{role.magicMod}</span>}
                   </div>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/10 text-violet-300 font-bold inline-block mb-1">
-                    [{role.id}]
-                  </span>
-                  <p className="text-[10px] text-white/50 leading-tight line-clamp-2">
-                    {role.roleDesc}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-1 mt-2 pt-1.5 border-t border-white/10 text-[9px] font-mono">
-                  {role.hpMod !== 0 && (
-                    <span className={role.hpMod > 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                      HP {role.hpMod > 0 ? `+${role.hpMod}` : role.hpMod}
-                    </span>
-                  )}
-                  {role.powerMod !== 0 && (
-                    <span className="text-rose-400 font-bold">ATK +{role.powerMod}</span>
-                  )}
-                  {role.defenseMod !== 0 && (
-                    <span className="text-cyan-400 font-bold">DEF +{role.defenseMod}</span>
-                  )}
-                  {role.agilityMod !== 0 && (
-                    <span className={role.agilityMod > 0 ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
-                      AGI {role.agilityMod > 0 ? `+${role.agilityMod}` : role.agilityMod}
-                    </span>
-                  )}
-                  {role.magicMod !== 0 && (
-                    <span className="text-violet-400 font-bold">MAG +{role.magicMod}</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -556,34 +521,10 @@ function ColorsPanel() {
 }
 
 export function CustomizationPanel() {
-  const { activeCategory, currentAvatar, updateAvatar, coins, addCoins } = useAvatarStore();
+  const { activeCategory, currentAvatar, updateAvatar } = useAvatarStore();
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sleek Cyber Wallet Bar (Testing Phase: Unlimited Currency) */}
-      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-2 mx-4 flex-shrink-0 text-xs">
-        <div className="flex items-center gap-2 font-mono text-amber-300 font-bold">
-          <span>🪙</span>
-          <span>{coins.toLocaleString()} COINS</span>
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider font-sans font-bold">
-            UNLIMITED (TEST)
-          </span>
-          <button
-            onClick={() => addCoins(1000000)}
-            className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 transition-all font-mono font-bold"
-            title="Top up testing coins"
-          >
-            +MAX
-          </button>
-        </div>
-        <Link
-          href="/lobby"
-          className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider font-mono border border-amber-500/30 transition-all flex items-center gap-1"
-        >
-          <Swords size={11} />
-          <span>Battle Arena</span>
-        </Link>
-      </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <AnimatePresence mode="wait">

@@ -11,6 +11,16 @@
   --border-glass: rgba(0, 255, 102, 0.15);
   --glow-green: 0 0 25px rgba(0, 255, 102, 0.45);
   --glow-green-sm: 0 0 12px rgba(0, 255, 102, 0.35);
+
+  --color-background: #020502;
+  --color-foreground: #FFFFFF;
+  --color-muted: rgba(255, 255, 255, 0.08);
+  --color-muted-foreground: rgba(255, 255, 255, 0.65);
+  --color-secondary: rgba(255, 255, 255, 0.12);
+  --color-secondary-foreground: #FFFFFF;
+  --color-primary: #00FF66;
+  --color-primary-foreground: #000000;
+  --color-ring: #00FF66;
 }
 
 * {
