@@ -77,11 +77,11 @@ body::after {
 
 /* Cyber Glassmorphism panel base with chamfered cut edges */
 .glass-panel {
-  background: rgba(4, 9, 5, 0.9);
+  background: rgba(4, 9, 5, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 102, 0.22);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 255, 102, 0.05);
+  border: 1px solid rgba(0, 255, 102, 0.12);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(0, 255, 102, 0.1);
 }
 
 .glass-panel-chamfer {
@@ -89,14 +89,15 @@ body::after {
 }
 
 .glass-panel:hover {
-  border-color: rgba(0, 255, 102, 0.45);
+  border-color: rgba(0, 255, 102, 0.28);
+  box-shadow: 0 12px 36px -5px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 255, 102, 0.12);
 }
 
 .glass-panel-light {
-  background: rgba(6, 16, 8, 0.75);
+  background: rgba(6, 16, 8, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 255, 102, 0.18);
+  border: 1px solid rgba(0, 255, 102, 0.1);
 }
 
 /* High contrast cyber HUD corners (┌ ┐ └ ┘) */
@@ -255,4 +256,131 @@ body::after {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMMERSIVE GAME ARENA — Full-viewport 3D with floating HUD overlays
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Full-viewport game container (fills below navbar) */
+.game-viewport {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  background: #020502;
+}
+
+/* Cinematic vignette around the 3D canvas edges */
+.game-viewport::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(2, 5, 2, 0.7) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Floating HUD glass panel — overlaid on top of 3D scene */
+.hud-float {
+  position: absolute;
+  z-index: 10;
+  background: rgba(2, 8, 4, 0.82);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(0, 255, 102, 0.18);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.6),
+    0 0 1px rgba(0, 255, 102, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  color: white;
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+}
+
+.hud-float:hover {
+  border-color: rgba(0, 255, 102, 0.35);
+}
+
+/* Compact HUD pill — for small inline indicators */
+.hud-pill {
+  position: absolute;
+  z-index: 10;
+  background: rgba(2, 8, 4, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 102, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  border-radius: 9999px;
+  padding: 4px 14px;
+  color: white;
+  font-size: 11px;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Glow action button — primary interactive element */
+.hud-action-btn {
+  background: linear-gradient(135deg, #00FF66 0%, #00CC52 100%);
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(0, 255, 102, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.hud-action-btn:hover {
+  background: linear-gradient(135deg, #33FF88 0%, #00FF66 100%);
+  box-shadow: 0 0 36px rgba(0, 255, 102, 0.6), 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.hud-action-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 18px rgba(0, 255, 102, 0.3);
+}
+
+.hud-action-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Subtle ambient glow ring for active elements */
+@keyframes hud-glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(0, 255, 102, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(0, 255, 102, 0.55); }
+}
+
+.hud-glow-active {
+  animation: hud-glow-pulse 2s ease-in-out infinite;
+}
+
+/* Progress bar with glow */
+.hud-progress-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.hud-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* Thin separator line */
+.hud-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 102, 0.2), transparent);
 }

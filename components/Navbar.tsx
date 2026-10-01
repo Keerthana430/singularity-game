@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices } from 'lucide-react';
+import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices, Trees } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
@@ -13,6 +13,7 @@ const navLinks = [
   { href: '/studio', label: '// STUDIO', icon: Layers },
   { href: '/lobby', label: '// ARENA', icon: Swords },
   { href: '/ludo', label: '// LUDO', icon: Dices },
+  { href: '/snakes', label: '// SNAKES', icon: Trees },
   { href: '/contest', label: '// CONTEST', icon: Heart },
   { href: '/#rankings', label: '// RANKINGS', icon: Trophy },
 ];
@@ -67,12 +68,14 @@ export function Navbar() {
                     <Icon size={14} className={active ? 'text-[#00FF66]' : ''} />
                     {label}
                     {active && (
-                      <motion.div
-                        layoutId="nav-active"
-                        className="absolute inset-0 bg-[#00FF66]/10 border border-[#00FF66]/40 shadow-[0_0_12px_rgba(0,255,102,0.3)]"
-                        style={{ zIndex: -1 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      />
+                      <>
+                        <motion.div
+                          layoutId="nav-underline"
+                          className="absolute bottom-0 inset-x-2 h-[2px] bg-[#00FF66] shadow-[0_0_12px_#00FF66]"
+                          transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#00FF66]/10 to-transparent pointer-events-none rounded-t-md" />
+                      </>
                     )}
                   </Link>
                 );
@@ -104,16 +107,24 @@ export function Navbar() {
                 </Link>
               )}
 
-              {/* Avatar identity badge */}
-              <div className="hud-box flex items-center gap-2 px-3 py-1.5 bg-black/80 border border-[#00FF66]/40 font-mono">
+              {/* Player Profile / Avatar identity badge */}
+              <Link
+                href="/profile"
+                className={`hud-box flex items-center gap-2 px-3 py-1.5 bg-black/80 font-mono transition-all group ${
+                  pathname === '/profile'
+                    ? 'border-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.35)] text-[#00FF66]'
+                    : 'border-white/20 hover:border-[#00FF66]/50'
+                }`}
+                title="Player Profile"
+              >
                 <div
-                  className="w-5 h-5 rounded-full border border-[#00FF66] flex-shrink-0"
+                  className="w-5 h-5 rounded-full border border-[#00FF66] flex-shrink-0 group-hover:scale-105 transition-transform"
                   style={{ background: `linear-gradient(135deg, ${currentAvatar.topColor}, ${currentAvatar.hairColor})` }}
                   aria-hidden="true"
                 />
-                <span className="text-xs text-white font-bold">{currentAvatar.name.toUpperCase()}</span>
+                <span className="text-xs text-white group-hover:text-[#00FF66] font-bold transition-colors">{currentAvatar.name.toUpperCase()}</span>
                 <span className="text-[10px] text-[#00FF66] font-black">[{((currentAvatar.classRole || 'OPERATIVE') as string).toUpperCase()}]</span>
-              </div>
+              </Link>
 
               <Link
                 href="/studio"
@@ -164,6 +175,21 @@ export function Navbar() {
                   </Link>
                 );
               })}
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 text-xs font-bold tracking-wider transition-all ${
+                  pathname === '/profile'
+                    ? 'bg-[#00FF66] text-black font-black'
+                    : 'text-white/70 hover:text-[#00FF66] hover:bg-[#00FF66]/10'
+                }`}
+              >
+                <div
+                  className="w-4 h-4 rounded-full border border-current flex-shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${currentAvatar.topColor}, ${currentAvatar.hairColor})` }}
+                />
+                <span>// PROFILE ({currentAvatar.name.toUpperCase()})</span>
+              </Link>
               <Link
                 href="/studio"
                 onClick={() => setMobileOpen(false)}

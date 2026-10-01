@@ -239,16 +239,29 @@ export const useContestStore = create<ContestStore>()(
       },
 
       voteForEntry: (entryId) => {
-        const { hasVoted, myEntryId, myTeamName, entries } = get();
-        if (hasVoted) return false;
+        const { myEntryId, myTeamName, entries, votedForId } = get();
         if (entryId === myEntryId) return false; // Can't vote for yourself
         if (!myTeamName) return false;
+        if (votedForId === entryId) return false; // Already voted for this build
 
-        const updated = entries.map((e) =>
-          e.id === entryId
-            ? { ...e, likes: e.likes + 1, likedBy: [...e.likedBy, myTeamName] }
-            : e
-        );
+        // If previously voted for another build, transfer vote (-1 from old, +1 to new)
+        const updated = entries.map((e) => {
+          if (votedForId && e.id === votedForId) {
+            return {
+              ...e,
+              likes: Math.max(0, e.likes - 1),
+              likedBy: e.likedBy.filter((t) => t !== myTeamName),
+            };
+          }
+          if (e.id === entryId) {
+            return {
+              ...e,
+              likes: e.likes + 1,
+              likedBy: [...e.likedBy.filter((t) => t !== myTeamName), myTeamName],
+            };
+          }
+          return e;
+        });
 
         set({
           entries: updated,

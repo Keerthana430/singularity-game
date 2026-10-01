@@ -51,7 +51,7 @@ interface Arena3DViewProps {
 
 export function Arena3DView(props: Arena3DViewProps) {
   return (
-    <div className={`relative w-full h-[400px] md:h-[480px] rounded-2xl overflow-hidden border border-white/10 ${props.className || ''}`}>
+    <div className={`relative w-full overflow-hidden ${props.className || 'h-[400px] md:h-[480px] rounded-2xl border border-white/10'}`}>
       <Arena3DCanvas {...props} />
     </div>
   );

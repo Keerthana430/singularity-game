@@ -69,17 +69,17 @@ export function Logo({ size = 'md', showSubtitle = false }: LogoProps) {
       {/* Wordmark */}
       <div className="flex flex-col leading-none">
         <span
-          className={`font-black tracking-[0.22em] uppercase ${s.text} text-white group-hover:text-[#00FF66] transition-colors`}
+          className={`font-black tracking-[0.22em] uppercase ${s.text} text-white group-hover:text-[#00FF66] transition-colors drop-shadow-[0_0_12px_rgba(0,255,102,0.3)]`}
           style={{ fontFamily: "'Orbitron', sans-serif" }}
         >
           SINGULARITY
         </span>
         {showSubtitle && (
           <span
-            className={`${s.sub} tracking-[0.2em] uppercase text-[#00FF66] font-bold mt-1`}
+            className={`${s.sub} tracking-[0.24em] uppercase text-[#00FF66] font-bold mt-0.5`}
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
-            AVATAR ENGINE
+            GAMING SYSTEM
           </span>
         )}
       </div>

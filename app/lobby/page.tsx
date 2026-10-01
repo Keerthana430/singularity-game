@@ -25,6 +25,8 @@ import {
   Wind,
   Layers,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Coins as CoinsIcon,
   Clock,
   Timer,
@@ -34,7 +36,7 @@ import { useAuthStore } from '@/store/authStore';
 import { AvatarConfig } from '@/types/avatar';
 import { Arena3DView } from '@/components/arena/Arena3DView';
 import { VersusScreen } from '@/components/arena/VersusScreen';
-import { CombatAction } from '@/components/arena/Arena3DCanvas';
+import { CombatAction, BiomeType } from '@/components/arena/Arena3DCanvas';
 import { calculateAvatarStats } from '@/lib/statsCalculator';
 import { useToast } from '@/components/Toast';
 import { PRESET_AVATARS } from '@/data/presets';
@@ -170,6 +172,8 @@ export default function LobbyPage() {
   const [showCutscene, setShowCutscene] = useState(false);
   const [showVersusScreen, setShowVersusScreen] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
+  const [playerDamageFlash, setPlayerDamageFlash] = useState(false);
+  const [battleLogOpen, setBattleLogOpen] = useState(false);
   const autoFightIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isFairy = currentAvatar.species?.toLowerCase() === 'fairy';
@@ -798,6 +802,15 @@ export default function LobbyPage() {
         }, 200);
       }
 
+      if (oppDmg > 0 && !playerEvaded) {
+        setPlayerDamageFlash(true);
+        setScreenShake(true);
+        setTimeout(() => {
+          setPlayerDamageFlash(false);
+          setScreenShake(false);
+        }, 450);
+      }
+
       const newPlayerHp = Math.max(0, playerFighter.hp - oppDmg);
       setPlayerFighter((prev) => ({ ...prev, hp: newPlayerHp, shieldActive: false }));
 
@@ -867,27 +880,22 @@ export default function LobbyPage() {
   return (
     <div className={`min-h-screen bg-[#020502] text-white pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans ${screenShake ? 'animate-bounce' : ''}`}>
       {/* Header with Navigation Tabs & Wallet */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#00FF66]/15">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#00FF66] font-mono">
-              ARENA PROTOCOL &bull; 3D COLOSSEUM COMBAT
-            </p>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            BATTLE ARENA & LEADERBOARD
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
+          <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-white font-mono">
+            BATTLE ARENA <span className="text-[#00FF66] hidden sm:inline">// 3D COLOSSEUM</span>
           </h1>
         </div>
 
         {/* Right side: Cyber Coins Wallet & Tab Buttons */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.15)]">
-            <CoinsIcon size={15} className="text-amber-400 animate-pulse" />
+            <CoinsIcon size={14} className="text-amber-400 animate-pulse" />
             <span>{coins} COINS</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-[#041006] p-1 rounded-xl border border-[#00FF66]/20">
+          <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10">
             <button
               onClick={() => setActiveTab('tournament')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
@@ -896,7 +904,7 @@ export default function LobbyPage() {
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              <Swords size={14} />
+              <Swords size={13} />
               <span>3D Arena</span>
             </button>
 
@@ -908,7 +916,7 @@ export default function LobbyPage() {
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              <Trophy size={14} />
+              <Trophy size={13} />
               <span>Leaderboard</span>
             </button>
           </div>
@@ -920,194 +928,130 @@ export default function LobbyPage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === 'tournament' && (
         <div className="flex flex-col gap-4">
-          {/* Streamlined Tournament Bar */}
-          <div className="glass-panel px-4 py-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66]">
-                <Trophy size={18} />
-              </div>
-              <div>
-                <span className="text-[10px] text-[#00FF66] font-bold font-mono tracking-widest uppercase">
-                  ACTIVE TOURNAMENT
-                </span>
-                <h3 className="text-base font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                  {tournamentFormat}
-                </h3>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {tournamentStage === 'idle' ? (
-                <button
-                  onClick={handleStartTournament}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl font-black uppercase tracking-wider text-xs text-black neon-green-button hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,255,102,0.35)]"
-                >
-                  <Play size={15} />
-                  <span>Enter Arena</span>
-                </button>
-              ) : tournamentStage === 'champion' ? (
-                <button
-                  onClick={handleStartTournament}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl font-black uppercase tracking-wider text-xs text-black neon-green-button hover:scale-105 transition-all"
-                >
-                  <Crown size={15} />
-                  <span>New Tournament</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleAutoFight}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-xs font-bold uppercase tracking-wider transition-all"
-                  >
-                    <FastForward size={14} />
-                    <span>Auto-Fight</span>
-                  </button>
-                  <button
-                    onClick={() => setTournamentStage('idle')}
-                    className="p-1.5 rounded-lg border border-white/10 hover:border-red-400/40 text-white/50 hover:text-red-400 transition-all"
-                    title="Forfeit Match"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Clean Horizontal Stepper Progress */}
-          <div className="flex items-center justify-between gap-1 px-2 py-1">
-            {[
-              { id: 'quarter', label: 'Quarter-Finals' },
-              { id: 'semi', label: 'Semi-Finals' },
-              { id: 'final', label: 'Grand Finals' },
-              { id: 'champion', label: 'Champion' },
-            ].map((st, i) => {
-              const active = tournamentStage === st.id;
-              return (
-                <React.Fragment key={st.id}>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full transition-all ${
-                        active
-                          ? 'bg-[#00FF66] shadow-[0_0_8px_#00FF66]'
-                          : 'bg-white/20'
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-mono uppercase tracking-wider ${
-                        active ? 'text-[#00FF66] font-bold' : 'text-white/40'
-                      }`}
-                    >
-                      {st.label}
-                    </span>
+          {/* Visual Esports Tournament Progression Nodes (Active match stages only) */}
+          {tournamentStage !== 'idle' && (
+            <div className="relative glass-panel p-4 rounded-2xl border border-white/10 overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.2)]">
+                    <Trophy size={20} />
                   </div>
-                  {i < 3 && <div className="flex-1 h-px bg-white/10 mx-2 hidden sm:block" />}
-                </React.Fragment>
-              );
-            })}
-          </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
+                      <span className="text-[10px] text-[#00FF66] font-bold font-mono tracking-widest uppercase">
+                        SINGULARITY 8-MAN INVITATIONAL
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black uppercase text-white tracking-wide" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                      {tournamentFormat}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Tournament Progression Glowing Nodes */}
+                <div className="flex items-center gap-1.5 sm:gap-3 py-1.5 px-3.5 rounded-xl bg-black/60 border border-white/10">
+                  {[
+                    { id: 'quarter', label: 'Quarter', icon: Swords },
+                    { id: 'semi', label: 'Semi', icon: Zap },
+                    { id: 'final', label: 'Finals', icon: Shield },
+                    { id: 'champion', label: 'Champion', icon: Crown },
+                  ].map((st, i) => {
+                    const isCurrent = tournamentStage === st.id;
+                    const isPassed =
+                      (st.id === 'quarter' && ['semi', 'final', 'champion'].includes(tournamentStage)) ||
+                      (st.id === 'semi' && ['final', 'champion'].includes(tournamentStage)) ||
+                      (st.id === 'final' && tournamentStage === 'champion');
+                    const Icon = st.icon;
+
+                    return (
+                      <React.Fragment key={st.id}>
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                              isCurrent
+                                ? 'bg-[#00FF66] text-black font-black shadow-[0_0_15px_#00FF66] ring-2 ring-[#00FF66]/40'
+                                : isPassed
+                                ? 'bg-[#00FF66]/20 border border-[#00FF66]/50 text-[#00FF66]'
+                                : 'bg-white/5 border border-white/10 text-white/40'
+                            }`}
+                          >
+                            <Icon size={13} />
+                          </div>
+                          <span
+                            className={`text-[10px] font-mono uppercase tracking-wider hidden md:inline ${
+                              isCurrent
+                                ? 'text-[#00FF66] font-bold'
+                                : isPassed
+                                ? 'text-white/80'
+                                : 'text-white/30'
+                            }`}
+                          >
+                            {st.label}
+                          </span>
+                        </div>
+                        {i < 3 && (
+                          <div
+                            className={`w-3 sm:w-6 h-0.5 transition-all ${
+                              isPassed || isCurrent
+                                ? 'bg-gradient-to-r from-[#00FF66] to-[#00FF66]/60 shadow-[0_0_6px_#00FF66]'
+                                : 'bg-white/10'
+                            }`}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* Tournament Stage Controls */}
+                <div className="flex items-center gap-2">
+                  {tournamentStage === 'champion' ? (
+                    <button
+                      onClick={handleStartTournament}
+                      className="hud-action-btn flex items-center gap-2 px-5 py-2.5 text-xs uppercase"
+                    >
+                      <Crown size={14} />
+                      <span>New Tournament</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleAutoFight}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-xs font-bold uppercase tracking-wider transition-all"
+                      >
+                        <FastForward size={14} />
+                        <span>Auto</span>
+                      </button>
+                      <button
+                        onClick={() => setTournamentStage('idle')}
+                        className="p-1.5 rounded-lg border border-white/10 hover:border-red-400/40 text-white/50 hover:text-red-400 transition-all"
+                        title="Forfeit Match"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ───────────────────────────────────────────────────────────── */}
-          {/* LIVE 3D ARENA VIEWPORT & FIGHT SYSTEM                         */}
+          {/* LIVE 3D ARENA VIEWPORT & FIGHT SYSTEM (FULL IMMERSION)        */}
           {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage !== 'idle' && opponentFighter && (
-            <div className="flex flex-col gap-4">
-              {/* Unified Fighting-Game Style Health HUD */}
-              <div className="glass-panel p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-4">
-                {/* Left: Player Fighter */}
-                <div className="flex-1 flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-black uppercase tracking-wider text-white">
-                      {playerFighter.name}{' '}
-                      <span className="text-[#00FF66] text-[10px] font-mono font-normal">
-                        ({currentAvatar.species || 'Human'})
-                      </span>
-                    </span>
-                    <span className="font-mono font-bold text-[#00FF66]">
-                      {playerFighter.hp} / {playerFighter.maxHp} HP
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 rounded-full bg-black/80 border border-white/10 overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-[#00FF66] to-[#39FF14]"
-                      initial={false}
-                      animate={{ width: `${Math.max(0, (playerFighter.hp / playerFighter.maxHp) * 100)}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                  {/* Slim Overdrive Bar */}
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400">
-                    <span>OVERDRIVE:</span>
-                    <div className="flex-1 h-1 rounded-full bg-black overflow-hidden border border-white/10">
-                      <div
-                        className="h-full bg-amber-400 transition-all"
-                        style={{ width: `${overdriveEnergy}%` }}
-                      />
-                    </div>
-                    <span>{overdriveEnergy}%</span>
-                  </div>
+            <div className={`relative w-full rounded-3xl overflow-hidden border border-[#00FF66]/30 shadow-2xl bg-[#020502] h-[640px] sm:h-[700px] ${screenShake ? 'animate-bounce' : ''}`}>
 
-                  {/* Active Player Status Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                    {playerParryActive && (
-                      <span className="px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400 text-sky-300 text-[9px] font-mono font-bold animate-pulse">
-                        🛡️ {shieldAttack.name.toUpperCase()} ACTIVE
-                      </span>
-                    )}
-                    {playerBurnTurns > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
-                        🔥 BURN ({playerBurnTurns}T)
-                      </span>
-                    )}
-                  </div>
-                </div>
+              {/* Red damage vignette overlay when damaged */}
+              <div
+                className={`absolute inset-0 pointer-events-none z-20 transition-opacity duration-300 ${
+                  playerDamageFlash ? 'opacity-100 bg-red-600/30' : 'opacity-0'
+                }`}
+              />
 
-                {/* Center: VS Badge & Round */}
-                <div className="flex flex-col items-center justify-center px-2">
-                  <div className="w-8 h-8 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-xs font-black font-mono text-white/80">
-                    VS
-                  </div>
-                  <span className="text-[10px] font-mono text-white/40 mt-1 uppercase">
-                    RND {currentRoundNumber}
-                  </span>
-                </div>
-
-                {/* Right: Opponent Fighter */}
-                <div className="flex-1 flex flex-col gap-1 text-right">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-red-400">
-                      {opponentFighter.hp} / {opponentFighter.maxHp} HP
-                    </span>
-                    <span className="font-black uppercase tracking-wider text-white">
-                      <span className="text-red-400 text-[10px] font-mono font-normal mr-1">
-                        ({opponentFighter.archetype})
-                      </span>
-                      {opponentFighter.name}
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 rounded-full bg-black/80 border border-white/10 overflow-hidden flex justify-end">
-                    <motion.div
-                      className="h-full bg-gradient-to-l from-red-500 to-amber-500"
-                      initial={false}
-                      animate={{ width: `${Math.max(0, (opponentFighter.hp / opponentFighter.maxHp) * 100)}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                  <div className="flex flex-wrap items-center justify-end gap-1.5 mt-0.5">
-                    {opponentBurnTurns > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
-                        🔥 BURN ({opponentBurnTurns}T)
-                      </span>
-                    )}
-                    <span className="text-[10px] font-mono text-white/40">
-                      PWR: {opponentFighter.power} | DEF: {opponentFighter.defense}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Unified 3D Colosseum Arena Viewport */}
-              <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
+              {/* 3D ARENA VIEWPORT (FILLS THE ENTIRE CONTAINER) */}
+              <div className="absolute inset-0 z-0">
                 <Arena3DView
                   playerConfig={playerFighter.avatarConfig}
                   opponentConfig={opponentFighter.avatarConfig}
@@ -1124,53 +1068,56 @@ export default function LobbyPage() {
                   isCrit={isAttackCrit}
                   isDodge={isAttackDodge}
                   floatingCombatText={floatingTexts}
+                  className="w-full h-full"
                 />
+              </div>
 
-                {/* Floating Damage & Combat Numbers Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex justify-between px-16 sm:px-24 items-center">
-                  {/* Left Player Floating Text */}
-                  <div className="relative flex flex-col items-center">
-                    {floatingTexts
-                      .filter((f) => f.target === 'player')
-                      .map((f) => (
-                        <motion.div
-                          key={f.id}
-                          initial={{ opacity: 1, y: 0, scale: 0.8 }}
-                          animate={{ opacity: 0, y: -65, scale: 1.4 }}
-                          transition={{ duration: 1.1, ease: 'easeOut' }}
-                          className={`font-black font-mono text-xl sm:text-2xl drop-shadow-[0_0_12px_rgba(255,255,255,0.8)] ${
-                            f.color ? '' : f.isCrit ? 'text-amber-300' : 'text-red-400'
-                          }`}
-                          style={{ color: f.color }}
-                        >
-                          {f.text}
-                        </motion.div>
-                      ))}
-                  </div>
-
-                  {/* Right Opponent Floating Text */}
-                  <div className="relative flex flex-col items-center">
-                    {floatingTexts
-                      .filter((f) => f.target === 'opponent')
-                      .map((f) => (
-                        <motion.div
-                          key={f.id}
-                          initial={{ opacity: 1, y: 0, scale: 0.8 }}
-                          animate={{ opacity: 0, y: -65, scale: 1.4 }}
-                          transition={{ duration: 1.1, ease: 'easeOut' }}
-                          className={`font-black font-mono text-xl sm:text-2xl drop-shadow-[0_0_12px_rgba(0,255,102,0.8)] ${
-                            f.color ? '' : f.isCrit ? 'text-amber-300' : 'text-[#00FF66]'
-                          }`}
-                          style={{ color: f.color }}
-                        >
-                          {f.text}
-                        </motion.div>
-                      ))}
-                  </div>
+              {/* Floating Damage & Combat Numbers Overlay */}
+              <div className="absolute inset-0 pointer-events-none z-20 flex justify-between px-16 sm:px-24 items-center">
+                {/* Left Player Floating Text */}
+                <div className="relative flex flex-col items-center">
+                  {floatingTexts
+                    .filter((f) => f.target === 'player')
+                    .map((f) => (
+                      <motion.div
+                        key={f.id}
+                        initial={{ opacity: 1, y: 0, scale: 0.8 }}
+                        animate={{ opacity: 0, y: -65, scale: 1.4 }}
+                        transition={{ duration: 1.1, ease: 'easeOut' }}
+                        className={`font-black font-mono text-xl sm:text-2xl drop-shadow-[0_0_12px_rgba(255,255,255,0.8)] ${
+                          f.color ? '' : f.isCrit ? 'text-amber-300' : 'text-red-400'
+                        }`}
+                        style={{ color: f.color }}
+                      >
+                        {f.text}
+                      </motion.div>
+                    ))}
                 </div>
 
-                {/* Cinematic 3... 2... 1... ENGAGE Countdown Entrance */}
-                {isRoundCountingDown && opponentFighter && (
+                {/* Right Opponent Floating Text */}
+                <div className="relative flex flex-col items-center">
+                  {floatingTexts
+                    .filter((f) => f.target === 'opponent')
+                    .map((f) => (
+                      <motion.div
+                        key={f.id}
+                        initial={{ opacity: 1, y: 0, scale: 0.8 }}
+                        animate={{ opacity: 0, y: -65, scale: 1.4 }}
+                        transition={{ duration: 1.1, ease: 'easeOut' }}
+                        className={`font-black font-mono text-xl sm:text-2xl drop-shadow-[0_0_12px_rgba(0,255,102,0.8)] ${
+                          f.color ? '' : f.isCrit ? 'text-amber-300' : 'text-[#00FF66]'
+                        }`}
+                        style={{ color: f.color }}
+                      >
+                        {f.text}
+                      </motion.div>
+                    ))}
+                </div>
+              </div>
+
+              {/* 3... 2... 1... ENGAGE Countdown */}
+              {isRoundCountingDown && opponentFighter && (
+                <div className="relative z-30">
                   <RoundCountdownOverlay
                     roundNumber={currentRoundNumber}
                     stageName={`${tournamentFormat} // ${tournamentStage.toUpperCase()} FINALS`}
@@ -1178,182 +1125,298 @@ export default function LobbyPage() {
                     opponentName={opponentFighter.name}
                     onComplete={() => setIsRoundCountingDown(false)}
                   />
-                )}
+                </div>
+              )}
+
+              {/* ─── FLOATING TOP-CENTER: Match State Header ─── */}
+              <div className="hud-float top-3 left-1/2 -translate-x-1/2 px-4 py-2 flex items-center gap-3 font-mono text-xs z-20">
+                <span className="font-bold text-[#00FF66] uppercase">{playerFighter.name}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]" />
+                <span className="font-black text-white/50">VS</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="font-bold text-red-400 uppercase">{opponentFighter.name}</span>
+                <span className="text-white/20">|</span>
+                <span className="text-white/60 font-bold">RND {currentRoundNumber}</span>
               </div>
 
-              {/* Species-Specific 4-Move Combat Deck */}
-              <div className="glass-panel p-3.5 rounded-2xl border border-white/10 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between pb-1.5 border-b border-white/10 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Activity size={14} className="text-[#00FF66]" />
-                    <span className="font-black uppercase tracking-wider text-white">
-                      {speciesAttackSet.speciesName} Combat Arts
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono text-white/50">
-                    {isTurnAnimating ? 'Resolving Combat Turn...' : 'Ready for Command'}
+              {/* ─── FLOATING TOP-LEFT: Player Combat HUD ─── */}
+              <div className="hud-float top-3 left-3 p-3.5 w-64 sm:w-72 flex flex-col gap-2 z-20">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-black uppercase text-white truncate max-w-[140px]">
+                    {playerFighter.name}
+                  </span>
+                  <span className="font-mono font-bold text-[#00FF66]">
+                    {playerFighter.hp} / {playerFighter.maxHp} HP
                   </span>
                 </div>
 
+                {/* HP Bar */}
+                <div className="hud-progress-bar">
+                  <motion.div
+                    className="hud-progress-fill bg-gradient-to-r from-[#00FF66] to-[#39FF14]"
+                    initial={false}
+                    animate={{ width: `${Math.max(0, (playerFighter.hp / playerFighter.maxHp) * 100)}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+
+                {/* Overdrive Bar */}
+                <div className="flex items-center gap-2 text-[10px] font-mono text-amber-400">
+                  <Flame size={12} className={overdriveEnergy >= 100 ? 'animate-pulse text-amber-300' : 'text-white/40'} />
+                  <span>OVERDRIVE</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-black/60 overflow-hidden border border-white/10">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-300"
+                      style={{ width: `${overdriveEnergy}%` }}
+                    />
+                  </div>
+                  <span>{overdriveEnergy}%</span>
+                </div>
+
+                {/* Status Badges */}
+                <div className="flex flex-wrap items-center gap-1">
+                  {playerParryActive && (
+                    <span className="px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400 text-sky-300 text-[9px] font-mono font-bold animate-pulse">
+                      🛡️ PARRY ACTIVE
+                    </span>
+                  )}
+                  {playerBurnTurns > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
+                      🔥 BURN ({playerBurnTurns}T)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* ─── FLOATING TOP-RIGHT: Opponent Combat HUD ─── */}
+              <div className="hud-float top-3 right-3 p-3.5 w-64 sm:w-72 flex flex-col gap-2 z-20">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-mono font-bold text-red-400">
+                    {opponentFighter.hp} / {opponentFighter.maxHp} HP
+                  </span>
+                  <span className="font-black uppercase text-white truncate max-w-[140px] text-right">
+                    {opponentFighter.name}
+                  </span>
+                </div>
+
+                {/* Opponent HP Bar */}
+                <div className="hud-progress-bar">
+                  <motion.div
+                    className="hud-progress-fill bg-gradient-to-l from-red-500 to-amber-500 ml-auto"
+                    initial={false}
+                    animate={{ width: `${Math.max(0, (opponentFighter.hp / opponentFighter.maxHp) * 100)}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono text-white/50">
+                  <span>PWR: {opponentFighter.power} | DEF: {opponentFighter.defense}</span>
+                  <span className="text-red-400 font-bold uppercase">[{opponentFighter.archetype}]</span>
+                </div>
+
+                {opponentBurnTurns > 0 && (
+                  <div className="flex justify-end">
+                    <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
+                      🔥 BURN ({opponentBurnTurns}T)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* ─── FLOATING BOTTOM-LEFT: Collapsible Telemetry Log ─── */}
+              <div className="hud-float bottom-4 left-3 z-20 transition-all" style={{ width: battleLogOpen ? '280px' : 'auto' }}>
+                <button
+                  onClick={() => setBattleLogOpen(!battleLogOpen)}
+                  className="flex items-center gap-2 px-3 py-2 text-left w-full"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
+                  <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest flex-1">
+                    Telemetry Log
+                  </span>
+                  {battleLogOpen ? <ChevronDown size={12} className="text-white/30" /> : <ChevronUp size={12} className="text-white/30" />}
+                </button>
+                {battleLogOpen && (
+                  <div className="px-3 pb-3 max-h-32 overflow-y-auto no-scrollbar font-mono text-[10px] flex flex-col gap-1">
+                    {battleLogs.slice(-5).map((log, idx) => (
+                      <p
+                        key={idx}
+                        className={`leading-snug py-1 border-b border-white/5 ${
+                          log.attacker === playerFighter.name ? 'text-[#00FF66]' : 'text-red-300'
+                        }`}
+                      >
+                        <span className="font-bold">[{log.attacker}]</span> {log.message}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ─── FLOATING BOTTOM: 4-Move Ability Action Deck ─── */}
+              <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-2 sm:p-3 w-[92%] sm:w-[680px] z-20">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {/* Move 1: Species Strike */}
+                  {/* Move 1: Strike */}
                   <button
                     onClick={() => handlePlayerMove('strike')}
                     disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${strikeAttack.vfxColor}30` }}
+                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${strikeAttack.vfxColor}40` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white" style={{ color: strikeAttack.vfxColor }}>
+                      <span className="text-xs font-black uppercase" style={{ color: strikeAttack.vfxColor }}>
                         {strikeAttack.name}
                       </span>
-                      <Swords size={14} style={{ color: strikeAttack.vfxColor }} />
+                      <Swords size={13} style={{ color: strikeAttack.vfxColor }} />
                     </div>
-                    <span className="text-[10px] font-mono block" style={{ color: strikeAttack.vfxAccent }}>
-                      {strikeAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power} {strikeAttack.scalingStat.toUpperCase()} &bull; {strikeAttack.statusEffect ? `${Math.round(strikeAttack.statusChance * 100)}% ${strikeAttack.statusEffect}` : `+${strikeAttack.overdriveGain} AP`}
+                    <span className="text-[9px] font-mono text-white/50 block truncate">
+                      {strikeAttack.scalingStat.toUpperCase()} &bull; +{strikeAttack.overdriveGain} AP
                     </span>
                   </button>
 
-                  {/* Move 2: Species Magic */}
+                  {/* Move 2: Magic */}
                   <button
                     onClick={() => handlePlayerMove('magic')}
                     disabled={isTurnAnimating || magicCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${magicAttack.vfxColor}30` }}
+                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${magicAttack.vfxColor}40` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white" style={{ color: magicAttack.vfxColor }}>
+                      <span className="text-xs font-black uppercase" style={{ color: magicAttack.vfxColor }}>
                         {magicAttack.name}
                       </span>
-                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : ''}`} style={magicCooldown <= 0 ? { backgroundColor: `${magicAttack.vfxColor}20`, color: magicAttack.vfxColor } : undefined}>
+                      <span className={`text-[8px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-violet-500/20 text-violet-300'}`}>
                         {magicCooldown > 0 ? `${magicCooldown}T CD` : 'READY'}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono block" style={{ color: magicAttack.vfxAccent }}>
-                      {magicAttack.scalingStat === 'magic' ? playerFighter.magic : playerFighter.power} {magicAttack.scalingStat.toUpperCase()} &bull; {Math.round(magicAttack.statusChance * 100)}% {magicAttack.statusEffect}
+                    <span className="text-[9px] font-mono text-white/50 block truncate">
+                      {magicAttack.scalingStat.toUpperCase()} &bull; {Math.round(magicAttack.statusChance * 100)}% {magicAttack.statusEffect}
                     </span>
                   </button>
 
-                  {/* Move 3: Species Shield */}
+                  {/* Move 3: Shield */}
                   <button
                     onClick={() => handlePlayerMove('shield')}
                     disabled={isTurnAnimating || shieldCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${shieldAttack.vfxColor}30` }}
+                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                    style={{ borderColor: `${shieldAttack.vfxColor}40` }}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white" style={{ color: shieldAttack.vfxColor }}>
+                      <span className="text-xs font-black uppercase" style={{ color: shieldAttack.vfxColor }}>
                         {shieldAttack.name}
                       </span>
-                      <span className={`text-[9px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : ''}`} style={shieldCooldown <= 0 ? { backgroundColor: `${shieldAttack.vfxColor}20`, color: shieldAttack.vfxColor } : undefined}>
+                      <span className={`text-[8px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-sky-500/20 text-sky-300'}`}>
                         {shieldCooldown > 0 ? `${shieldCooldown}T CD` : 'READY'}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono block" style={{ color: shieldAttack.vfxAccent }}>
-                      -{Math.round((shieldAttack.shieldReduction || 0.7) * 100)}% Dmg + {Math.round((shieldAttack.reflectPercent || 0.4) * 100)}% Parry
+                    <span className="text-[9px] font-mono text-white/50 block truncate">
+                      Parry Reflect &bull; Shield
                     </span>
                   </button>
 
-                  {/* Move 4: Species Ultimate */}
+                  {/* Move 4: Ultimate */}
                   <button
                     onClick={() => handlePlayerMove('ultimate')}
                     disabled={isTurnAnimating || overdriveEnergy < 100 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className={`p-2.5 rounded-xl border text-left transition-all group disabled:opacity-30 ${
+                    className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all group disabled:opacity-30 ${
                       overdriveEnergy >= 100
-                        ? 'border-amber-400 bg-amber-500/20 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse'
-                        : 'border-white/10 bg-white/5 text-white/60'
+                        ? 'border-amber-400 bg-amber-500/25 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-pulse'
+                        : 'border-white/10 bg-black/60 text-white/60'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white" style={overdriveEnergy >= 100 ? { color: ultimateAttack.vfxColor } : undefined}>
+                      <span className="text-xs font-black uppercase" style={overdriveEnergy >= 100 ? { color: ultimateAttack.vfxColor } : undefined}>
                         {ultimateAttack.name}
                       </span>
-                      <Flame size={14} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
+                      <Flame size={13} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
                     </div>
-                    <span className="text-[10px] font-mono text-amber-300 block">
+                    <span className="text-[9px] font-mono text-amber-300 block truncate">
                       {overdriveEnergy >= 100 ? '★ UNLEASH ★' : `${overdriveEnergy}% / 100%`}
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* Compact Combat Telemetry Log */}
-              <div className="glass-panel p-3 rounded-2xl border border-white/10 max-h-36 overflow-y-auto">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-mono text-[#00FF66] uppercase font-bold">
-                    COMBAT LOG TELEMETRY
-                  </span>
-                  <span className="text-[10px] font-mono text-white/40">LATEST ACTIONS</span>
-                </div>
-                <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto font-mono text-xs no-scrollbar">
-                  {battleLogs.slice(-4).map((log, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-2 rounded-lg border text-xs leading-relaxed ${
-                        log.attacker === playerFighter.name
-                          ? 'bg-[#00FF66]/10 border-[#00FF66]/30 text-white'
-                          : log.attacker.includes('REFEREE')
-                          ? 'bg-white/5 border-white/15 text-[#00FF66] font-bold text-center'
-                          : 'bg-red-950/20 border-red-500/30 text-white/90'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[10px] text-white/40 mb-0.5">
-                        <span>{log.attacker}</span>
-                        <span className={log.critical ? 'text-[#00FF66] font-black' : ''}>{log.action}</span>
-                      </div>
-                      <p>{log.message}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Idle Deployment Stage Preview */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* IDLE HERO ARENA: REVERSED HIERARCHY (3D ARENA AS HERO)        */}
+          {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage === 'idle' && (
-            <div className="glass-panel p-8 rounded-3xl border border-[#00FF66]/20 flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="flex-1 flex flex-col gap-4">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#00FF66] font-mono">
-                  READY FOR ARENA DEPLOYMENT
-                </span>
-                <h2 className="text-3xl sm:text-4xl font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                  {currentAvatar.name}
-                </h2>
-                <p className="text-sm text-white/70 leading-relaxed max-w-lg">
-                  Deploy your procedural build into competitive tournament matchmaking. Your combat telemetry scales directly from your chosen species, class role, weapon, and cute outfits.
+            <div className="flex flex-col items-center gap-6 w-full">
+              {/* 1. Header: INVITATIONAL // 08 PLAYERS */}
+              <div className="flex flex-col items-center justify-center text-center gap-1.5 pt-1">
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/80 border border-[#00FF66]/30 shadow-[0_0_20px_rgba(0,255,102,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
+                  <span className="text-xs sm:text-sm font-mono font-black text-[#00FF66] tracking-[0.25em] uppercase">
+                    INVITATIONAL // 08 PLAYERS
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 uppercase font-black tracking-wider">
+                    COMBAT ARENA
+                  </span>
+                </div>
+                <p className="text-[11px] font-mono text-white/40 uppercase tracking-widest">
+                  CYBERPUNK DUEL CHAMPIONSHIP &bull; 🟢 GREEN + 🔴 COMBAT RED ARENA
                 </p>
-
-                <div className="grid grid-cols-4 gap-3 max-w-lg pt-4 border-t border-white/10">
-                  <div>
-                    <span className="text-[10px] text-white/40 uppercase font-mono">Max HP</span>
-                    <p className="text-lg font-bold font-mono text-emerald-400">{calculatedPlayerStats.maxHp}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-white/40 uppercase font-mono">Power</span>
-                    <p className="text-lg font-bold font-mono text-rose-400">{calculatedPlayerStats.power}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-white/40 uppercase font-mono">Agility</span>
-                    <p className="text-lg font-bold font-mono text-amber-400">{calculatedPlayerStats.agility}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-white/40 uppercase font-mono">Magic</span>
-                    <p className="text-lg font-bold font-mono text-violet-400">{calculatedPlayerStats.magic}</p>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={handleStartTournament}
-                    className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs text-black neon-green-button hover:scale-105 transition-all shadow-[0_0_25px_rgba(0,255,102,0.4)]"
-                  >
-                    <Play size={16} />
-                    <span>Enter Tournament Arena</span>
-                  </button>
-                </div>
               </div>
 
-              <div className="w-full md:w-96 h-80 rounded-2xl overflow-hidden bg-black/60 border border-[#00FF66]/30">
+              {/* 2. 3D ARENA: Massive Central Hero */}
+              <div className="relative w-full max-w-5xl mx-auto h-[480px] sm:h-[560px] md:h-[620px] rounded-3xl overflow-hidden border border-[#00FF66]/35 shadow-[0_0_60px_rgba(0,255,102,0.18)] bg-gradient-to-b from-[#030c05] via-[#020502] to-black">
+                {/* Top Corner Floating Badges */}
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                  <div className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#00FF66]/40 text-xs font-mono text-[#00FF66] font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,102,0.2)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
+                    <span>3D COLOSSEUM // READY</span>
+                  </div>
+
+                  {/* Biome selector */}
+                  <div className="hidden sm:flex items-center gap-1 bg-black/80 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[10px] font-mono">
+                    {(['grassland', 'volcano', 'mystic'] as BiomeType[]).map((b) => (
+                      <button
+                        key={b}
+                        onClick={() => setCurrentBiome(b)}
+                        className={`px-2 py-0.5 rounded-full uppercase transition-all ${
+                          currentBiome === b
+                            ? 'bg-[#00FF66] text-black font-bold'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        {b}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                  <Link
+                    href="/studio"
+                    className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 hover:border-[#00FF66] text-xs font-mono text-white/80 hover:text-white uppercase transition-all flex items-center gap-1.5 shadow-lg group"
+                  >
+                    <Layers size={13} className="text-[#00FF66] group-hover:rotate-45 transition-transform" />
+                    <span>Tune Rig</span>
+                  </Link>
+                </div>
+
+                {/* Floating Avatar Name Badge inside 3D Hero Arena */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none">
+                  <div className="px-6 py-2.5 rounded-2xl bg-black/80 backdrop-blur-md border border-[#00FF66]/30 shadow-[0_0_30px_rgba(0,0,0,0.9)] flex items-center gap-3">
+                    <span
+                      className="text-lg sm:text-2xl font-black text-white tracking-widest uppercase"
+                      style={{ fontFamily: "'Orbitron', sans-serif" }}
+                    >
+                      {currentAvatar.name}
+                    </span>
+                    <span className="w-1 h-5 bg-white/20" />
+                    <span className="text-xs sm:text-sm font-mono font-bold text-[#00FF66] tracking-wider uppercase">
+                      {((currentAvatar.classRole || calculatedPlayerStats.className || 'MAGE') as string).toUpperCase()}
+                    </span>
+                    <span className="text-white/30 text-xs">&bull;</span>
+                    <span className="text-xs sm:text-sm font-mono text-white/70 uppercase">
+                      {currentAvatar.species || 'Human'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Interactive 3D Arena Viewport */}
                 <Arena3DView
                   playerConfig={currentAvatar}
                   opponentConfig={PRESET_AVATARS[0].avatar}
@@ -1363,6 +1426,58 @@ export default function LobbyPage() {
                   roundKey={battleRoundKey}
                   className="w-full h-full"
                 />
+
+                {/* Subtle Ambient Vignette */}
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+              </div>
+
+              {/* 3. Horizontal Stats Strip: HP 900 POWER 75 AGILITY 180 MAGIC 190 */}
+              <div className="w-full max-w-3xl mx-auto flex flex-wrap items-center justify-around gap-4 sm:gap-6 px-6 sm:px-10 py-3.5 rounded-2xl bg-black/75 border border-white/10 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">HP</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-400 font-mono tracking-wide">
+                    {calculatedPlayerStats.maxHp}
+                  </span>
+                </div>
+                <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">POWER</span>
+                  <span className="text-base sm:text-lg font-black text-rose-400 font-mono tracking-wide">
+                    {calculatedPlayerStats.power}
+                  </span>
+                </div>
+                <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">AGILITY</span>
+                  <span className="text-base sm:text-lg font-black text-amber-400 font-mono tracking-wide">
+                    {calculatedPlayerStats.agility}
+                  </span>
+                </div>
+                <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">MAGIC</span>
+                  <span className="text-base sm:text-lg font-black text-violet-400 font-mono tracking-wide">
+                    {calculatedPlayerStats.magic}
+                  </span>
+                </div>
+                <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">DEFENSE</span>
+                  <span className="text-base sm:text-lg font-black text-cyan-400 font-mono tracking-wide">
+                    {calculatedPlayerStats.defense}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. [ ENTER ARENA ] CTA Button */}
+              <div className="flex justify-center pt-2 pb-6">
+                <button
+                  onClick={handleStartTournament}
+                  className="hud-action-btn px-14 py-4 text-sm sm:text-base font-black uppercase tracking-[0.25em] flex items-center gap-3 shadow-[0_0_45px_rgba(0,255,102,0.5)] hover:shadow-[0_0_75px_rgba(0,255,102,0.8)] transition-all hover:scale-105 active:scale-95"
+                >
+                  <Play size={18} fill="currentColor" />
+                  <span>ENTER ARENA</span>
+                </button>
               </div>
             </div>
           )}

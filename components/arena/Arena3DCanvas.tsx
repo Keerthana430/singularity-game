@@ -6,6 +6,7 @@
 import React, { useRef, Suspense, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { AvatarConfig } from '@/types/avatar';
 import { AvatarModel } from '@/components/avatar/AvatarModel';
@@ -320,9 +321,9 @@ function ArenaBattleDais({
         return {
           baseColor: '#1e293b',
           topColor: '#0f172a',
-          rimColor: isPlayer ? '#00FF66' : '#f59e0b',
-          lightColor: isPlayer ? '#00FF66' : '#f59e0b',
-          lightIntensity: 2.5,
+          rimColor: isPlayer ? '#00FF66' : '#EF4444',
+          lightColor: isPlayer ? '#00FF66' : '#EF4444',
+          lightIntensity: 2.8,
         };
       case 'volcano':
         return {
@@ -383,7 +384,7 @@ function ArenaBattleDais({
 // ─── Cyber Colosseum Holographic Infrastructure ────────────────────────────
 
 function CyberColosseumInfrastructure({ biome = 'grassland' }: { biome: BiomeType }) {
-  const pylonColor = biome === 'volcano' ? '#f97316' : biome === 'mystic' ? '#00e5ff' : '#00FF66';
+  const pylonColor = biome === 'volcano' ? '#f97316' : biome === 'mystic' ? '#00e5ff' : '#EF4444';
   const ringColor = biome === 'volcano' ? '#ef4444' : biome === 'mystic' ? '#a855f7' : '#00FF66';
 
   const pylons = useMemo(() => [
@@ -991,16 +992,51 @@ export function Arena3DCanvas({
     }
   }, [biome]);
 
+// ─── AMBIENT COMBAT CYBER PARTICLES ─────────────────────────────────────────
+function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
+  const points = useMemo(() => {
+    const p = new Float32Array(250 * 3);
+    for (let i = 0; i < 250; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 16;
+      p[i * 3 + 1] = Math.random() * 5 - 0.5;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    return p;
+  }, []);
+
+  const pointsRef = useRef<THREE.Points>(null);
+  useFrame((_, delta) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y += delta * 0.04;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[points, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.035}
+        color={color}
+        transparent
+        opacity={0.55}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
   return (
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 1.25, 4.8], fov: 46 }}
+      camera={{ position: [0, 0.15, 3.8], fov: 38 }}
       className="w-full h-full"
     >
       <Suspense fallback={null}>
         <color attach="background" args={[lighting.bg]} />
-        <fog attach="fog" args={[lighting.fog, 6, 20]} />
+        <fog attach="fog" args={[lighting.fog, 6, 24]} />
 
         <ambientLight color={lighting.ambientColor} intensity={lighting.ambientInt} />
         <directionalLight
@@ -1008,8 +1044,9 @@ export function Arena3DCanvas({
           color={lighting.sunColor}
           intensity={lighting.sunInt}
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0001}
         />
 
         {/* Dynamic Dual Fighter Spotlights */}
@@ -1030,6 +1067,11 @@ export function Arena3DCanvas({
           color={opponentAction === 'crit-hit' ? '#DC2626' : opponentAction === 'hit' ? '#EF4444' : '#F59E0B'}
         />
 
+        {/* ─── FLOATING AMBIENT CYBER PARTICLES ─── */}
+        <CombatArenaParticles
+          color={biome === 'volcano' ? '#EF4444' : biome === 'mystic' ? '#C084FC' : '#00FF66'}
+        />
+
         {/* ─── REALISTIC BIOME ENVIRONMENT ─── */}
         {biome === 'grassland' && <GrasslandBiome />}
         {biome === 'volcano' && <VolcanoBiome />}
@@ -1042,13 +1084,13 @@ export function Arena3DCanvas({
         <ArenaBattleDais position={[playerHomeX, -0.68, 0]} biome={biome} side="player" />
         <ArenaBattleDais position={[opponentHomeX, -0.68, 0]} biome={biome} side="opponent" />
 
-        {/* Ground Contact Shadows */}
+        {/* Ground Contact Shadows (Deep Ambient Occlusion Grounding) */}
         <ContactShadows
           position={[0, -0.71, 0]}
-          opacity={0.75}
-          scale={12}
-          blur={1.6}
-          far={3}
+          opacity={0.88}
+          scale={14}
+          blur={1.8}
+          far={3.5}
         />
 
         {/* ─── STAGE ENTRANCE EFFECTS ─── */}
@@ -1199,11 +1241,26 @@ export function Arena3DCanvas({
           </group>
         ))}
 
+        {/* ─── POST-PROCESSING: BLOOM & VIGNETTE FOR 3D DEPTH ─── */}
+        <EffectComposer>
+          <Bloom
+            intensity={0.65}
+            luminanceThreshold={0.42}
+            luminanceSmoothing={0.8}
+            radius={0.75}
+          />
+          <Vignette eskil={false} offset={0.16} darkness={0.65} />
+        </EffectComposer>
+
+        {/* ─── LOW CINEMATIC FIGHTING CAMERA CONTROLS ─── */}
         <OrbitControls
+          target={[0, 0.42, 0]}
           enableZoom={false}
           enablePan={false}
-          maxPolarAngle={Math.PI / 2 - 0.05}
-          minPolarAngle={Math.PI / 3.5}
+          enableDamping
+          dampingFactor={0.06}
+          maxPolarAngle={Math.PI / 1.85}
+          minPolarAngle={Math.PI / 2.3}
           maxAzimuthAngle={Math.PI / 4}
           minAzimuthAngle={-Math.PI / 4}
         />

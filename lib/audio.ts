@@ -191,6 +191,35 @@ class SoundSynthesizer {
       // Ignore audio errors
     }
   }
+
+  // Fashion Week Sparkling Vote Chime
+  playFashionVote() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      const notes = [659.25, 830.61, 987.77, 1318.51, 1661.22]; // E5, G#5, B5, E6, G#6 (E major shimmer)
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime + idx * 0.05;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.35);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      });
+    } catch {
+      // Ignore audio errors
+    }
+  }
 }
 
 export const sound = new SoundSynthesizer();
