@@ -34,9 +34,25 @@ export function NeonButton({ variant = 'primary', fullWidth, children, style, di
     ...style,
   };
   return (
-    <button {...rest} disabled={disabled} style={base}
-      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.25)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = ''; }}
+    <button 
+      {...rest} 
+      disabled={disabled} 
+      style={base}
+      onMouseEnter={e => { 
+        if (!disabled) {
+          (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.25)'; 
+          import('../../audio').then(m => m.getAudioEngine().play('ui_hover'));
+        }
+      }}
+      onMouseLeave={e => { 
+        (e.currentTarget as HTMLButtonElement).style.filter = ''; 
+      }}
+      onClick={e => {
+        if (!disabled) {
+          import('../../audio').then(m => m.getAudioEngine().play('ui_click'));
+          if (rest.onClick) rest.onClick(e);
+        }
+      }}
     >
       {children}
     </button>

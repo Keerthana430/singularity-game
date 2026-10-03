@@ -175,3 +175,27 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - tsc --noEmit - PASS (0 errors)
   - All 28 unit tests - PASS
 - Deferred: per-tile animated pulse, quality tier runtime slider, particle budgets on mobile.
+
+## Phase 7: UI/UX, Game Flow, Responsive Layout  (2026-10-03)
+
+- Built:
+  - `src/ui/theme/tokens.ts` - design token constants (colors, fonts, radii, shadows, playerColors).
+  - `src/ui/components/NeonUI.tsx` - NeonButton, NeonPanel, EventCaption reusable primitives.
+  - `src/ui/screens/MainMenu/MainMenu.tsx` - neon arcade main menu with cyber-grid background.
+  - `src/ui/screens/PlayerSetup/PlayerSetup.tsx` - 2-4 player count stepper + color swatches + name inputs.
+  - `src/ui/screens/Victory/VictoryScreen.tsx` - animated victory screen with winner callout, score table, replay/menu.
+  - `src/ui/hud/GameHUD.tsx` - in-game HUD: turn indicator, dice result, snake/ladder event captions, roll button, player position list.
+  - `src/ui/AppShell.tsx` - top-level screen router (menu -> setup -> game -> victory); Space/Enter keyboard roll; double-roll spam guard (rollingRef).
+  - `src/ui/index.ts` - barrel export.
+  - `app/globals.css` - added neonPulse keyframe.
+  - `app/prototype/page.tsx` - replaced PrototypeUI with AppShell; Canvas positioned absolute so it stays alive across screens.
+- Exit criteria:
+  - Full 2-4 player game flow (menu -> setup -> game -> victory) - PASS
+  - Neon visual language consistent with 3D world - PASS
+  - Turn ownership and dice result HUD - PASS
+  - Event captions for snake/ladder - PASS
+  - Double-roll spam guard - PASS (rollingRef + 2.5s cooldown)
+  - Keyboard: Space/Enter to roll - PASS
+  - tsc --noEmit - PASS (0 errors)
+  - All 28 unit tests - PASS
+- Deferred: Gamepad support, reduced-motion accessibility pass, settings screen (audio/quality), pause/restart mid-game, touch safe-area insets on mobile.
