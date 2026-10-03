@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '../state/store';
 import { Board3D } from '../board';
 import { PlayerPawn3D, Dice3D, Dice3DRef, CameraController } from './';
@@ -7,6 +8,7 @@ import { GameEvent } from '../state/eventTypes';
 import { getTilePosition } from '../board/tileMapping';
 import { Vector3 } from 'three';
 import { animatePath } from '../movement/pathAnimator';
+import { globalSequencer } from '../animation';
 
 export function GameRenderer() {
   const boardConfig = useGameStore(state => state.boardConfig);
@@ -64,24 +66,61 @@ export function GameRenderer() {
 
     const onLandedOnSnake = async (e: GameEvent) => {
       if (e.type !== 'LANDED_ON_SNAKE') return;
-      // Wait a tiny bit for the normal move to finish visually if needed, 
-      // or just assume it's queued. For prototype, we just animate the slide.
       const mesh = pawnRefs.current[e.playerId];
       const tailPos = getTilePosition(e.to, boardConfig.size, 10, 1);
-      if (mesh) {
-        await animatePath(mesh, [tailPos], 1.0); // 1 sec slide
+      
+      if (!mesh) return;
+
+      globalSequencer.start({
+        id: `snake_bite_${e.playerId}_${Date.now()}`,
+        maxDuration: 5,
+        canSkip: true,
+        phases: [
+          { name: 'detect', duration: 0.3 },
+          { name: 'tension', duration: 0.5 },
+          { name: 'prepare', duration: 0.3 },
+          { name: 'lunge', duration: 0.2 },
+          { name: 'contact', duration: 0.2 },
+          { name: 'reaction', duration: 0.3 },
+          { 
+            name: 'descent', 
+            duration: 1.0,
+            onEnter: () => animatePath(mesh, [tailPos], 1.0)
+          },
+          { name: 'recovery', duration: 0.3 },
+          { name: 'resume', duration: 0.2 }
+        ]
+      }, () => {
         setVisualPositions(prev => ({ ...prev, [e.playerId]: tailPos }));
-      }
+        // Force complete transforms if skipped
+        mesh.position.copy(tailPos);
+      });
     };
 
     const onLandedOnLadder = async (e: GameEvent) => {
       if (e.type !== 'LANDED_ON_LADDER') return;
       const mesh = pawnRefs.current[e.playerId];
       const topPos = getTilePosition(e.to, boardConfig.size, 10, 1);
-      if (mesh) {
-        await animatePath(mesh, [topPos], 1.0); // 1 sec climb
+      
+      if (!mesh) return;
+
+      globalSequencer.start({
+        id: `ladder_climb_${e.playerId}_${Date.now()}`,
+        maxDuration: 4,
+        canSkip: true,
+        phases: [
+          { name: 'orient', duration: 0.2 },
+          { 
+            name: 'climb', 
+            duration: 1.5,
+            onEnter: () => animatePath(mesh, [topPos], 1.5)
+          },
+          { name: 'transition', duration: 0.3 }
+        ]
+      }, () => {
         setVisualPositions(prev => ({ ...prev, [e.playerId]: topPos }));
-      }
+        mesh.position.copy(topPos);
+      });
     };
 
     eventBus.on('DICE_ROLLED', onDiceRolled);
@@ -99,6 +138,10 @@ export function GameRenderer() {
 
   const activePlayer = players[currentPlayerIndex];
   const targetCameraPos = activePlayer ? (visualPositions[activePlayer.id] || getTilePosition(1)) : undefined;
+
+  useFrame((state, delta) => {
+    globalSequencer.update(delta);
+  });
 
   return (
     <group>

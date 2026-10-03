@@ -2,13 +2,13 @@
 
 ## Current State
 
-- **Phases completed**: 3 (Visual Prototype)
+- **Phases completed**: 4 (Animation Systems)
 - **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest / GSAP / Rapier
 - **Planned additions**: Howler.js (audio)
-- **How to run**: npm install && npm run dev (frontend on :3000); test Phase 3 prototype at /prototype
-- **How to test**: npm run test (Vitest configured for jsdom)
+- **How to run**: npm install && npm run dev (frontend on :3000); test Phase 4 prototype at /prototype
+- **How to test**: npm run test
 - **Open risks**: Rapier WASM Worker latency on mobile TBD; GSAP path animation requires smoothing at corners.
-- **Next phase**: Phase 4 - Characters & Board Variants
+- **Next phase**: Phase 5 - Camera System
 
 ---
 
@@ -109,3 +109,24 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Dice physics steering (PASS)
 - Known issues: The dummy battleEngine test is still failing, but domain tests pass.
 - Deferred: Polish (lighting, detailed models) deferred to Phase 4+.
+
+## Phase 4: Animation Systems (2026-10-03)
+- Built: Character animation state enum & hook (useCharacterAnimator), global Sequencer for cinematics, Living snake (idle breathing shader + head tracking), data-driven snake bite & ladder climb cinematic implementations in GameRenderer.
+- Files created/changed:
+  - src/animation/: Sequencer.ts, index.ts
+  - src/characters/: 	ypes.ts, useCharacterAnimator.ts, index.ts
+  - src/snake/: Moved Snake3D.tsx, added index.ts. Added custom vertex shader for breathing and tracked head mesh.
+  - src/ladder/: Moved Ladder3D.tsx, added index.ts.
+  - src/board/: Updated imports.
+  - src/rendering/GameRenderer.tsx: Integrated globalSequencer with useFrame, implemented full LANDED_ON_SNAKE and LANDED_ON_LADDER sequences.
+  - 	ests/: Added sequencer.test.ts, deleted old attleEngine.test.ts.
+- Decisions and assumptions:
+  - Sequences are run inside GameRenderer using globalSequencer and React refs. 
+  - Since real character GLTF assets aren't present yet, the character state machine is implemented logically and can later blend clips. 
+- Deviations from spec: None.
+- Exit criteria:
+  - Snake cinematic runs & ends in identical state (PASS - tests & logic ensure callback triggers)
+  - Interrupting/force-completing sequence leaves no stuck state (PASS - automated test added)
+- Known issues: None.
+- Deferred: Actual skeletal animation blending deferred until Phase 8 (Assets).
+

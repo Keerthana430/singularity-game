@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { BoardConfig } from '../state';
 import { getTilePosition } from './tileMapping';
 import { Tile3D } from './Tile3D';
-import { Snake3D } from './Snake3D';
-import { Ladder3D } from './Ladder3D';
+import { Snake3D } from '../snake';
+import { Ladder3D } from '../ladder';
 
 interface Board3DProps {
   config: BoardConfig;
