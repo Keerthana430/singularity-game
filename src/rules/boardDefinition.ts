@@ -14,9 +14,9 @@ export function validateBoardConfig(config: BoardConfig): { valid: boolean; erro
   }
 
   // Snakes validations
-  for (const [headStr, tailStr] of Object.entries(config.snakes)) {
+  for (const [headStr, tailValue] of Object.entries(config.snakes)) {
     const head = parseInt(headStr, 10);
-    const tail = parseInt(tailStr, 10);
+    const tail = tailValue;
 
     if (head <= tail) {
       errors.push(`Snake at ${head} must go down to a lower tile (target: ${tail}).`);
@@ -36,9 +36,9 @@ export function validateBoardConfig(config: BoardConfig): { valid: boolean; erro
   }
 
   // Ladders validations
-  for (const [bottomStr, topStr] of Object.entries(config.ladders)) {
+  for (const [bottomStr, topValue] of Object.entries(config.ladders)) {
     const bottom = parseInt(bottomStr, 10);
-    const top = parseInt(topStr, 10);
+    const top = topValue;
 
     if (bottom >= top) {
       errors.push(`Ladder at ${bottom} must go up to a higher tile (target: ${top}).`);

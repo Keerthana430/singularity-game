@@ -23,7 +23,7 @@ export class GameLoop {
     this.state.commandLog.push(command);
 
     for (const event of events) {
-      this.eventBus.emit(event);
+      this.eventBus.emit(event.type, event);
     }
   }
 }

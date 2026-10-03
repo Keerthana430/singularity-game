@@ -2,13 +2,13 @@
 
 ## Current State
 
-- **Phases completed**: 2 (Game Rules Engine & State)
-- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest
-- **Planned additions**: Rapier3D-deterministic (dice), Howler.js (audio)
-- **How to run**: `npm install && npm run dev` (frontend on :3000); test renderer at `/test-render`
-- **How to test**: `npm run test` (Vitest configured for jsdom)
-- **Open risks**: R3F + WebGPURenderer postprocessing compatibility untested; Rapier WASM Worker latency TBD; mobile GPU budget unverified
-- **Next phase**: Phase 3 — Prototype: Board, Camera, Dice, Movement, Basic Snake & Ladder
+- **Phases completed**: 3 (Visual Prototype)
+- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest / GSAP / Rapier
+- **Planned additions**: Howler.js (audio)
+- **How to run**: npm install && npm run dev (frontend on :3000); test Phase 3 prototype at /prototype
+- **How to test**: npm run test (Vitest configured for jsdom)
+- **Open risks**: Rapier WASM Worker latency on mobile TBD; GSAP path animation requires smoothing at corners.
+- **Next phase**: Phase 4 - Characters & Board Variants
 
 ---
 
@@ -89,3 +89,23 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
 - **Known issues**: None.
 - **Deferred**: Phase 3 prototype integration with 3D Canvas.
 
+
+
+## Phase 3: Visual Prototype (2026-10-03)
+- Built: 3D Board with Boustrophedon mapping, procedural snake and ladder meshes, GSAP-powered pawn path animation, and Rapier-physics dice steering. Added prototype UI to interact with it.
+- Files created/changed:
+  - src/board/: Board3D.tsx, 	ileMapping.ts
+  - src/rendering/: Dice3D.tsx, GameRenderer.tsx, PlayerPawn3D.tsx, pathAnimator.ts, Ladder3D.tsx, Snake3D.tsx
+  - src/ui/: PrototypeUI.tsx
+  - src/core/: eventBus.ts (updated to singleton & typed events)
+  - pp/prototype/: page.tsx
+- Decisions and assumptions:
+  - GSAP is used instead of pure R3F hooks for deterministic, sequenced movement animations.
+  - Dice uses Rapier for physical tumble, but we force-override its rotation right before it settles so it matches the PRNG's domain result.
+- Deviations from spec: None.
+- Exit criteria:
+  - Board rendering (PASS)
+  - Path movement (PASS)
+  - Dice physics steering (PASS)
+- Known issues: The dummy battleEngine test is still failing, but domain tests pass.
+- Deferred: Polish (lighting, detailed models) deferred to Phase 4+.
