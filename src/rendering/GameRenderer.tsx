@@ -4,6 +4,8 @@ import { useGameStore } from '../state/store';
 import { Board3D } from '../board';
 import { PlayerPawn3D, Dice3D, Dice3DRef } from './';
 import { CameraController } from '../camera';
+import { PostProcessing, DiceImpactFX, VictoryFX, LandingHopFX } from '../effects';
+import { Environment3D } from '../environment';
 import { eventBus } from '../core/eventBus';
 import { GameEvent } from '../state/eventTypes';
 import { getTilePosition } from '../board/tileMapping';
@@ -146,21 +148,41 @@ export function GameRenderer() {
 
   return (
     <group>
+      <Environment3D />
+      <PostProcessing qualityTier="high" />
+      <DiceImpactFX />
+      <VictoryFX />
+      <LandingHopFX />
       <Board3D config={boardConfig} />
       
       {players.map((p) => {
-        const pos = visualPositions[p.id] || getTilePosition(p.position);
+        const basePos = visualPositions[p.id] || getTilePosition(p.position);
+        
+        // Tile sharing offset
+        const sharingPlayers = players.filter(other => other.position === p.position);
+        const shareIndex = sharingPlayers.findIndex(other => other.id === p.id);
+        const totalSharing = sharingPlayers.length;
+        
+        const offset = new Vector3(0, 0, 0);
+        if (totalSharing > 1) {
+          const angle = (shareIndex / totalSharing) * Math.PI * 2;
+          const radius = 0.25;
+          offset.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+        }
+        
+        const renderPos = basePos.clone().add(offset);
+
         return (
           // We wrap PlayerPawn3D or just render the mesh directly so we can attach a ref 
           // for gsap to animate.
           <mesh 
             key={p.id} 
             ref={el => pawnRefs.current[p.id] = el}
-            position={pos} 
+            position={renderPos} 
             castShadow
           >
             <cylinderGeometry args={[0.2, 0.4, 1.0, 16]} />
-            <meshStandardMaterial color={p.color} roughness={0.3} metalness={0.1} />
+            <meshStandardMaterial color={p.color} roughness={0.3} metalness={0.8} emissive={p.color} emissiveIntensity={0.5} />
           </mesh>
         );
       })}

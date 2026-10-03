@@ -11,14 +11,7 @@ export default function PrototypePage() {
     <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative' }}>
       <PrototypeUI />
       <Canvas shadows>
-        <ambientLight intensity={0.6} />
-        <directionalLight 
-          position={[10, 20, 10]} 
-          intensity={1.5} 
-          castShadow 
-          shadow-mapSize-width={2048} 
-          shadow-mapSize-height={2048}
-        />
+
         <Physics gravity={[0, -20, 0]}>
           <GameRenderer />
         </Physics>

@@ -27,12 +27,27 @@ export function Board3D({ config }: Board3DProps) {
     return t;
   }, [config]);
 
+  const boardW = cols * tileSize;
+  const boardD = (config.size / cols) * tileSize;
+
   return (
     <group>
-      {/* Base board thickness */}
+      {/* Board base – dark metallic slab */}
       <mesh position={[0, 0, 0]} receiveShadow>
-        <boxGeometry args={[cols * tileSize, tileSize, (config.size / cols) * tileSize]} />
-        <meshStandardMaterial color="#1a1a25" roughness={0.7} />
+        <boxGeometry args={[boardW, 0.18, boardD]} />
+        <meshStandardMaterial color="#0d0d1a" roughness={0.3} metalness={0.9} />
+      </mesh>
+
+      {/* Neon edge strip – thin plane just under tiles, gives perimeter glow */}
+      <mesh position={[0, 0.06, 0]} receiveShadow>
+        <boxGeometry args={[boardW + 0.15, 0.04, boardD + 0.15]} />
+        <meshStandardMaterial
+          color="#000011"
+          emissive="#0033ff"
+          emissiveIntensity={2}
+          roughness={0.1}
+          metalness={0.8}
+        />
       </mesh>
 
       {/* Tiles */}

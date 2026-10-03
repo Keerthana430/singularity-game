@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 
 interface Tile3DProps {
@@ -26,23 +26,44 @@ export function Tile3D({ number, position, size, isSnakeHead, isLadderBase }: Ti
     <group position={position}>
       {/* Tile Surface */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[size * 0.95, size * 0.95]} />
-        <meshStandardMaterial color={color} roughness={0.8} />
+        <planeGeometry args={[size * 0.92, size * 0.92]} />
+        <meshStandardMaterial 
+          color={color} 
+          roughness={0.2} 
+          metalness={0.8}
+          emissive={isSnakeHead ? '#ff0000' : isLadderBase ? '#00ff00' : '#101020'}
+          emissiveIntensity={0.2}
+        />
       </mesh>
       
-      {/* Tile Number */}
-      <Text
-        position={[0, 0.01, 0]}
+      {/* Tile Edge / Border (Neon) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <planeGeometry args={[size * 0.98, size * 0.98]} />
+        <meshStandardMaterial 
+          color="#000000" 
+          emissive={isSnakeHead ? '#ff0055' : isLadderBase ? '#00ff55' : '#0055ff'} 
+          emissiveIntensity={0.5} 
+        />
+      </mesh>
+      
+      {/* Tile Number (Using Html to bypass Troika worker issues) */}
+      <Html
+        position={[0, 0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={size * 0.3}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
+        transform
+        occlude
       >
-        {number}
-      </Text>
+        <div style={{
+          color: '#ffffff',
+          fontSize: `${size * 20}px`,
+          fontWeight: 'bold',
+          textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000',
+          pointerEvents: 'none',
+          userSelect: 'none'
+        }}>
+          {number}
+        </div>
+      </Html>
     </group>
   );
 }

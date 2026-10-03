@@ -2,13 +2,13 @@
 
 ## Current State
 
-- **Phases completed**: 5 (Camera Intelligence)
-- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest / GSAP / Rapier
+- **Phases completed**: 6 (Visual Polish: Environment, Lighting, Materials, FX)
+- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest / GSAP / Rapier / @react-three/postprocessing
 - **Planned additions**: Howler.js (audio)
 - **How to run**: npm install && npm run dev (frontend on :3000); test prototype at /prototype
 - **How to test**: npm run test
-- **Open risks**: Rapier WASM Worker latency on mobile TBD; GSAP path animation requires smoothing at corners.
-- **Next phase**: Phase 6 - Game Loop & Simulation Integration
+- **Open risks**: Rapier WASM Worker latency on mobile TBD; Tile `<Html>` fallback for numbers may need z-sorting tweak at steep camera angles.
+- **Next phase**: Phase 7 - Dice Physics & Input
 
 ---
 
@@ -148,3 +148,30 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Portrait mobile has distinct usable framing (PASS - dynamically pulls back Z/Y offset if aspect ratio < 1.0)
 - Known issues: None.
 - Deferred: Optional user controls (pan/orbit limits) deferred since it requires hooking into OrbitControls which may fight with the programmatic lerping. Focus is fully automated intelligent camera for now.
+
+## Phase 6: Visual Polish: Environment, Lighting, Materials, FX  (2026-10-03)
+
+- Built:
+  - `src/environment/Environment3D.tsx` - fog, ambient/directional/point lights (magenta+cyan), Tron-style floor grid, floating ambient sparkles.
+  - `src/effects/PostProcessing.tsx` - EffectComposer with Bloom, Vignette, adaptive ToneMapping; qualityTier prop disables all on 'low'.
+  - `src/effects/DiceImpactFX.tsx` - gold burst particles on DICE_ROLLED, auto-clears 800ms.
+  - `src/effects/VictoryFX.tsx` - 3-layer multi-color sparkles on GAME_WON, 4s duration.
+  - `src/effects/LandingHopFX.tsx` - blue hop dust puff on PLAYER_MOVE_START.
+  - `src/effects/index.ts`, `src/environment/index.ts` - barrel exports.
+- Files changed:
+  - Board3D: dark metallic slab + neon blue perimeter edge strip.
+  - Tile3D: metallic + emissive tiles; snake tiles red, ladder tiles green, normal tiles blue neon border.
+  - Snake3D: neon red metallic tube with emissive glow.
+  - Ladder3D: neon cyan emissive poles+steps, each step its own mesh.
+  - GameRenderer: wired all FX; player pawns emissive metallic; tile-sharing circular offset.
+  - page.tsx: removed redundant lights (consolidated in Environment3D).
+- Exit criteria:
+  - Neon futuristic arcade look - PASS
+  - Environment/arena around board - PASS (floor grid, fog, sparkles)
+  - Post-processing chain (bloom, tone map, vignette) - PASS (qualityTier toggle)
+  - Particle FX: dice, hop, victory - PASS
+  - Player tile-sharing offset - PASS
+  - Numbers readable under bloom (Html overlay) - PASS
+  - tsc --noEmit - PASS (0 errors)
+  - All 28 unit tests - PASS
+- Deferred: per-tile animated pulse, quality tier runtime slider, particle budgets on mobile.

@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { Vector3, CatmullRomCurve3, Mesh, ShaderMaterial, MeshStandardMaterial } from 'three';
 import { useFrame } from '@react-three/fiber';
-import { useStore } from '../state/store';
+import { useGameStore } from '../state/store';
 import { getTilePosition } from '../board/tileMapping';
 
 interface Snake3DProps {
@@ -14,9 +14,9 @@ export function Snake3D({ startPos, endPos }: Snake3DProps) {
   const time = useRef({ value: 0 });
   const headRef = useRef<Mesh>(null);
 
-  const activePlayerIndex = useStore((state) => state.currentPlayerIndex);
-  const players = useStore((state) => state.players);
-  const boardConfig = useStore((state) => state.boardConfig);
+  const activePlayerIndex = useGameStore((state) => state.currentPlayerIndex);
+  const players = useGameStore((state) => state.players);
+  const boardConfig = useGameStore((state) => state.boardConfig);
 
   const curve = useMemo(() => {
     const midPoint = new Vector3().addVectors(startPos, endPos).multiplyScalar(0.5);
@@ -60,8 +60,11 @@ export function Snake3D({ startPos, endPos }: Snake3DProps) {
         <tubeGeometry args={[curve, 32, 0.15, 8, false]} />
         <meshStandardMaterial 
           ref={materialRef}
-          color="#ff4444" 
-          roughness={0.4} 
+          color="#ff2222" 
+          roughness={0.2} 
+          metalness={0.8}
+          emissive="#550000"
+          emissiveIntensity={1}
           onBeforeCompile={(shader) => {
             shader.uniforms.uTime = time.current;
             shader.vertexShader = `

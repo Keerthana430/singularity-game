@@ -32,20 +32,35 @@ export function Ladder3D({ startPos, endPos }: Ladder3DProps) {
     steps.push(<tubeGeometry key={`step-${i}`} args={[stepCurve, 2, 0.05, 6, false]} />);
   }
 
+  // Shared neon ladder material props
+  const poleProps = { color: '#001122', roughness: 0.1, metalness: 0.9, emissive: '#00eeff', emissiveIntensity: 1.5 };
+  const stepProps = { color: '#001122', roughness: 0.1, metalness: 0.9, emissive: '#00ccdd', emissiveIntensity: 0.8 };
+
   return (
     <group>
+      {/* Left pole */}
       <mesh castShadow>
-        <tubeGeometry args={[leftCurve, 2, 0.05, 6, false]} />
-        <meshStandardMaterial color="#8b5a2b" roughness={0.9} />
+        <tubeGeometry args={[leftCurve, 6, 0.06, 6, false]} />
+        <meshStandardMaterial {...poleProps} />
       </mesh>
+      {/* Right pole */}
       <mesh castShadow>
-        <tubeGeometry args={[rightCurve, 2, 0.05, 6, false]} />
-        <meshStandardMaterial color="#8b5a2b" roughness={0.9} />
+        <tubeGeometry args={[rightCurve, 6, 0.06, 6, false]} />
+        <meshStandardMaterial {...poleProps} />
       </mesh>
-      <mesh castShadow>
-        {steps}
-        <meshStandardMaterial color="#8b5a2b" roughness={0.9} />
-      </mesh>
+      {/* Steps – each step is a separate mesh for correct geometry */}
+      {Array.from({ length: stepsCount }, (_, i) => {
+        const t = (i + 1) / (stepsCount + 1);
+        const stepLeft = leftPoleStart.clone().lerp(leftPoleEnd, t);
+        const stepRight = rightPoleStart.clone().lerp(rightPoleEnd, t);
+        const sc = new LineCurve3(stepLeft, stepRight);
+        return (
+          <mesh key={i} castShadow>
+            <tubeGeometry args={[sc, 2, 0.04, 6, false]} />
+            <meshStandardMaterial {...stepProps} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
