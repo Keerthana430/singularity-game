@@ -10,7 +10,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { AvatarModel } from '@/components/avatar/AvatarModel';
+import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 import { AvatarConfig } from '@/types/avatar';
 import { sound } from '@/lib/audio';
 
@@ -735,10 +735,16 @@ function ClimberPiece3D({
         </Html>
       </group>
 
-      {/* Procedural 3D Avatar Model */}
-      <group scale={0.52}>
-        <AvatarModel config={avatar} action={action} animate={true} />
-      </group>
+      {/* Procedural 3D Avatar Model positioned accurately on mountain platform */}
+      {(() => {
+        const bp = getBodyProps(avatar);
+        const standingOffsetY = (0.36 * bp.torsoHScale + 0.58 * bp.legScale) * bp.totalScale * 0.52;
+        return (
+          <group position={[0, standingOffsetY, 0]} scale={0.52}>
+            <AvatarModel config={avatar} action={action} animate={true} />
+          </group>
+        );
+      })()}
     </group>
   );
 }

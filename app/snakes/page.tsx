@@ -215,7 +215,7 @@ export default function SnakesAndLaddersPage() {
   const canPlayerRoll = canRoll && !isRolling && !winner && !activeMovement && isPlayerTurn;
 
   return (
-    <div className="bg-[#020502] min-h-screen pt-16">
+    <div className="bg-[#020502] h-[calc(100dvh-4rem)] w-full overflow-hidden">
       {/* ═══════════════════════════════════════════════════════════════
           FULL-VIEWPORT GAME ARENA
           3D canvas fills the entire screen, all UI is floating HUD

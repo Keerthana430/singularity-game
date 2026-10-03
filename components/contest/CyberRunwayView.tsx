@@ -26,6 +26,12 @@ const CyberRunway3D = dynamic(
   }
 );
 
+import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
+
 export function CyberRunwayView(props: CyberRunwayProps) {
-  return <CyberRunway3D {...props} />;
+  return (
+    <WebGLErrorBoundary fallbackTitle="Cyber Runway Hologram Offline">
+      <CyberRunway3D {...props} />
+    </WebGLErrorBoundary>
+  );
 }

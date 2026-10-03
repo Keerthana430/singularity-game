@@ -26,6 +26,12 @@ const Ludo3DColosseum = dynamic(
   }
 );
 
+import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
+
 export function Ludo3DView(props: Ludo3DColosseumProps) {
-  return <Ludo3DColosseum {...props} />;
+  return (
+    <WebGLErrorBoundary fallbackTitle="Ludo Cyber Colosseum Offline">
+      <Ludo3DColosseum {...props} />
+    </WebGLErrorBoundary>
+  );
 }

@@ -328,10 +328,19 @@ export default function LobbyPage() {
   };
 
   const handleStartTournament = () => {
-    // Block if still healing
+    // If avatar is currently in healing phase:
     if (healTimeLeft > 0) {
-      addToast(`⏳ Avatar still healing! ${healTimeLeft}s remaining. Use Instant Stimpack to skip.`, 'error');
-      return;
+      if (coins >= 50) {
+        spendCoins(50);
+        instantHeal();
+        setPlayerFighter((prev) => ({ ...prev, hp: prev.maxHp }));
+        sound.playEquip();
+        addToast('⚡ Nanite Stimpack applied! Avatar restored for tournament.', 'success');
+      } else {
+        addToast(`⏳ Avatar is regenerating in Medbay (${healTimeLeft}s left). Need 50 coins to bypass.`, 'info');
+        setTournamentStage('idle');
+        return;
+      }
     }
     const randomFmt = TOURNAMENT_FORMATS[Math.floor(Math.random() * TOURNAMENT_FORMATS.length)];
     setTournamentFormat(randomFmt);
@@ -878,9 +887,9 @@ export default function LobbyPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-[#020502] text-white pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans ${screenShake ? 'animate-bounce' : ''}`}>
+    <div className="h-[calc(100dvh-4rem)] w-full overflow-hidden flex flex-col pt-3 pb-3 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans bg-[#020502] text-white">
       {/* Header with Navigation Tabs & Wallet */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-white/10">
+      <div className="flex-shrink-0 flex items-center justify-between gap-3 mb-2 pb-2 border-b border-white/10">
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
           <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-white font-mono">
@@ -888,8 +897,22 @@ export default function LobbyPage() {
           </h1>
         </div>
 
-        {/* Right side: Cyber Coins Wallet & Tab Buttons */}
-        <div className="flex items-center gap-3">
+        {/* Right side: Medbay, Cyber Coins Wallet & Tab Buttons */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {healTimeLeft > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 font-mono text-[11px]">
+              <Heart size={12} className="text-red-400 animate-pulse shrink-0" />
+              <span>MEDBAY: {healTimeLeft}s</span>
+              <button
+                onClick={handleInstantHealPurchase}
+                className="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-[9px] font-bold transition-all ml-0.5"
+                title="Use Stimpack (50 Coins)"
+              >
+                ⚡ 50🪙
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.15)]">
             <CoinsIcon size={14} className="text-amber-400 animate-pulse" />
             <span>{coins} COINS</span>
@@ -927,30 +950,30 @@ export default function LobbyPage() {
       {/* TAB 1: 3D TOURNAMENT ARENA                                    */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === 'tournament' && (
-        <div className="flex flex-col gap-4">
+        <div className="flex-1 min-h-0 flex flex-col relative w-full">
           {/* Visual Esports Tournament Progression Nodes (Active match stages only) */}
           {tournamentStage !== 'idle' && (
-            <div className="relative glass-panel p-4 rounded-2xl border border-white/10 overflow-hidden">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex-shrink-0 relative glass-panel p-2 sm:p-2.5 rounded-xl border border-white/10 overflow-hidden mb-2">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.2)]">
-                    <Trophy size={20} />
+                  <div className="w-8 h-8 rounded-lg bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] shadow-[0_0_12px_rgba(0,255,102,0.2)]">
+                    <Trophy size={16} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
-                      <span className="text-[10px] text-[#00FF66] font-bold font-mono tracking-widest uppercase">
+                      <span className="text-[9px] text-[#00FF66] font-bold font-mono tracking-widest uppercase">
                         SINGULARITY 8-MAN INVITATIONAL
                       </span>
                     </div>
-                    <h3 className="text-base font-black uppercase text-white tracking-wide" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                    <h3 className="text-xs sm:text-sm font-black uppercase text-white tracking-wide" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                       {tournamentFormat}
                     </h3>
                   </div>
                 </div>
 
                 {/* Tournament Progression Glowing Nodes */}
-                <div className="flex items-center gap-1.5 sm:gap-3 py-1.5 px-3.5 rounded-xl bg-black/60 border border-white/10">
+                <div className="flex items-center gap-1 sm:gap-2 py-1 px-2.5 rounded-lg bg-black/60 border border-white/10">
                   {[
                     { id: 'quarter', label: 'Quarter', icon: Swords },
                     { id: 'semi', label: 'Semi', icon: Zap },
@@ -966,20 +989,20 @@ export default function LobbyPage() {
 
                     return (
                       <React.Fragment key={st.id}>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                            className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${
                               isCurrent
-                                ? 'bg-[#00FF66] text-black font-black shadow-[0_0_15px_#00FF66] ring-2 ring-[#00FF66]/40'
+                                ? 'bg-[#00FF66] text-black font-black shadow-[0_0_12px_#00FF66] ring-1 ring-[#00FF66]/50'
                                 : isPassed
                                 ? 'bg-[#00FF66]/20 border border-[#00FF66]/50 text-[#00FF66]'
                                 : 'bg-white/5 border border-white/10 text-white/40'
                             }`}
                           >
-                            <Icon size={13} />
+                            <Icon size={11} />
                           </div>
                           <span
-                            className={`text-[10px] font-mono uppercase tracking-wider hidden md:inline ${
+                            className={`text-[9px] font-mono uppercase tracking-wider hidden md:inline ${
                               isCurrent
                                 ? 'text-[#00FF66] font-bold'
                                 : isPassed
@@ -992,7 +1015,7 @@ export default function LobbyPage() {
                         </div>
                         {i < 3 && (
                           <div
-                            className={`w-3 sm:w-6 h-0.5 transition-all ${
+                            className={`w-2.5 sm:w-4 h-0.5 transition-all ${
                               isPassed || isCurrent
                                 ? 'bg-gradient-to-r from-[#00FF66] to-[#00FF66]/60 shadow-[0_0_6px_#00FF66]'
                                 : 'bg-white/10'
@@ -1007,28 +1030,38 @@ export default function LobbyPage() {
                 {/* Tournament Stage Controls */}
                 <div className="flex items-center gap-2">
                   {tournamentStage === 'champion' ? (
-                    <button
-                      onClick={handleStartTournament}
-                      className="hud-action-btn flex items-center gap-2 px-5 py-2.5 text-xs uppercase"
-                    >
-                      <Crown size={14} />
-                      <span>New Tournament</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleStartTournament}
+                        className="hud-action-btn flex items-center gap-1.5 px-3 py-1.5 text-xs uppercase"
+                      >
+                        <Crown size={12} />
+                        <span>New Tournament</span>
+                      </button>
+                      <button
+                        onClick={() => setTournamentStage('idle')}
+                        className="px-2.5 py-1.5 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-xs font-mono uppercase transition-all flex items-center gap-1"
+                        title="Return to Base"
+                      >
+                        <RotateCcw size={12} />
+                        <span className="hidden sm:inline">Base</span>
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleAutoFight}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-xs font-bold uppercase tracking-wider transition-all"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-[10px] font-bold uppercase tracking-wider transition-all"
                       >
-                        <FastForward size={14} />
+                        <FastForward size={12} />
                         <span>Auto</span>
                       </button>
                       <button
                         onClick={() => setTournamentStage('idle')}
                         className="p-1.5 rounded-lg border border-white/10 hover:border-red-400/40 text-white/50 hover:text-red-400 transition-all"
-                        title="Forfeit Match"
+                        title="Exit to Base"
                       >
-                        <RotateCcw size={14} />
+                        <RotateCcw size={12} />
                       </button>
                     </div>
                   )}
@@ -1041,7 +1074,7 @@ export default function LobbyPage() {
           {/* LIVE 3D ARENA VIEWPORT & FIGHT SYSTEM (FULL IMMERSION)        */}
           {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage !== 'idle' && opponentFighter && (
-            <div className={`relative w-full rounded-3xl overflow-hidden border border-[#00FF66]/30 shadow-2xl bg-[#020502] h-[640px] sm:h-[700px] ${screenShake ? 'animate-bounce' : ''}`}>
+            <div className="relative flex-1 min-h-0 w-full rounded-2xl overflow-hidden border border-[#00FF66]/30 shadow-2xl bg-[#020502]">
 
               {/* Red damage vignette overlay when damaged */}
               <div
@@ -1251,89 +1284,169 @@ export default function LobbyPage() {
                 )}
               </div>
 
-              {/* ─── FLOATING BOTTOM: 4-Move Ability Action Deck ─── */}
-              <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-2 sm:p-3 w-[92%] sm:w-[680px] z-20">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {/* Move 1: Strike */}
-                  <button
-                    onClick={() => handlePlayerMove('strike')}
-                    disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${strikeAttack.vfxColor}40` }}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase" style={{ color: strikeAttack.vfxColor }}>
-                        {strikeAttack.name}
-                      </span>
-                      <Swords size={13} style={{ color: strikeAttack.vfxColor }} />
-                    </div>
-                    <span className="text-[9px] font-mono text-white/50 block truncate">
-                      {strikeAttack.scalingStat.toUpperCase()} &bull; +{strikeAttack.overdriveGain} AP
+              {/* ─── FLOATING BOTTOM: Action Deck or Match Resolution Deck ─── */}
+              {opponentFighter.hp <= 0 ? (
+                <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-3 sm:p-4 w-[92%] sm:w-[620px] z-20 flex flex-col items-center gap-3 bg-black/90 border border-[#00FF66]/40 backdrop-blur-xl rounded-2xl shadow-[0_0_30px_rgba(0,255,102,0.25)]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
+                    <span className="text-xs font-mono font-black text-[#00FF66] uppercase tracking-widest">
+                      {tournamentStage === 'champion' ? '👑 TOURNAMENT CHAMPION // VICTORY' : '⚔️ STAGE KNOCKOUT // ROUND WON'}
                     </span>
-                  </button>
+                  </div>
 
-                  {/* Move 2: Magic */}
-                  <button
-                    onClick={() => handlePlayerMove('magic')}
-                    disabled={isTurnAnimating || magicCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${magicAttack.vfxColor}40` }}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase" style={{ color: magicAttack.vfxColor }}>
-                        {magicAttack.name}
-                      </span>
-                      <span className={`text-[8px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-violet-500/20 text-violet-300'}`}>
-                        {magicCooldown > 0 ? `${magicCooldown}T CD` : 'READY'}
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono text-white/50 block truncate">
-                      {magicAttack.scalingStat.toUpperCase()} &bull; {Math.round(magicAttack.statusChance * 100)}% {magicAttack.statusEffect}
-                    </span>
-                  </button>
+                  <div className="flex flex-wrap items-center justify-center gap-2.5 w-full">
+                    {tournamentStage === 'champion' ? (
+                      <button
+                        onClick={handleStartTournament}
+                        className="hud-action-btn px-5 py-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,102,0.4)]"
+                      >
+                        <Crown size={14} />
+                        <span>Defend Title (New Tournament)</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (tournamentStage === 'quarter') startStageBattle('semi');
+                          else if (tournamentStage === 'semi') startStageBattle('final');
+                        }}
+                        className="hud-action-btn px-5 py-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,102,0.4)]"
+                      >
+                        <Swords size={14} />
+                        <span>Advance to Next Round</span>
+                      </button>
+                    )}
 
-                  {/* Move 3: Shield */}
-                  <button
-                    onClick={() => handlePlayerMove('shield')}
-                    disabled={isTurnAnimating || shieldCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
-                    style={{ borderColor: `${shieldAttack.vfxColor}40` }}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase" style={{ color: shieldAttack.vfxColor }}>
-                        {shieldAttack.name}
-                      </span>
-                      <span className={`text-[8px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-sky-500/20 text-sky-300'}`}>
-                        {shieldCooldown > 0 ? `${shieldCooldown}T CD` : 'READY'}
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono text-white/50 block truncate">
-                      Parry Reflect &bull; Shield
-                    </span>
-                  </button>
+                    {healTimeLeft > 0 && (
+                      <button
+                        onClick={handleInstantHealPurchase}
+                        className="px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                      >
+                        <Zap size={13} className="text-amber-400 animate-pulse" />
+                        <span>Stimpack ({healTimeLeft}s • 50🪙)</span>
+                      </button>
+                    )}
 
-                  {/* Move 4: Ultimate */}
-                  <button
-                    onClick={() => handlePlayerMove('ultimate')}
-                    disabled={isTurnAnimating || overdriveEnergy < 100 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
-                    className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all group disabled:opacity-30 ${
-                      overdriveEnergy >= 100
-                        ? 'border-amber-400 bg-amber-500/25 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-pulse'
-                        : 'border-white/10 bg-black/60 text-white/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase" style={overdriveEnergy >= 100 ? { color: ultimateAttack.vfxColor } : undefined}>
-                        {ultimateAttack.name}
-                      </span>
-                      <Flame size={13} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
-                    </div>
-                    <span className="text-[9px] font-mono text-amber-300 block truncate">
-                      {overdriveEnergy >= 100 ? '★ UNLEASH ★' : `${overdriveEnergy}% / 100%`}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => setTournamentStage('idle')}
+                      className="px-4 py-2.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Return to Base</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : playerFighter.hp <= 0 ? (
+                <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-3 sm:p-4 w-[92%] sm:w-[540px] z-20 flex flex-col items-center gap-3 bg-black/90 border border-red-500/40 backdrop-blur-xl rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.25)]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                    <span className="text-xs font-mono font-black text-red-400 uppercase tracking-widest">
+                      ☠️ AVATAR DEFEATED // EXTRACTION REQUIRED
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2.5 w-full">
+                    {healTimeLeft > 0 && (
+                      <button
+                        onClick={handleInstantHealPurchase}
+                        className="px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                      >
+                        <Zap size={13} className="text-amber-400 animate-pulse" />
+                        <span>Instant Nanite Stimpack (50🪙)</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setTournamentStage('idle')}
+                      className="hud-action-btn px-5 py-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,102,0.4)]"
+                    >
+                      <RotateCcw size={14} />
+                      <span>Return to Base</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Standard 4-Move Ability Action Deck */
+                <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-2 sm:p-3 w-[92%] sm:w-[680px] z-20">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {/* Move 1: Strike */}
+                    <button
+                      onClick={() => handlePlayerMove('strike')}
+                      disabled={isTurnAnimating || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
+                      className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                      style={{ borderColor: `${strikeAttack.vfxColor}40` }}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-black uppercase" style={{ color: strikeAttack.vfxColor }}>
+                          {strikeAttack.name}
+                        </span>
+                        <Swords size={13} style={{ color: strikeAttack.vfxColor }} />
+                      </div>
+                      <span className="text-[9px] font-mono text-white/50 block truncate">
+                        {strikeAttack.scalingStat.toUpperCase()} &bull; +{strikeAttack.overdriveGain} AP
+                      </span>
+                    </button>
+
+                    {/* Move 2: Magic */}
+                    <button
+                      onClick={() => handlePlayerMove('magic')}
+                      disabled={isTurnAnimating || magicCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
+                      className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                      style={{ borderColor: `${magicAttack.vfxColor}40` }}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-black uppercase" style={{ color: magicAttack.vfxColor }}>
+                          {magicAttack.name}
+                        </span>
+                        <span className={`text-[8px] font-mono font-bold px-1 rounded ${magicCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-violet-500/20 text-violet-300'}`}>
+                          {magicCooldown > 0 ? `${magicCooldown}T CD` : 'READY'}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-white/50 block truncate">
+                        {magicAttack.scalingStat.toUpperCase()} &bull; {Math.round(magicAttack.statusChance * 100)}% {magicAttack.statusEffect}
+                      </span>
+                    </button>
+
+                    {/* Move 3: Shield */}
+                    <button
+                      onClick={() => handlePlayerMove('shield')}
+                      disabled={isTurnAnimating || shieldCooldown > 0 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
+                      className="p-2 sm:p-2.5 rounded-xl border border-white/10 bg-black/60 hover:bg-white/10 text-left transition-all group disabled:opacity-40"
+                      style={{ borderColor: `${shieldAttack.vfxColor}40` }}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-black uppercase" style={{ color: shieldAttack.vfxColor }}>
+                          {shieldAttack.name}
+                        </span>
+                        <span className={`text-[8px] font-mono font-bold px-1 rounded ${shieldCooldown > 0 ? 'bg-white/10 text-white/40' : 'bg-sky-500/20 text-sky-300'}`}>
+                          {shieldCooldown > 0 ? `${shieldCooldown}T CD` : 'READY'}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-white/50 block truncate">
+                        Parry Reflect &bull; Shield
+                      </span>
+                    </button>
+
+                    {/* Move 4: Ultimate */}
+                    <button
+                      onClick={() => handlePlayerMove('ultimate')}
+                      disabled={isTurnAnimating || overdriveEnergy < 100 || playerFighter.hp <= 0 || opponentFighter.hp <= 0}
+                      className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all group disabled:opacity-30 ${
+                        overdriveEnergy >= 100
+                          ? 'border-amber-400 bg-amber-500/25 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-pulse'
+                          : 'border-white/10 bg-black/60 text-white/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-black uppercase" style={overdriveEnergy >= 100 ? { color: ultimateAttack.vfxColor } : undefined}>
+                          {ultimateAttack.name}
+                        </span>
+                        <Flame size={13} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
+                      </div>
+                      <span className="text-[9px] font-mono text-amber-300 block truncate">
+                        {overdriveEnergy >= 100 ? '★ UNLEASH ★' : `${overdriveEnergy}% / 100%`}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
@@ -1342,81 +1455,9 @@ export default function LobbyPage() {
           {/* IDLE HERO ARENA: REVERSED HIERARCHY (3D ARENA AS HERO)        */}
           {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage === 'idle' && (
-            <div className="flex flex-col items-center gap-6 w-full">
-              {/* 1. Header: INVITATIONAL // 08 PLAYERS */}
-              <div className="flex flex-col items-center justify-center text-center gap-1.5 pt-1">
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/80 border border-[#00FF66]/30 shadow-[0_0_20px_rgba(0,255,102,0.15)]">
-                  <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
-                  <span className="text-xs sm:text-sm font-mono font-black text-[#00FF66] tracking-[0.25em] uppercase">
-                    INVITATIONAL // 08 PLAYERS
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 uppercase font-black tracking-wider">
-                    COMBAT ARENA
-                  </span>
-                </div>
-                <p className="text-[11px] font-mono text-white/40 uppercase tracking-widest">
-                  CYBERPUNK DUEL CHAMPIONSHIP &bull; 🟢 GREEN + 🔴 COMBAT RED ARENA
-                </p>
-              </div>
-
-              {/* 2. 3D ARENA: Massive Central Hero */}
-              <div className="relative w-full max-w-5xl mx-auto h-[480px] sm:h-[560px] md:h-[620px] rounded-3xl overflow-hidden border border-[#00FF66]/35 shadow-[0_0_60px_rgba(0,255,102,0.18)] bg-gradient-to-b from-[#030c05] via-[#020502] to-black">
-                {/* Top Corner Floating Badges */}
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-                  <div className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#00FF66]/40 text-xs font-mono text-[#00FF66] font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,102,0.2)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
-                    <span>3D COLOSSEUM // READY</span>
-                  </div>
-
-                  {/* Biome selector */}
-                  <div className="hidden sm:flex items-center gap-1 bg-black/80 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[10px] font-mono">
-                    {(['grassland', 'volcano', 'mystic'] as BiomeType[]).map((b) => (
-                      <button
-                        key={b}
-                        onClick={() => setCurrentBiome(b)}
-                        className={`px-2 py-0.5 rounded-full uppercase transition-all ${
-                          currentBiome === b
-                            ? 'bg-[#00FF66] text-black font-bold'
-                            : 'text-white/50 hover:text-white'
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                  <Link
-                    href="/studio"
-                    className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 hover:border-[#00FF66] text-xs font-mono text-white/80 hover:text-white uppercase transition-all flex items-center gap-1.5 shadow-lg group"
-                  >
-                    <Layers size={13} className="text-[#00FF66] group-hover:rotate-45 transition-transform" />
-                    <span>Tune Rig</span>
-                  </Link>
-                </div>
-
-                {/* Floating Avatar Name Badge inside 3D Hero Arena */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none">
-                  <div className="px-6 py-2.5 rounded-2xl bg-black/80 backdrop-blur-md border border-[#00FF66]/30 shadow-[0_0_30px_rgba(0,0,0,0.9)] flex items-center gap-3">
-                    <span
-                      className="text-lg sm:text-2xl font-black text-white tracking-widest uppercase"
-                      style={{ fontFamily: "'Orbitron', sans-serif" }}
-                    >
-                      {currentAvatar.name}
-                    </span>
-                    <span className="w-1 h-5 bg-white/20" />
-                    <span className="text-xs sm:text-sm font-mono font-bold text-[#00FF66] tracking-wider uppercase">
-                      {((currentAvatar.classRole || calculatedPlayerStats.className || 'MAGE') as string).toUpperCase()}
-                    </span>
-                    <span className="text-white/30 text-xs">&bull;</span>
-                    <span className="text-xs sm:text-sm font-mono text-white/70 uppercase">
-                      {currentAvatar.species || 'Human'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Interactive 3D Arena Viewport */}
+            <div className="relative flex-1 min-h-0 w-full rounded-2xl overflow-hidden border border-[#00FF66]/35 shadow-[0_0_50px_rgba(0,255,102,0.18)] bg-gradient-to-b from-[#030c05] via-[#020502] to-black">
+              {/* 3D ARENA VIEWPORT (FILLS 100% OF THIS IMMERSIVE CONTAINER) */}
+              <div className="absolute inset-0 z-0">
                 <Arena3DView
                   playerConfig={currentAvatar}
                   opponentConfig={PRESET_AVATARS[0].avatar}
@@ -1426,58 +1467,117 @@ export default function LobbyPage() {
                   roundKey={battleRoundKey}
                   className="w-full h-full"
                 />
-
                 {/* Subtle Ambient Vignette */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/85 via-transparent to-black/45" />
               </div>
 
-              {/* 3. Horizontal Stats Strip: HP 900 POWER 75 AGILITY 180 MAGIC 190 */}
-              <div className="w-full max-w-3xl mx-auto flex flex-wrap items-center justify-around gap-4 sm:gap-6 px-6 sm:px-10 py-3.5 rounded-2xl bg-black/75 border border-white/10 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
-                <div className="flex items-center gap-2.5 font-mono">
-                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">HP</span>
-                  <span className="text-base sm:text-lg font-black text-emerald-400 font-mono tracking-wide">
-                    {calculatedPlayerStats.maxHp}
+              {/* TOP HUD ROW */}
+              <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+                {/* Left: 3D Colosseum Badge + Biome selector */}
+                <div className="flex items-center gap-2 pointer-events-auto">
+                  <div className="px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-[#00FF66]/40 text-xs font-mono text-[#00FF66] font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,102,0.2)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
+                    <span>3D COLOSSEUM // READY</span>
+                  </div>
+
+                  <div className="hidden sm:flex items-center gap-1 bg-black/85 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[10px] font-mono">
+                    {(['grassland', 'volcano', 'mystic'] as BiomeType[]).map((b) => (
+                      <button
+                        key={b}
+                        onClick={() => setCurrentBiome(b)}
+                        className={`px-2 py-0.5 rounded-full uppercase transition-all ${
+                          currentBiome === b
+                            ? 'bg-[#00FF66] text-black font-bold shadow-[0_0_10px_#00FF66]'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        {b}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Center: Invitational Badge */}
+                <div className="hidden md:inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/85 border border-[#00FF66]/30 shadow-[0_0_20px_rgba(0,255,102,0.15)] pointer-events-auto">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-ping" />
+                  <span className="text-xs font-mono font-black text-[#00FF66] tracking-[0.2em] uppercase">
+                    INVITATIONAL // 08 PLAYERS
+                  </span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 uppercase font-black">
+                    COMBAT
                   </span>
                 </div>
-                <div className="w-px h-5 bg-white/10 hidden sm:block" />
-                <div className="flex items-center gap-2.5 font-mono">
-                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">POWER</span>
-                  <span className="text-base sm:text-lg font-black text-rose-400 font-mono tracking-wide">
-                    {calculatedPlayerStats.power}
-                  </span>
-                </div>
-                <div className="w-px h-5 bg-white/10 hidden sm:block" />
-                <div className="flex items-center gap-2.5 font-mono">
-                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">AGILITY</span>
-                  <span className="text-base sm:text-lg font-black text-amber-400 font-mono tracking-wide">
-                    {calculatedPlayerStats.agility}
-                  </span>
-                </div>
-                <div className="w-px h-5 bg-white/10 hidden sm:block" />
-                <div className="flex items-center gap-2.5 font-mono">
-                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">MAGIC</span>
-                  <span className="text-base sm:text-lg font-black text-violet-400 font-mono tracking-wide">
-                    {calculatedPlayerStats.magic}
-                  </span>
-                </div>
-                <div className="w-px h-5 bg-white/10 hidden sm:block" />
-                <div className="flex items-center gap-2.5 font-mono">
-                  <span className="text-xs text-white/50 font-bold uppercase tracking-wider">DEFENSE</span>
-                  <span className="text-base sm:text-lg font-black text-cyan-400 font-mono tracking-wide">
-                    {calculatedPlayerStats.defense}
-                  </span>
+
+                {/* Right: Tune Rig */}
+                <div className="pointer-events-auto">
+                  <Link
+                    href="/studio"
+                    className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 hover:border-[#00FF66] text-xs font-mono text-white/80 hover:text-white uppercase transition-all flex items-center gap-1.5 shadow-lg group"
+                  >
+                    <Layers size={13} className="text-[#00FF66] group-hover:rotate-45 transition-transform" />
+                    <span>Tune Rig</span>
+                  </Link>
                 </div>
               </div>
 
-              {/* 4. [ ENTER ARENA ] CTA Button */}
-              <div className="flex justify-center pt-2 pb-6">
-                <button
-                  onClick={handleStartTournament}
-                  className="hud-action-btn px-14 py-4 text-sm sm:text-base font-black uppercase tracking-[0.25em] flex items-center gap-3 shadow-[0_0_45px_rgba(0,255,102,0.5)] hover:shadow-[0_0_75px_rgba(0,255,102,0.8)] transition-all hover:scale-105 active:scale-95"
-                >
-                  <Play size={18} fill="currentColor" />
-                  <span>ENTER ARENA</span>
-                </button>
+              {/* BOTTOM HUD FLOATING CONTROLS & STATS (NO SCROLLING NEEDED!) */}
+              <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col items-center gap-2 pointer-events-none">
+                {/* 1. Avatar Name & Role pill */}
+                <div className="px-5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-[#00FF66]/30 shadow-[0_0_25px_rgba(0,0,0,0.9)] flex items-center gap-2.5 pointer-events-auto">
+                  <span
+                    className="text-base sm:text-lg font-black text-white tracking-widest uppercase"
+                    style={{ fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    {currentAvatar.name}
+                  </span>
+                  <span className="w-1 h-3.5 bg-white/20" />
+                  <span className="text-xs font-mono font-bold text-[#00FF66] tracking-wider uppercase">
+                    {((currentAvatar.classRole || calculatedPlayerStats.className || 'MAGE') as string).toUpperCase()}
+                  </span>
+                  <span className="text-white/30 text-xs">&bull;</span>
+                  <span className="text-xs font-mono text-white/70 uppercase">
+                    {currentAvatar.species || 'Human'}
+                  </span>
+                </div>
+
+                {/* 2. Sleek compact Stats Strip */}
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-4 sm:px-8 py-2 rounded-xl bg-black/85 border border-white/10 backdrop-blur-md shadow-2xl pointer-events-auto">
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-white/50 font-bold uppercase">HP</span>
+                    <span className="font-black text-emerald-400 font-mono">{calculatedPlayerStats.maxHp}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-white/50 font-bold uppercase">PWR</span>
+                    <span className="font-black text-rose-400 font-mono">{calculatedPlayerStats.power}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-white/50 font-bold uppercase">AGI</span>
+                    <span className="font-black text-amber-400 font-mono">{calculatedPlayerStats.agility}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-white/50 font-bold uppercase">MAG</span>
+                    <span className="font-black text-violet-400 font-mono">{calculatedPlayerStats.magic}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-white/50 font-bold uppercase">DEF</span>
+                    <span className="font-black text-cyan-400 font-mono">{calculatedPlayerStats.defense}</span>
+                  </div>
+                </div>
+
+                {/* 3. Glowing [ ENTER ARENA ] CTA Button */}
+                <div className="pointer-events-auto pt-0.5">
+                  <button
+                    onClick={handleStartTournament}
+                    className="hud-action-btn px-10 py-2.5 text-xs sm:text-sm font-black uppercase tracking-[0.25em] flex items-center gap-2.5 shadow-[0_0_35px_rgba(0,255,102,0.45)] hover:shadow-[0_0_65px_rgba(0,255,102,0.75)] transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Play size={16} fill="currentColor" />
+                    <span>ENTER ARENA</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1488,18 +1588,18 @@ export default function LobbyPage() {
       {/* TAB 2: CLEAN, NEAT LEADERBOARD                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === 'leaderboard' && (
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
+        <div className="flex-1 min-h-0 flex flex-col gap-3 py-1">
+          <div className="flex-shrink-0 flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-[#00FF66] font-mono">GLOBAL RANKINGS</p>
-              <h2 className="text-2xl font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              <h2 className="text-xl sm:text-2xl font-black uppercase text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                 TOP AVATAR BUILDS
               </h2>
             </div>
             <span className="text-xs font-mono text-white/40">SEASON 1 STANDINGS</span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col gap-2.5 pr-1">
             {leaderboard.map((entry) => (
               <div
                 key={entry.rank}

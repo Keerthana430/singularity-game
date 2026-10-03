@@ -9,7 +9,7 @@ import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { AvatarConfig } from '@/types/avatar';
-import { AvatarModel } from '@/components/avatar/AvatarModel';
+import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 import {
   PhantomDodgeEffect,
   CriticalHitImpactScene,
@@ -824,8 +824,13 @@ interface DynamicFighterProps {
 function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
   const groupRef = useRef<THREE.Group>(null);
   const isPlayer = side === 'player';
+  const bodyProps = useMemo(() => getBodyProps(config), [config]);
+
+  // The arena dais surface is at Y = -0.62. AvatarModel's feet extend downwards from its torso origin.
+  // We offset Y so that the soles of the boots rest precisely on top of the dais ring:
+  const standingY = -0.62 + (0.36 * bodyProps.torsoHScale + 0.58 * bodyProps.legScale) * bodyProps.totalScale;
   const targetXRef = useRef(homeX);
-  const targetYRef = useRef(-0.6);
+  const targetYRef = useRef(standingY);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
@@ -834,23 +839,23 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
     if (action === 'attack') {
       // Aggressive lunge forward into the opponent
       targetXRef.current = isPlayer ? (homeX + 0.95) : (homeX - 0.95);
-      targetYRef.current = -0.55;
+      targetYRef.current = standingY + 0.05;
     } else if (action === 'crit-hit') {
       // Violent critical knockback: launched upwards into the air and pushed far back!
       targetXRef.current = isPlayer ? (homeX - 0.7) : (homeX + 0.7);
-      targetYRef.current = -0.22;
+      targetYRef.current = standingY + 0.45;
     } else if (action === 'hit') {
       // Stagger and fly backwards from the hit
       targetXRef.current = isPlayer ? (homeX - 0.4) : (homeX + 0.4);
-      targetYRef.current = -0.6;
+      targetYRef.current = standingY;
     } else if (action === 'dodge') {
       // Acrobatic evasive backstep / sidestep hop!
       targetXRef.current = isPlayer ? (homeX - 0.65) : (homeX + 0.65);
-      targetYRef.current = -0.42;
+      targetYRef.current = standingY + 0.22;
     } else {
       // Idle / defend / healing: stand firm on home dais
       targetXRef.current = homeX;
-      targetYRef.current = -0.6;
+      targetYRef.current = standingY;
     }
 
     // Smooth physics lerp for position X and Y
@@ -917,7 +922,7 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
   return (
     <group
       ref={groupRef}
-      position={[homeX, -0.6, 0]}
+      position={[homeX, standingY, 0]}
       rotation={[0, isPlayer ? Math.PI / 2.2 : -Math.PI / 2.2, 0]}
     >
       <AvatarModel
@@ -1031,7 +1036,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 0.15, 3.8], fov: 38 }}
+      camera={{ position: [0, 0.45, 4.3], fov: 42 }}
       className="w-full h-full"
     >
       <Suspense fallback={null}>
@@ -1051,16 +1056,16 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
 
         {/* Dynamic Dual Fighter Spotlights */}
         <spotLight
-          position={[-2.5, 4, 2]}
-          target-position={[playerHomeX, -0.6, 0]}
+          position={[-2.5, 4.5, 2]}
+          target-position={[playerHomeX, 0.35, 0]}
           angle={0.65}
           penumbra={0.7}
           intensity={playerAction === 'hit' || playerAction === 'crit-hit' ? 7.0 : 3.2}
           color={playerAction === 'crit-hit' ? '#DC2626' : playerAction === 'hit' ? '#EF4444' : '#00FF66'}
         />
         <spotLight
-          position={[2.5, 4, 2]}
-          target-position={[opponentHomeX, -0.6, 0]}
+          position={[2.5, 4.5, 2]}
+          target-position={[opponentHomeX, 0.35, 0]}
           angle={0.65}
           penumbra={0.7}
           intensity={opponentAction === 'hit' || opponentAction === 'crit-hit' ? 7.0 : 3.2}
@@ -1254,7 +1259,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
 
         {/* ─── LOW CINEMATIC FIGHTING CAMERA CONTROLS ─── */}
         <OrbitControls
-          target={[0, 0.42, 0]}
+          target={[0, 0.35, 0]}
           enableZoom={false}
           enablePan={false}
           enableDamping

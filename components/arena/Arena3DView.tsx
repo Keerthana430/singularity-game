@@ -24,6 +24,8 @@ const Arena3DCanvas = dynamic(
   }
 );
 
+import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
+
 interface Arena3DViewProps {
   playerConfig: AvatarConfig;
   opponentConfig: AvatarConfig;
@@ -52,7 +54,9 @@ interface Arena3DViewProps {
 export function Arena3DView(props: Arena3DViewProps) {
   return (
     <div className={`relative w-full overflow-hidden ${props.className || 'h-[400px] md:h-[480px] rounded-2xl border border-white/10'}`}>
-      <Arena3DCanvas {...props} />
+      <WebGLErrorBoundary fallbackTitle="Arena Holo-Colosseum Offline">
+        <Arena3DCanvas {...props} />
+      </WebGLErrorBoundary>
     </div>
   );
 }

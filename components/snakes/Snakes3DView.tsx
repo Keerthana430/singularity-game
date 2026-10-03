@@ -26,6 +26,12 @@ const Snakes3DCanvas = dynamic(
   }
 );
 
+import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
+
 export function Snakes3DView(props: Snakes3DCanvasProps) {
-  return <Snakes3DCanvas {...props} />;
+  return (
+    <WebGLErrorBoundary fallbackTitle="Snakes Mountain Arena Offline">
+      <Snakes3DCanvas {...props} />
+    </WebGLErrorBoundary>
+  );
 }

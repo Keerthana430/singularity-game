@@ -685,7 +685,7 @@ export default function LudoPage() {
   };
 
   return (
-    <div className="bg-[#020502] min-h-screen pt-16">
+    <div className="bg-[#020502] h-[calc(100dvh-4rem)] w-full overflow-hidden">
       {/* ═══════════════════════════════════════════════════════════════
           FULL-VIEWPORT GAME ARENA
           3D colosseum fills the entire screen, all UI is floating HUD

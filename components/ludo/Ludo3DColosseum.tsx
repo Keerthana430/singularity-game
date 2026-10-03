@@ -10,7 +10,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { AvatarModel } from '@/components/avatar/AvatarModel';
+import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 import {
   CriticalHitImpactScene,
   HumanIronBastion,
@@ -557,10 +557,19 @@ function AvatarPiece3D({
         <pointLight color={player.colorHex} intensity={1.5} distance={1.4} />
       )}
 
-      {/* 3D Procedural Avatar Model */}
-      <group scale={isSelectable && hovered ? avatarScale * 1.12 : avatarScale}>
-        <AvatarModel config={player.avatar} action={currentAction} animate={true} />
-      </group>
+      {/* 3D Procedural Avatar Model positioned accurately on the board tile */}
+      {(() => {
+        const bp = getBodyProps(player.avatar);
+        const standingOffsetY = (0.36 * bp.torsoHScale + 0.58 * bp.legScale) * bp.totalScale * avatarScale;
+        return (
+          <group
+            position={[0, standingOffsetY, 0]}
+            scale={isSelectable && hovered ? avatarScale * 1.12 : avatarScale}
+          >
+            <AvatarModel config={player.avatar} action={currentAction} animate={true} />
+          </group>
+        );
+      })()}
     </group>
   );
 }
