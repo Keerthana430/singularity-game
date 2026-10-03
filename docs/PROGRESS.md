@@ -2,13 +2,38 @@
 
 ## Current State
 
-- **Phases completed**: 0 (Technical Research & Technology Selection)
-- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5
-- **Planned additions**: Rapier3D-deterministic (dice), Howler.js (audio), Vitest (testing)
-- **How to run**: `npm install && npm run dev` (frontend on :3000); backend: `cd backend && pip install -r requirements.txt && uvicorn main:app --reload --port 8080`
-- **How to test**: Not yet configured (Vitest to be added in Phase 1)
+- **Phases completed**: 1 (Architecture & Project Foundations)
+- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest
+- **Planned additions**: Rapier3D-deterministic (dice), Howler.js (audio)
+- **How to run**: `npm install && npm run dev` (frontend on :3000); test renderer at `/test-render`
+- **How to test**: `npm run test` (Vitest configured for jsdom)
 - **Open risks**: R3F + WebGPURenderer postprocessing compatibility untested; Rapier WASM Worker latency TBD; mobile GPU budget unverified
-- **Next phase**: Phase 1 — Architecture & Project Foundations (system design doc, scaffold `/src/`, hello-triangle renderer boot)
+- **Next phase**: Phase 2 — Game Rules Engine & State (board definition, purely deterministic rules)
+
+---
+
+## Phase 1: Architecture & Project Foundations (2026-10-03)
+
+- **Built**: `ARCHITECTURE.md` complete system design; Vitest integration; `/src/` scaffolding (types, math, rules skeleton, event bus, game loop); `/app/test-render` Hello Triangle.
+- **Files created/changed**:
+  - `/docs/ARCHITECTURE.md` — 15 sections including diagrams, typed interfaces, and layer rules.
+  - `/src/shared/types.ts`, `/src/shared/mathUtils.ts`, `/src/shared/index.ts` — zero-dependency foundations.
+  - `/src/state/gameState.ts`, `/src/state/commandTypes.ts`, `/src/state/eventTypes.ts`, `/src/state/index.ts` — state definitions.
+  - `/src/rules/gameReducer.ts`, `/src/rules/index.ts` — pure deterministic rules skeleton.
+  - `/src/core/eventBus.ts`, `/src/core/gameLoop.ts`, `/src/core/index.ts` — communication and loop.
+  - `vitest.config.ts`, `vitest.setup.ts`, `package.json` — test runner setup.
+  - `/tests/mathUtils.test.ts` — passing math tests.
+  - `/src/rendering/HelloTriangle.tsx`, `/app/test-render/page.tsx` — WebGPU/WebGL rendering proof.
+- **Decisions and assumptions**:
+  - Use `vite-tsconfig-paths` to resolve Next.js `@/` aliases in Vitest.
+  - Create a dedicated `/test-render` route instead of modifying the existing `page.tsx` landing page.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - architecture doc is complete and internally consistent — **PASS** — covers 15 requested areas.
+  - project builds and runs — **PASS** — `npm run build` succeeds, tests pass.
+  - no module depends on a module it shouldn't (document the allowed dependency directions) — **PASS** — Layer rules documented in ARCHITECTURE.md §1; implemented scaffolding strictly adheres (shared imports nothing, state imports shared, rules imports shared/state, core imports all).
+- **Known issues**: The existing `lib/__tests__/battleEngine.test.ts` (not part of this scope) is poorly structured for Vitest, but core math tests pass.
+- **Deferred**: Game logic implementation (Phase 2), 3D assets (Phase 3+).
 
 ---
 
