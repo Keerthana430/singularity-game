@@ -5,7 +5,7 @@ import { createSeededRng, randomInt } from '../src/rules';
 import { serializeState, deserializeState, replayCommands } from '../src/state';
 
 function getInitialState(seed: number = 12345, maxPlayers: number = 2): GameState {
-  let state: GameState = {
+  const state: GameState = {
     players: [],
     currentPlayerIndex: 0,
     turnPhase: 'waiting',
@@ -50,7 +50,7 @@ describe('Rules Engine Core', () => {
     const state = getInitialState();
     state.turnPhase = 'rolling'; // Manually force to invalid state
     const cmd: GameCommand = { type: 'ROLL_DICE', playerId: state.players[0].id };
-    const { newState, events } = gameReducer(state, cmd);
+    const { events } = gameReducer(state, cmd);
     expect(events.length).toBe(0); // Ignored
   });
 
@@ -75,8 +75,6 @@ describe('Rules Engine Core', () => {
   describe('Board Interactions (Snakes & Ladders)', () => {
     it('Landed on ladder: should climb', () => {
       let state = getInitialState(12345);
-      const p1 = state.players[0];
-      
       // We want to force a roll that lands on a ladder.
       // E.g. tile 2 is a ladder to 38. Player is on 1. We need a roll of 1.
       // We can hack the PRNG state or just inject a known value into a temporary function if we could.
@@ -150,7 +148,7 @@ describe('Rules Engine Core', () => {
         seed++;
       }
       
-      let state = getInitialState(seed);
+      const state = getInitialState(seed);
       state.players[0].position = 98; // Needs 2 to win, rolls 2
       
       const { newState, events } = gameReducer(state, { type: 'ROLL_DICE', playerId: state.players[0].id });
@@ -169,7 +167,7 @@ describe('Rules Engine Core', () => {
         seed++;
       }
       
-      let state = getInitialState(seed);
+      const state = getInitialState(seed);
       state.boardConfig.rules.exactFinish = false;
       state.players[0].position = 98; // Needs 2 to win, rolls 6
       
@@ -190,7 +188,7 @@ describe('Rules Engine Core', () => {
         seed++;
       }
       
-      let state = getInitialState(seed);
+      const state = getInitialState(seed);
       expect(state.currentPlayerIndex).toBe(0);
       
       const { newState } = gameReducer(state, { type: 'ROLL_DICE', playerId: state.players[0].id });
@@ -205,7 +203,7 @@ describe('Rules Engine Core', () => {
         seed++;
       }
       
-      let state = getInitialState(seed);
+      const state = getInitialState(seed);
       state.boardConfig.rules.extraTurnOnSix = true;
       expect(state.currentPlayerIndex).toBe(0);
       

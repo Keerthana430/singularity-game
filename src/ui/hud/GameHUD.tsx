@@ -2,10 +2,9 @@
 'use client';
 import React, { CSSProperties, useEffect, useState } from 'react';
 import { EventCaption } from '../components/NeonUI';
-import { colors, fonts, radii, shadows, playerColors } from '../theme/tokens';
+import { colors, fonts, radii, playerColors } from '../theme/tokens';
 import { TurnPhase, PlayerState } from '../../state/gameState';
 import { PlayerId } from '../../shared';
-import { eventBus } from '../../core/eventBus';
 
 interface GameHUDProps {
   players: PlayerState[];
@@ -42,9 +41,9 @@ export function GameHUD({ players, currentPlayerIndex, turnPhase, lastDiceResult
   useEffect(() => {
     const caption = CAPTION_EVENTS[turnPhase];
     if (caption) {
-      setCaptionText(caption);
-      const t = setTimeout(() => setCaptionText(null), 2200);
-      return () => clearTimeout(t);
+      const startT = setTimeout(() => setCaptionText(caption), 0);
+      const endT = setTimeout(() => setCaptionText(null), 2200);
+      return () => { clearTimeout(startT); clearTimeout(endT); };
     }
   }, [turnPhase]);
 

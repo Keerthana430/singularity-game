@@ -1,5 +1,4 @@
 import { BoardConfig, GameRules } from '../state';
-import { TileNumber } from '../shared';
 
 /**
  * Validates a board configuration to ensure it has no illegal states
@@ -56,7 +55,7 @@ export function validateBoardConfig(config: BoardConfig): { valid: boolean; erro
 
   // Overlaps
   for (const key of Object.keys(config.snakes)) {
-    if (config.ladders[key as any]) {
+    if (config.ladders[Number(key)]) {
       errors.push(`Tile ${key} has both a snake head and a ladder base.`);
     }
   }
@@ -92,17 +91,30 @@ export function createStandardBoard(rules: GameRules = DEFAULT_RULES): BoardConf
       99: 80,
     },
     ladders: {
-      2: 38,
-      7: 14,
-      8: 31,
-      15: 26,
-      21: 42,
-      28: 84,
-      36: 44,
-      51: 67,
-      71: 91,
-      78: 98,
-      87: 94,
+      // Ladders must cross from terrace boundary to next terrace boundary.
+      // Terrace boundaries are at row 1->2 (tiles 11-20 -> 21-30)
+      // row 3->4 (tiles 31-40 -> 41-50)
+      // row 5->6 (tiles 51-60 -> 61-70)
+      // row 7->8 (tiles 71-80 -> 81-90)
+      
+      // Terrace 0 to 1
+      12: 29, // col 8
+      15: 26, // col 5 (classic 15->26 is already valid!)
+      18: 23, // col 2
+      
+      // Terrace 1 to 2
+      31: 50, // col 9
+      36: 45, // col 4
+      39: 42, // col 1
+      
+      // Terrace 2 to 3
+      52: 69, // col 8
+      56: 65, // col 4
+      58: 63, // col 2
+      
+      // Terrace 3 to 4
+      71: 90, // col 9
+      77: 84, // col 3
     },
     rules,
   };

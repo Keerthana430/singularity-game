@@ -1,4 +1,4 @@
-import { GameState, GameCommand, GameEvent, PlayerState } from '../state';
+import { GameState, GameCommand, GameEvent } from '../state';
 import { createSeededRng, randomInt } from './seededRng';
 import { createStandardBoard } from './boardDefinition';
 

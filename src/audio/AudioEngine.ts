@@ -70,6 +70,8 @@ export class AudioEngine {
   /* ── Unlock ── */
 
   private setupUnlockListeners() {
+    if (typeof document === 'undefined') return;
+    
     const unlock = () => {
       if (this.isUnlocked) return;
       this.isUnlocked = true;

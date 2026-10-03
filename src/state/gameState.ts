@@ -31,5 +31,5 @@ export interface GameState {
   winner: PlayerId | null;
   turnNumber: number;
   rngState: number;
-  commandLog: any[]; // To be typed precisely later
+  commandLog: unknown[]; // To be typed precisely later
 }

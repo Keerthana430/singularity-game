@@ -1,12 +1,24 @@
 import React, { useMemo } from 'react';
 import { Vector3, LineCurve3 } from 'three';
+import { BoardLayout } from '../board/layout';
+import { TileNumber } from '../shared';
 
 interface Ladder3DProps {
-  startPos: Vector3;
-  endPos: Vector3;
+  layout: BoardLayout;
+  baseTile: number;
+  topTile: number;
 }
 
-export function Ladder3D({ startPos, endPos }: Ladder3DProps) {
+export function Ladder3D({ layout, baseTile, topTile }: Ladder3DProps) {
+  const getPos = (n: number) => {
+    const t = layout.tiles[n as TileNumber];
+    if (!t) return new Vector3(0, 0, 0);
+    return new Vector3(t.center.x, t.surfaceHeight, t.center.z);
+  };
+
+  const startPos = getPos(baseTile);
+  const endPos = getPos(topTile);
+
   // Simple ladder: two main poles and steps
   const stepsCount = Math.floor(startPos.distanceTo(endPos) / 0.5);
   
@@ -21,16 +33,6 @@ export function Ladder3D({ startPos, endPos }: Ladder3DProps) {
 
   const leftCurve = useMemo(() => new LineCurve3(leftPoleStart, leftPoleEnd), [leftPoleStart, leftPoleEnd]);
   const rightCurve = useMemo(() => new LineCurve3(rightPoleStart, rightPoleEnd), [rightPoleStart, rightPoleEnd]);
-
-  // Generate steps
-  const steps = [];
-  for (let i = 1; i <= stepsCount; i++) {
-    const t = i / (stepsCount + 1);
-    const stepLeft = leftPoleStart.clone().lerp(leftPoleEnd, t);
-    const stepRight = rightPoleStart.clone().lerp(rightPoleEnd, t);
-    const stepCurve = new LineCurve3(stepLeft, stepRight);
-    steps.push(<tubeGeometry key={`step-${i}`} args={[stepCurve, 2, 0.05, 6, false]} />);
-  }
 
   // Shared neon ladder material props
   const poleProps = { color: '#001122', roughness: 0.1, metalness: 0.9, emissive: '#00eeff', emissiveIntensity: 1.5 };

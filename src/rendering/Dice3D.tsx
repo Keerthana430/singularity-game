@@ -1,13 +1,12 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { RigidBody, RapierRigidBody, vec3, euler } from '@react-three/rapier';
+import { RigidBody, RapierRigidBody } from '@react-three/rapier';
 import { Vector3, Euler, Quaternion } from 'three';
 
 export interface Dice3DRef {
   roll: (result: number) => Promise<void>;
 }
 
-export const Dice3D = forwardRef<Dice3DRef, {}>((props, ref) => {
+export const Dice3D = forwardRef<Dice3DRef, Record<string, unknown>>((props, ref) => {
   const bodyRef = useRef<RapierRigidBody>(null);
   const isRolling = useRef(false);
   const targetResult = useRef<number | null>(null);
@@ -83,3 +82,4 @@ export const Dice3D = forwardRef<Dice3DRef, {}>((props, ref) => {
     </RigidBody>
   );
 });
+Dice3D.displayName = 'Dice3D';

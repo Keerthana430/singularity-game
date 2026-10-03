@@ -1,66 +1,42 @@
 import React, { useMemo } from 'react';
 import { BoardConfig } from '../state';
-import { getTilePosition } from './tileMapping';
 import { Tile3D } from './Tile3D';
 import { Snake3D } from '../snake';
 import { Ladder3D } from '../ladder';
+import { PerformanceConfig } from '../rendering/qualityConfig';
+import { generateTerracedLayout } from './layout';
 
 interface Board3DProps {
   config: BoardConfig;
+  qualityConfig: PerformanceConfig;
 }
 
-export function Board3D({ config }: Board3DProps) {
-  const tileSize = 1;
-  const cols = 10;
-  
-  // Calculate tile positions
-  const tiles = useMemo(() => {
-    const t = [];
-    for (let i = 1; i <= config.size; i++) {
-      t.push({
-        number: i,
-        position: getTilePosition(i, config.size, cols, tileSize),
-        isSnakeHead: !!config.snakes[i],
-        isLadderBase: !!config.ladders[i]
-      });
-    }
-    return t;
-  }, [config]);
-
-  const boardW = cols * tileSize;
-  const boardD = (config.size / cols) * tileSize;
+export function Board3D({ config, qualityConfig }: Board3DProps) {
+  // Generate layout based on standard config for now.
+  // In the future this could be passed in.
+  const layout = useMemo(() => generateTerracedLayout(), []);
 
   return (
     <group>
-      {/* Board base – dark metallic slab */}
-      <mesh position={[0, 0, 0]} receiveShadow>
-        <boxGeometry args={[boardW, 0.18, boardD]} />
+      {/* Board base – dark metallic slab under the lowest level */}
+      <mesh position={[0, -0.5, 0]} receiveShadow>
+        <boxGeometry args={[11, 0.5, 11]} />
         <meshStandardMaterial color="#0d0d1a" roughness={0.3} metalness={0.9} />
       </mesh>
 
-      {/* Neon edge strip – thin plane just under tiles, gives perimeter glow */}
-      <mesh position={[0, 0.06, 0]} receiveShadow>
-        <boxGeometry args={[boardW + 0.15, 0.04, boardD + 0.15]} />
-        <meshStandardMaterial
-          color="#000011"
-          emissive="#0033ff"
-          emissiveIntensity={2}
-          roughness={0.1}
-          metalness={0.8}
-        />
-      </mesh>
-
       {/* Tiles */}
-      {tiles.map((tile) => (
-        <Tile3D 
-          key={`tile-${tile.number}`} 
-          number={tile.number} 
-          position={tile.position} 
-          size={tileSize} 
-          isSnakeHead={tile.isSnakeHead}
-          isLadderBase={tile.isLadderBase}
-        />
-      ))}
+      {Object.values(layout.tiles).map((tileLayout) => {
+        const isSnakeHead = !!config.snakes[tileLayout.tileNumber];
+        const isLadderBase = !!config.ladders[tileLayout.tileNumber];
+        return (
+          <Tile3D 
+            key={`tile-${tileLayout.tileNumber}`} 
+            layout={tileLayout}
+            isSnakeHead={isSnakeHead}
+            isLadderBase={isLadderBase}
+          />
+        );
+      })}
 
       {/* Snakes */}
       {Object.entries(config.snakes).map(([headStr, tailValue]) => {
@@ -69,8 +45,10 @@ export function Board3D({ config }: Board3DProps) {
         return (
           <Snake3D
             key={`snake-${head}`}
-            startPos={getTilePosition(head, config.size, cols, tileSize)}
-            endPos={getTilePosition(tail, config.size, cols, tileSize)}
+            layout={layout}
+            headTile={head}
+            tailTile={tail}
+            config={qualityConfig}
           />
         );
       })}
@@ -82,8 +60,9 @@ export function Board3D({ config }: Board3DProps) {
         return (
           <Ladder3D
             key={`ladder-${base}`}
-            startPos={getTilePosition(base, config.size, cols, tileSize)}
-            endPos={getTilePosition(top, config.size, cols, tileSize)}
+            layout={layout}
+            baseTile={base}
+            topTile={top}
           />
         );
       })}

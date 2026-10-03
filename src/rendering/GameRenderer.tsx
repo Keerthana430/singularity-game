@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '../state/store';
 import { Board3D } from '../board';
@@ -8,41 +8,33 @@ import { PostProcessing, DiceImpactFX, VictoryFX, LandingHopFX } from '../effect
 import { Environment3D } from '../environment';
 import { eventBus } from '../core/eventBus';
 import { GameEvent } from '../state/eventTypes';
-import { getTilePosition } from '../board/tileMapping';
 import { Vector3 } from 'three';
 import { animatePath } from '../movement/pathAnimator';
 import { globalSequencer } from '../animation';
+import { generateTerracedLayout } from '../board/layout';
+import { TileNumber } from '../shared';
+
+import { useQualityTier } from './useQualityTier';
 
 export function GameRenderer() {
   const boardConfig = useGameStore(state => state.boardConfig);
   const players = useGameStore(state => state.players);
   const currentPlayerIndex = useGameStore(state => state.currentPlayerIndex);
   
+  const { config, dpr } = useQualityTier();
+  const layout = useMemo(() => generateTerracedLayout(), []);
+
   const diceRef = useRef<Dice3DRef>(null);
-  
-  // We manage visual positions in local state, derived from events, 
-  // to allow smooth animation without snapping immediately when the pure state updates.
   const [visualPositions, setVisualPositions] = useState<Record<string, Vector3>>({});
-  
-  // Pawn refs for animation
   const pawnRefs = useRef<Record<string, any>>({});
 
-  useEffect(() => {
-    // Initialize visual positions if not set
-    const initialPos: Record<string, Vector3> = {};
-    players.forEach(p => {
-      if (!visualPositions[p.id]) {
-        initialPos[p.id] = getTilePosition(p.position, boardConfig.size, 10, 1);
-      }
-    });
-    if (Object.keys(initialPos).length > 0) {
-      setVisualPositions(prev => ({ ...prev, ...initialPos }));
-    }
-  }, [players, boardConfig.size]);
+  const getPos = (n: number) => {
+    const t = layout.tiles[n as TileNumber];
+    if (!t) return new Vector3(0, 0, 0);
+    return new Vector3(t.center.x, t.surfaceHeight, t.center.z);
+  };
 
   useEffect(() => {
-    // Integration layer: Listen to domain events to trigger animations
-    
     const onDiceRolled = async (e: GameEvent) => {
       if (e.type !== 'DICE_ROLLED') return;
       if (diceRef.current) {
@@ -55,9 +47,8 @@ export function GameRenderer() {
       
       const { playerId, from, to } = e;
       const path: Vector3[] = [];
-      // Build path tile by tile
       for (let i = from + 1; i <= to; i++) {
-        path.push(getTilePosition(i, boardConfig.size, 10, 1));
+        path.push(getPos(i));
       }
       
       const mesh = pawnRefs.current[playerId];
@@ -70,7 +61,7 @@ export function GameRenderer() {
     const onLandedOnSnake = async (e: GameEvent) => {
       if (e.type !== 'LANDED_ON_SNAKE') return;
       const mesh = pawnRefs.current[e.playerId];
-      const tailPos = getTilePosition(e.to, boardConfig.size, 10, 1);
+      const tailPos = getPos(e.to);
       
       if (!mesh) return;
 
@@ -95,7 +86,6 @@ export function GameRenderer() {
         ]
       }, () => {
         setVisualPositions(prev => ({ ...prev, [e.playerId]: tailPos }));
-        // Force complete transforms if skipped
         mesh.position.copy(tailPos);
       });
     };
@@ -103,7 +93,7 @@ export function GameRenderer() {
     const onLandedOnLadder = async (e: GameEvent) => {
       if (e.type !== 'LANDED_ON_LADDER') return;
       const mesh = pawnRefs.current[e.playerId];
-      const topPos = getTilePosition(e.to, boardConfig.size, 10, 1);
+      const topPos = getPos(e.to);
       
       if (!mesh) return;
 
@@ -137,10 +127,10 @@ export function GameRenderer() {
       eventBus.off('LANDED_ON_SNAKE', onLandedOnSnake);
       eventBus.off('LANDED_ON_LADDER', onLandedOnLadder);
     };
-  }, [boardConfig.size]);
+  }, [boardConfig.size, layout]);
 
   const activePlayer = players[currentPlayerIndex];
-  const targetCameraPos = activePlayer ? (visualPositions[activePlayer.id] || getTilePosition(1)) : undefined;
+  const targetCameraPos = activePlayer ? (visualPositions[activePlayer.id] || getPos(1)) : undefined;
 
   useFrame((state, delta) => {
     globalSequencer.update(delta);
@@ -148,17 +138,16 @@ export function GameRenderer() {
 
   return (
     <group>
-      <Environment3D />
-      <PostProcessing qualityTier="high" />
+      <Environment3D config={config} />
+      <PostProcessing config={config} />
       <DiceImpactFX />
       <VictoryFX />
       <LandingHopFX />
-      <Board3D config={boardConfig} />
+      <Board3D config={boardConfig} qualityConfig={config} />
       
       {players.map((p) => {
-        const basePos = visualPositions[p.id] || getTilePosition(p.position);
+        const basePos = visualPositions[p.id] || getPos(p.position);
         
-        // Tile sharing offset
         const sharingPlayers = players.filter(other => other.position === p.position);
         const shareIndex = sharingPlayers.findIndex(other => other.id === p.id);
         const totalSharing = sharingPlayers.length;
@@ -171,10 +160,10 @@ export function GameRenderer() {
         }
         
         const renderPos = basePos.clone().add(offset);
+        // The Pawn's visual center is bottom, so Y is shifted slightly up.
+        renderPos.y += 0.5; // Offset by half the pawn height (1.0) so it stands on the surface
 
         return (
-          // We wrap PlayerPawn3D or just render the mesh directly so we can attach a ref 
-          // for gsap to animate.
           <mesh 
             key={p.id} 
             ref={el => pawnRefs.current[p.id] = el}

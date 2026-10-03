@@ -8,8 +8,4 @@ export type CharacterAnimState =
   | 'Celebrating'
   | 'Defeated';
 
-export interface CharacterAsset {
-  // To be implemented when GLTF is available
-  // scene: THREE.Group;
-  // animations: Map<string, THREE.AnimationClip>;
-}
+export type CharacterAsset = Record<string, unknown>;

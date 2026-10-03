@@ -3,13 +3,15 @@ import { CameraMode } from './types';
 
 // Fixed offset presets for different modes
 export const CAMERA_OFFSETS: Record<CameraMode, Vector3> = {
-  gameplay: new Vector3(0, 10, 10),
-  dice: new Vector3(0, 4, 6),
-  movement: new Vector3(0, 5, 8),
-  snake: new Vector3(-2, 4, 6),
-  ladder: new Vector3(2, 4, 6),
-  victory: new Vector3(0, 2, 8),
-  overview: new Vector3(0, 15, 0),
+  // Higher 3/4 elevated view (~35-45 deg elevation, ~30-45 deg yaw)
+  gameplay: new Vector3(-9, 12, 11),
+  dice: new Vector3(-4, 5, 6),
+  movement: new Vector3(-8, 10, 9),
+  snake: new Vector3(-5, 6, 7),
+  ladder: new Vector3(-5, 6, 7),
+  victory: new Vector3(-4, 3, 6),
+  // Overview frames the whole board. The board center is (0, ~1.5, 0).
+  overview: new Vector3(-12, 16, 14),
 };
 
 export interface CameraState {

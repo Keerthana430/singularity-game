@@ -1,7 +1,12 @@
 import React from 'react';
 import { Grid, Sparkles } from '@react-three/drei';
+import { PerformanceConfig } from '../rendering/qualityConfig';
 
-export function Environment3D() {
+interface EnvironmentProps {
+  config: PerformanceConfig;
+}
+
+export function Environment3D({ config }: EnvironmentProps) {
   return (
     <group>
       {/* Fog for atmospheric depth */}
@@ -13,8 +18,8 @@ export function Environment3D() {
         position={[10, 20, 10]} 
         intensity={1.5} 
         color="#ffffff"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
+        castShadow={config.shadowMapSize > 0}
+        shadow-mapSize={[config.shadowMapSize, config.shadowMapSize]}
         shadow-camera-left={-15}
         shadow-camera-right={15}
         shadow-camera-top={15}
@@ -40,15 +45,17 @@ export function Environment3D() {
       />
 
       {/* Subtle floating particles for arcade/magic vibe */}
-      <Sparkles 
-        count={200} 
-        scale={25} 
-        size={2} 
-        speed={0.2} 
-        opacity={0.3} 
-        color="#ffffff" 
-        position={[0, 5, 0]}
-      />
+      {config.particleCap > 0 && (
+        <Sparkles 
+          count={config.particleCap} 
+          scale={25} 
+          size={2} 
+          speed={0.2} 
+          opacity={0.3} 
+          color="#ffffff" 
+          position={[0, 5, 0]}
+        />
+      )}
     </group>
   );
 }
