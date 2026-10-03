@@ -76,3 +76,10 @@
 - **Options**: (a) Authoritative server + command sync, (b) Peer-to-peer, (c) Lockstep.
 - **Decision**: **Authoritative server model with command-sequence-number protocol (architecture only, no implementation until Phase 11).** Server validates commands, broadcasts events. Clients replay with animation.
 - **Consequences**: Rules engine must remain pure and serializable from Phase 2 onward. Command log must be replayable. Transport layer stubbed behind an interface.
+
+## ADR-012: Deterministic PRNG Algorithm
+
+- **Context**: Game engine needs a deterministic random number generator for dice rolling that is serializable and fast.
+- **Options**: (a) Math.random() (b) Linear Congruential Generator (LCG) (c) Mulberry32 (d) Mersenne Twister.
+- **Decision**: **Mulberry32**. It is fast, has better distribution than LCG, and the state can be represented as a single 32-bit integer, making it trivial to serialize in the `GameState`.
+- **Consequences**: We cannot rely on standard `Math.random()`. The random seed state must be carried in the `GameState` and explicitly mutated/advanced during the `gameReducer` when rolls happen.

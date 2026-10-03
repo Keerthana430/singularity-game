@@ -2,13 +2,13 @@
 
 ## Current State
 
-- **Phases completed**: 1 (Architecture & Project Foundations)
+- **Phases completed**: 2 (Game Rules Engine & State)
 - **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest
 - **Planned additions**: Rapier3D-deterministic (dice), Howler.js (audio)
 - **How to run**: `npm install && npm run dev` (frontend on :3000); test renderer at `/test-render`
 - **How to test**: `npm run test` (Vitest configured for jsdom)
 - **Open risks**: R3F + WebGPURenderer postprocessing compatibility untested; Rapier WASM Worker latency TBD; mobile GPU budget unverified
-- **Next phase**: Phase 2 â€” Game Rules Engine & State (board definition, purely deterministic rules)
+- **Next phase**: Phase 3 â€” Prototype: Board, Camera, Dice, Movement, Basic Snake & Ladder
 
 ---
 
@@ -62,3 +62,30 @@
   - No technology chosen merely because it is popular â€” **PASS** â€” each choice justified by existing codebase investment, specific technical requirements, or measured tradeoffs (e.g., Rapier chosen over keyframe for visual variety; XState rejected despite popularity for being overkill)
 - **Known issues**: None
 - **Deferred**: All implementation deferred to Phase 1+
+
+---
+
+## Phase 2: Game Rules Engine & State (2026-10-03)
+
+- **Built**: Complete deterministic rules engine, PRNG, and serialization.
+- **Files created/changed**:
+  - /src/rules/boardDefinition.ts — Board structural definitions and validation logic.
+  - /src/rules/gameReducer.ts — Implemented state machine (rolling, moving, snakes, ladders, finish logic).
+  - /src/rules/seededRng.ts — Implemented Mulberry32 PRNG.
+  - /src/rules/index.ts — Exported rules logic.
+  - /src/state/serialization.ts — Full state serialize/deserialize/replay logic.
+  - /src/state/index.ts — Exported serialization.
+  - /tests/rulesEngine.test.ts — 18 comprehensive tests spanning mechanics, serialization, validation, and fuzzing.
+- **Decisions and assumptions**:
+  - RNG Seed state is tracked inside GameState and re-seeded after each dice roll deterministically using the next generation value.
+  - Used Mulberry32 for PRNG for performance and excellent distribution compared to simple LCGs.
+  - Invalid commands are silently ignored (no-op) rather than throwing, which is standard for Redux-like robust state loops.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - 100% of rule tests pass — **PASS** — 18/18 tests pass.
+  - CLI/test harness can simulate a full game headlessly — **PASS** — 
+pm run test executes fuzz test that plays 1000 games headlessly without UI.
+  - Module imports nothing from rendering/animation/UI — **PASS** — Inspected src/rules and src/state imports.
+- **Known issues**: None.
+- **Deferred**: Phase 3 prototype integration with 3D Canvas.
+
