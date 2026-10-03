@@ -1,27 +1,29 @@
 import type { Metadata } from 'next';
-import { Orbitron, JetBrains_Mono, Noto_Sans_JP } from 'next/font/google';
+import { Fredoka, Zen_Maru_Gothic, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { ToastProvider } from '@/components/Toast';
 import { DeviceNoticeBanner } from '@/components/DeviceNoticeBanner';
 import { SessionSync } from '@/components/auth/SessionSync';
+import { RetroBackground } from '@/components/retro/RetroBackground';
 
-const orbitron = Orbitron({
+const fredoka = Fredoka({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+const zenMaruGothic = Zen_Maru_Gothic({
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-body',
   display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
-  display: 'swap',
-});
-
-const notoSansJP = Noto_Sans_JP({
-  subsets: ['latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-jp',
   display: 'swap',
 });
 
@@ -42,14 +44,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${orbitron.variable} ${jetbrainsMono.variable} ${notoSansJP.variable}`}>
-      {/* body background + grid live in globals.css body::before / ::after */}
-      <body className="antialiased relative font-mono text-[#F0F4F1] bg-[#0A0D0B]">
+    <html lang="en" className={`${fredoka.variable} ${zenMaruGothic.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased relative font-sans text-[#FFF8EE] bg-[#101426]">
+        <RetroBackground />
         <SessionSync />
         <ToastProvider />
         <Navbar />
         <DeviceNoticeBanner />
-        {/* z-index: 1 ensures page content stacks above body::before / ::after background layers */}
+        {/* z-index: 1 ensures page content stacks above background layers */}
         <main className="relative z-[1] min-h-screen">{children}</main>
       </body>
     </html>

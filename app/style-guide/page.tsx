@@ -1,13 +1,12 @@
 'use client';
 // app/style-guide/page.tsx
-// SINGULARITY — Retro-Anime Visual Identity Style Bible
-// Interactive showcase of cel-shading, outlines, typography, faction swatches, and quality tiers.
+// SINGULARITY — Phase 1: Warm Retro-Anime Style Bible & Character Approach Bake-Off
+// Direction Change v2: Cozy space station community, warm palette, rounded forms, and 3-way Character Bake-Off.
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import {
   Shield,
   Crown,
@@ -15,561 +14,583 @@ import {
   Target,
   AlertTriangle,
   Flame,
-  Zap,
-  Eye,
-  Cpu,
-  Layers,
-  Check,
   ChevronLeft,
-  Sun,
-  Moon,
+  Check,
+  Play,
+  Pause,
+  User,
+  Zap,
+  Info,
+  Layers,
+  Palette,
+  Type,
+  Award,
 } from 'lucide-react';
-import { ToonTestModel } from '@/components/retro/ToonTestModel';
-import { AnimeLightingRig, AnimeLightingPreset } from '@/components/retro/ToonShading';
 import {
-  RetroPanel,
-  CRTDisplay,
-  HoloButton,
-  StatDisplay,
-  CyberTypography,
-} from '@/components/retro/RetroComponents';
+  ApproachAToon3D,
+  ApproachBVRMAnime,
+  ApproachCPaperDollSprite,
+  WarmAnimeLightingRig,
+  SpeciesType,
+} from '@/components/retro/CharacterBakeOff';
+import { PaintedBackdropSample } from '@/components/retro/PaintedBackdrop';
 import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
 
 export default function StyleGuidePage() {
-  // 3D Test Model Interactive Controls
-  const [lightingPreset, setLightingPreset] = useState<AnimeLightingPreset>('arena');
-  const [toonSteps, setToonSteps] = useState<2 | 3 | 4>(3);
+  // Bake-off interaction states
+  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesType>('human');
   const [showOutlines, setShowOutlines] = useState(true);
-  const [outlineThickness, setOutlineThickness] = useState(0.035);
-  const [armorColor, setArmorColor] = useState('#1E293B');
-  const [accentColor, setAccentColor] = useState('#00FF66');
-  const [qualityTier, setQualityTier] = useState<'high' | 'medium' | 'low'>('high');
+  const [animated, setAnimated] = useState(true);
+  const [activeApproach, setActiveApproach] = useState<'all' | 'A' | 'B' | 'C'>('all');
 
   return (
-    <div className="min-h-screen bg-[#0A0D0B] text-[#F0F4F1] font-mono p-4 sm:p-8 max-w-7xl mx-auto flex flex-col gap-10">
-      {/* ── HEADER NAVIGATION & BANNER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              href="/"
-              className="text-xs text-white/50 hover:text-[#00FF66] flex items-center gap-1 transition-colors"
-            >
-              <ChevronLeft size={14} />
-              <span>LAUNCHER</span>
-            </Link>
-            <span className="text-white/20">/</span>
-            <span className="text-xs text-[#00FF66] font-bold uppercase tracking-widest">
-              PHASE 1 // STYLE BIBLE
+    <div className="min-h-screen bg-[#101426] text-[#FFF8EE] font-sans p-4 sm:p-8 max-w-7xl mx-auto flex flex-col gap-12">
+      {/* ── TOP NAV BAR & STOP GATE BANNER ── */}
+      <header className="flex flex-col gap-4 border-b border-white/10 pb-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono font-bold text-[#8F97B0] hover:text-[#FFF8EE] hover:bg-white/10 transition-colors"
+          >
+            <ChevronLeft size={14} />
+            <span>RETURN TO DECK</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#00FF66] animate-pulse" />
+            <span className="text-xs font-mono font-bold text-[#00FF66] tracking-widest uppercase">
+              PHASE 1 // CHARACTER BAKE-OFF & STYLE BIBLE
             </span>
           </div>
-          <CyberTypography
-            title="RETRO-ANIME DIRECTION"
-            subTitle="Alternative 1990s Sci-Fi Future Visual Identity Specification"
-            japanese="実験的ビジュアル仕様書"
-            badge="SYS-REV-01"
-          />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="px-3.5 py-1.5 rounded-lg bg-black/60 border border-[#00FF66]/30 text-xs text-[#00FF66] font-bold flex items-center gap-2 shadow-[0_0_12px_rgba(0,255,102,0.2)]">
-            <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
-            <span>BRANCH: retro-anime-direction</span>
+        {/* STOP GATE ALERT */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FF6B35]/20 via-[#FFAA00]/15 to-[#A855F7]/20 border border-[#FFAA00]/40 flex items-start gap-3 shadow-[0_4px_24px_rgba(255,107,53,0.15)]">
+          <div className="p-2 rounded-xl bg-[#FFAA00]/20 text-[#FFAA00] flex-shrink-0 mt-0.5">
+            <AlertTriangle size={20} />
           </div>
-        </div>
-      </div>
-
-      {/* ── SECTION 1: INTERACTIVE 3D TOON MODEL TEST LAB ── */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-[#00FF66] font-bold uppercase tracking-widest block font-mono">
-              // 3D CEL-SHADING & OUTLINE TEST LAB
-            </span>
-            <h3
-              className="text-lg sm:text-xl font-black uppercase text-white tracking-wider"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              TOON SHADING BENCHMARK MODEL
-            </h3>
-          </div>
-          <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 text-xs">
-            {(['high', 'medium', 'low'] as const).map((tier) => (
-              <button
-                key={tier}
-                onClick={() => setQualityTier(tier)}
-                className={`px-3 py-1 rounded-lg uppercase text-[10px] font-bold transition-all ${
-                  qualityTier === tier
-                    ? 'bg-[#00FF66] text-black shadow-[0_0_10px_#00FF66]'
-                    : 'text-white/50 hover:text-white'
-                }`}
-              >
-                {tier} TIER
-              </button>
-            ))}
+            <h2 className="text-sm font-bold tracking-wide text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+              PHASE 1 STOP GATE: CHARACTER APPROACH BAKE-OFF & REVIEW
+            </h2>
+            <p className="text-xs text-[#E5DACB] mt-1 leading-relaxed">
+              Compare the <strong className="text-white">SAME original hero character (&quot;Nova Cadet Kai&quot;)</strong> rendered across all 3 technical approaches below. Test the 5 species, 12fps stepped animation, and outlines. Review our technical evaluation table and select your preferred approach before Phase 2.
+            </p>
           </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: 3D WebGL Canvas Viewport */}
-          <div className="lg:col-span-2 h-[480px] rounded-2xl border border-white/15 bg-[#050906] overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.9)]">
-            {/* Viewport Telemetry Overlay */}
-            <div className="absolute top-3 left-4 right-4 z-10 flex items-center justify-between pointer-events-none text-[10px] font-mono">
-              <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 pointer-events-auto">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
-                <span className="text-white/80 font-bold uppercase">MeshToonMaterial + Outlines</span>
-              </div>
-              <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-white/50 pointer-events-auto">
-                <span>LIGHTING: {lightingPreset.toUpperCase()}</span>
-                <span>•</span>
-                <span>{toonSteps}-TONE STEPS</span>
-              </div>
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 1: THE CHARACTER APPROACH BAKE-OFF (3D CANVAS SHOWCASE)
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#38BDF8] text-[10px] font-mono font-bold uppercase">
+                HERO BENCHMARK: NOVA CADET KAI
+              </span>
+              <span className="text-xs text-[#8F97B0] font-mono">12FPS ON-TWOS</span>
             </div>
-
-            <WebGLErrorBoundary fallbackTitle="StyleGuideToonViewer">
-              <Canvas
-                shadows={qualityTier !== 'low'}
-                dpr={qualityTier === 'high' ? [1, 2] : qualityTier === 'medium' ? 1.5 : 1}
-                camera={{ position: [0, 1.2, 3.8], fov: 42 }}
-                className="w-full h-full"
-              >
-                {/* Dedicated Anime 3-Point + Colored Rim Lighting Rig */}
-                <AnimeLightingRig
-                  preset={lightingPreset}
-                  rimIntensity={qualityTier === 'low' ? 1.8 : 2.8}
-                  keyIntensity={2.8}
-                />
-
-                {/* Benchmark Cel-Shaded Anime Model */}
-                <ToonTestModel
-                  outlineThickness={outlineThickness}
-                  toonSteps={toonSteps}
-                  armorColor={armorColor}
-                  accentColor={accentColor}
-                  showOutlines={showOutlines && qualityTier !== 'low'}
-                />
-
-                {/* Soft Contact Shadow beneath pedestal */}
-                {qualityTier !== 'low' && (
-                  <ContactShadows
-                    position={[0, -1.25, 0]}
-                    opacity={0.65}
-                    scale={5}
-                    blur={1.5}
-                    far={3}
-                  />
-                )}
-
-                {/* Controlled Anime Post-Processing */}
-                {qualityTier === 'high' && (
-                  <EffectComposer multisampling={4}>
-                    <Bloom
-                      luminanceThreshold={0.85}
-                      luminanceSmoothing={0.2}
-                      intensity={0.4}
-                    />
-                  </EffectComposer>
-                )}
-
-                <OrbitControls
-                  enablePan={false}
-                  minDistance={2.0}
-                  maxDistance={8.0}
-                  maxPolarAngle={Math.PI / 2 + 0.1}
-                />
-              </Canvas>
-            </WebGLErrorBoundary>
-
-            {/* Instruction tooltip */}
-            <div className="absolute bottom-3 left-4 z-10 text-[10px] font-mono text-white/40 pointer-events-none">
-              <span>DRAG TO ORBIT • SCROLL TO ZOOM</span>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-wide mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+              Character Architecture Bake-Off
+            </h1>
           </div>
 
-          {/* Right: Live Tuning Controls for Toon Shading */}
-          <RetroPanel title="TOON SHADING CONTROLS" tag="PARAM // TUNE" variant="default" className="flex flex-col gap-4">
-            {/* 1. Lighting Rig Preset */}
-            <div>
-              <label className="text-[10px] text-white/50 uppercase tracking-widest block mb-1.5 font-bold">
-                Anime Lighting Preset
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['arena', 'tabletop', 'mountain', 'runway'] as AnimeLightingPreset[]).map((pr) => (
-                  <button
-                    key={pr}
-                    onClick={() => setLightingPreset(pr)}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-between ${
-                      lightingPreset === pr
-                        ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.4)]'
-                        : 'bg-white/5 hover:bg-white/10 text-white/70'
-                    }`}
-                  >
-                    <span>{pr}</span>
-                    {lightingPreset === pr && <Check size={12} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Discrete Cel Shading Bands (Steps) */}
-            <div>
-              <label className="text-[10px] text-white/50 uppercase tracking-widest block mb-1.5 font-bold">
-                Stepped Cel Bands (GradientMap)
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {([2, 3, 4] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setToonSteps(st)}
-                    className={`py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                      toonSteps === st
-                        ? 'bg-[#00E5FF] text-black shadow-[0_0_12px_rgba(0,229,255,0.4)]'
-                        : 'bg-white/5 hover:bg-white/10 text-white/70'
-                    }`}
-                  >
-                    {st}-Tone
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Ink Outline Controls */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] text-white/50 uppercase tracking-widest font-bold">
-                  Ink Outlines (Drei &lt;Outlines&gt;)
-                </label>
+          {/* Interactive Controls Bar */}
+          <div className="flex items-center gap-2 flex-wrap bg-[#181D33] p-1.5 rounded-2xl border border-white/10">
+            {/* View Mode Selector */}
+            <div className="flex items-center gap-1 bg-black/30 p-1 rounded-xl">
+              {(['all', 'A', 'B', 'C'] as const).map((mode) => (
                 <button
-                  onClick={() => setShowOutlines(!showOutlines)}
-                  className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
-                    showOutlines ? 'bg-[#00FF66]/20 text-[#00FF66]' : 'bg-red-500/20 text-red-400'
+                  key={mode}
+                  onClick={() => setActiveApproach(mode)}
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                    activeApproach === mode
+                      ? 'bg-[#FF6B35] text-white shadow-[0_0_12px_rgba(255,107,53,0.5)]'
+                      : 'text-[#8F97B0] hover:text-white'
                   }`}
                 >
-                  {showOutlines ? 'Active' : 'Muted'}
+                  {mode === 'all' ? 'SIDE-BY-SIDE (ALL 3)' : `APPROACH ${mode}`}
                 </button>
-              </div>
-              <input
-                type="range"
-                min="0.01"
-                max="0.08"
-                step="0.005"
-                value={outlineThickness}
-                onChange={(e) => setOutlineThickness(parseFloat(e.target.value))}
-                className="w-full accent-[#00FF66]"
-                disabled={!showOutlines}
-              />
-              <div className="flex justify-between text-[9px] text-white/40 font-mono mt-0.5">
-                <span>Hairline (0.01)</span>
-                <span>Width: {outlineThickness}</span>
-                <span>Bold Anime (0.08)</span>
-              </div>
+              ))}
             </div>
 
-            {/* 4. Swatch Palette Tester */}
-            <div>
-              <label className="text-[10px] text-white/50 uppercase tracking-widest block mb-1.5 font-bold">
-                Armor Chassis Tone
-              </label>
-              <div className="flex items-center gap-2">
-                {[
-                  { label: 'Slate', hex: '#1E293B' },
-                  { label: 'Charcoal', hex: '#0F1713' },
-                  { label: 'Mecha White', hex: '#E2E8F0' },
-                  { label: 'Cobalt', hex: '#1E3A8A' },
-                  { label: 'Crimson', hex: '#881337' },
-                ].map((sw) => (
-                  <button
-                    key={sw.hex}
-                    onClick={() => setArmorColor(sw.hex)}
-                    style={{ backgroundColor: sw.hex }}
-                    className={`w-7 h-7 rounded-lg border-2 transition-transform ${
-                      armorColor === sw.hex ? 'border-[#00FF66] scale-110 shadow-lg' : 'border-white/20'
-                    }`}
-                    title={sw.label}
-                  />
-                ))}
-              </div>
+            {/* Species Selector */}
+            <div className="flex items-center gap-1 pl-2 border-l border-white/10">
+              <span className="text-[10px] font-mono text-[#8F97B0] uppercase mr-1">Species:</span>
+              {(['human', 'elf', 'cyborg', 'fairy', 'dwarf'] as SpeciesType[]).map((sp) => (
+                <button
+                  key={sp}
+                  onClick={() => setSelectedSpecies(sp)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold capitalize transition-all ${
+                    selectedSpecies === sp
+                      ? 'bg-[#38BDF8] text-black font-extrabold shadow-[0_0_10px_rgba(56,189,248,0.4)]'
+                      : 'text-[#8F97B0] hover:text-white bg-white/5'
+                  }`}
+                >
+                  {sp}
+                </button>
+              ))}
             </div>
 
-            {/* 5. Energy Core Color */}
-            <div>
-              <label className="text-[10px] text-white/50 uppercase tracking-widest block mb-1.5 font-bold">
-                Singularity Core Accent
-              </label>
-              <div className="flex items-center gap-2">
-                {[
-                  { label: 'Brand Green', hex: '#00FF66' },
-                  { label: 'Cyan', hex: '#00E5FF' },
-                  { label: 'Gold', hex: '#FFD600' },
-                  { label: 'Magenta', hex: '#D946EF' },
-                  { label: 'Violet', hex: '#8B5CF6' },
-                ].map((sw) => (
-                  <button
-                    key={sw.hex}
-                    onClick={() => setAccentColor(sw.hex)}
-                    style={{ backgroundColor: sw.hex }}
-                    className={`w-7 h-7 rounded-lg border-2 transition-transform ${
-                      accentColor === sw.hex ? 'border-white scale-110 shadow-lg' : 'border-white/20'
-                    }`}
-                    title={sw.label}
-                  />
-                ))}
-              </div>
-            </div>
-          </RetroPanel>
+            {/* Animation Toggle */}
+            <button
+              onClick={() => setAnimated(!animated)}
+              className={`p-1.5 rounded-xl border transition-all ${
+                animated
+                  ? 'bg-[#00FF66]/20 border-[#00FF66]/50 text-[#00FF66]'
+                  : 'bg-white/5 border-white/10 text-[#8F97B0]'
+              }`}
+              title={animated ? 'Pause 12fps animation' : 'Play 12fps animation'}
+            >
+              {animated ? <Pause size={14} /> : <Play size={14} />}
+            </button>
+
+            {/* Outline Toggle */}
+            <button
+              onClick={() => setShowOutlines(!showOutlines)}
+              className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold border transition-all ${
+                showOutlines
+                  ? 'bg-[#FFAA00]/20 border-[#FFAA00]/50 text-[#FFAA00]'
+                  : 'bg-white/5 border-white/10 text-[#8F97B0]'
+              }`}
+            >
+              INK OUTLINES: {showOutlines ? 'ON' : 'OFF'}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* ── SECTION 2: FACTION COLOR-BLIND & SYSTEM COMPARISON ── */}
-      <div className="flex flex-col gap-4">
+        {/* 3D Multi-Model Stage */}
+        <div className="relative w-full h-[520px] rounded-3xl border border-white/15 bg-gradient-to-b from-[#151930] via-[#12162B] to-[#0D1020] overflow-hidden shadow-[0_8px_36px_rgba(0,0,0,0.8)]">
+          {/* Viewport Labels Overlay */}
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none text-xs font-mono">
+            {activeApproach === 'all' ? (
+              <div className="grid grid-cols-3 w-full gap-4 text-center">
+                <div className="bg-[#181D33]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[#38BDF8] font-bold shadow-md">
+                  A: SMOOTH TOON 3D (CODE)
+                </div>
+                <div className="bg-[#181D33]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[#A855F7] font-bold shadow-md">
+                  B: VRM / GLTF HUMANOID
+                </div>
+                <div className="bg-[#181D33]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[#FF6B35] font-bold shadow-md">
+                  C: LAYERED 2D PAPER-DOLL
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#181D33]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-white font-bold">
+                VIEWING APPROACH {activeApproach}
+              </div>
+            )}
+          </div>
+
+          {/* 3D Canvas */}
+          <WebGLErrorBoundary fallbackTitle="Character Bake-Off Canvas Error">
+            <Canvas
+              shadows
+              camera={{ position: [0, 0.4, 3.8], fov: 42 }}
+              className="w-full h-full cursor-grab active:cursor-grabbing"
+            >
+              <WarmAnimeLightingRig />
+
+              {/* Models layout based on activeApproach */}
+              {activeApproach === 'all' && (
+                <>
+                  {/* Model A: Smooth Toon 3D (Left) */}
+                  <group position={[-1.4, 0, 0]}>
+                    <ApproachAToon3D
+                      species={selectedSpecies}
+                      showOutlines={showOutlines}
+                      animated={animated}
+                    />
+                  </group>
+
+                  {/* Model B: VRM Anime Humanoid (Center) */}
+                  <group position={[0, 0, 0]}>
+                    <ApproachBVRMAnime
+                      species={selectedSpecies}
+                      showOutlines={showOutlines}
+                      animated={animated}
+                    />
+                  </group>
+
+                  {/* Model C: Layered 2D Paper-Doll Sprite (Right) */}
+                  <group position={[1.4, 0, 0]}>
+                    <ApproachCPaperDollSprite
+                      species={selectedSpecies}
+                      animated={animated}
+                    />
+                  </group>
+                </>
+              )}
+
+              {activeApproach === 'A' && (
+                <group position={[0, 0, 0]}>
+                  <ApproachAToon3D
+                    species={selectedSpecies}
+                    showOutlines={showOutlines}
+                    animated={animated}
+                  />
+                </group>
+              )}
+
+              {activeApproach === 'B' && (
+                <group position={[0, 0, 0]}>
+                  <ApproachBVRMAnime
+                    species={selectedSpecies}
+                    showOutlines={showOutlines}
+                    animated={animated}
+                  />
+                </group>
+              )}
+
+              {activeApproach === 'C' && (
+                <group position={[0, 0, 0]}>
+                  <ApproachCPaperDollSprite
+                    species={selectedSpecies}
+                    animated={animated}
+                  />
+                </group>
+              )}
+
+              {/* Floor contact shadows */}
+              <ContactShadows
+                position={[0, -0.92, 0]}
+                opacity={0.65}
+                scale={6}
+                blur={1.8}
+                far={2}
+                color="#0A0D18"
+              />
+
+              <OrbitControls
+                enableZoom={true}
+                minDistance={1.8}
+                maxDistance={6.0}
+                maxPolarAngle={Math.PI / 2 + 0.05}
+                enablePan={false}
+              />
+            </Canvas>
+          </WebGLErrorBoundary>
+        </div>
+
+        {/* ── TECHNICAL EVALUATION MATRIX TABLE ── */}
+        <div className="overflow-x-auto rounded-2xl border border-white/15 bg-[#181D33]/60 backdrop-blur-md p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Award className="text-[#FFAA00]" size={18} />
+            <h3 className="text-base font-bold tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+              Technical Architecture Evaluation Matrix
+            </h3>
+          </div>
+
+          <table className="w-full text-left text-xs font-mono border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-[#8F97B0]">
+                <th className="py-3 px-4 font-bold uppercase tracking-wider">Evaluation Criteria</th>
+                <th className="py-3 px-4 font-bold text-[#38BDF8] uppercase tracking-wider">A) Smooth Toon 3D (Code)</th>
+                <th className="py-3 px-4 font-bold text-[#A855F7] uppercase tracking-wider">B) VRM / GLTF Humanoid</th>
+                <th className="py-3 px-4 font-bold text-[#FF6B35] uppercase tracking-wider">C) Layered 2D Paper-Doll</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-[#E5DACB]">
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">Baseline Performance & FPS</td>
+                <td className="py-3 px-4 text-[#00FF66] font-bold">60 FPS (Lightweight geometry, 18-24 draw calls)</td>
+                <td className="py-3 px-4 text-amber-300">52-58 FPS (Bone matrices, skinning CPU overhead)</td>
+                <td className="py-3 px-4 text-[#00FF66] font-bold">60 FPS (Sub-millisecond, 6 plane draw calls)</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">5 Species Customization Support</td>
+                <td className="py-3 px-4 text-[#00FF66]">100% (Instant code mesh swapping for ears, horns, wings)</td>
+                <td className="py-3 px-4 text-amber-300">Moderate (Requires separate rigged 3D models per species)</td>
+                <td className="py-3 px-4 text-[#00FF66]">100% (Seamless 2D layer swapping directly via store)</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">Weapons & Equipment Attachment</td>
+                <td className="py-3 px-4 text-[#00FF66]">Native socket parenting in 3D space with shadows</td>
+                <td className="py-3 px-4 text-[#00FF66]">Rigged hand bone attachments</td>
+                <td className="py-3 px-4 text-amber-300">Layered 2D sprite planes (limited 3D rotation)</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">Animation & Expressiveness</td>
+                <td className="py-3 px-4 text-[#00FF66]">Stepped 12fps squash-and-stretch + procedural rotation</td>
+                <td className="py-3 px-4 text-[#00FF66]">Skeletal blendshapes, facial morphs, spring bones</td>
+                <td className="py-3 px-4 text-[#00FF66]">100% authentic hand-drawn 80s/90s cel frame charm</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">Implementation Effort</td>
+                <td className="py-3 px-4 text-[#00FF66] font-bold">Low-Medium (100% procedural, no external modeling)</td>
+                <td className="py-3 px-4 text-red-400">High (External 3D asset modeling, rigging, file sizes)</td>
+                <td className="py-3 px-4 text-[#00FF66] font-bold">Low (Direct integration with existing store)</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-white">&quot;How Anime It Looks&quot;</td>
+                <td className="py-3 px-4 text-[#38BDF8]">Very high (Ghibli/Switch 2 rounded cel-shaded 3D)</td>
+                <td className="py-3 px-4 text-[#A855F7]">High (Modern VTuber / 3D anime game look)</td>
+                <td className="py-3 px-4 text-[#FF6B35] font-bold">Maximum (Genuine 80s/90s OVA hand-painted feel)</td>
+              </tr>
+              <tr className="bg-white/5 font-bold">
+                <td className="py-4 px-4 text-white">RECOMMENDATION</td>
+                <td className="py-4 px-4 text-[#38BDF8] font-bold">RECOMMENDED FOR ARENA / 3D BOARDS</td>
+                <td className="py-4 px-4 text-[#8F97B0]">Alternative for standalone 3D files</td>
+                <td className="py-4 px-4 text-[#FF6B35] font-bold">RECOMMENDED FOR HUD / DIALOG / 2.5D</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Detailed Recommendation Note */}
+          <div className="mt-4 p-4 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 flex items-start gap-3">
+            <Info size={18} className="text-[#00FF66] flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-[#E5DACB] leading-relaxed">
+              <strong className="text-[#00FF66]">Engine Recommendation: Approach A (Smooth Toon 3D in Code)</strong> is the optimal solution for all 3D game scenes (Arena Colosseum, Ludo board, Snakes Elevator). It provides complete 360° perspective freedom, true shadow casting, zero external asset licensing friction, solid 60 FPS performance, and full programmatic support for all 5 species. We can pair it with <strong>Approach C</strong> for 2D character portrait reaction dialogues!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 2: PAINTED BACKDROP SAMPLE (80s/90s ANIME SKY & LOUNGE)
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-4">
         <div>
-          <span className="text-[10px] text-[#00FF66] font-bold uppercase tracking-widest block font-mono">
-            // PALETTE VALIDATION & COLLISION CHECK
-          </span>
-          <h3
-            className="text-lg sm:text-xl font-black uppercase text-white tracking-wider"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            FACTION PALETTES VS SYSTEM ALERTS
-          </h3>
-          <p className="text-xs text-white/60 mt-1 max-w-3xl">
-            Direct side-by-side verification: Four distinct Ludo factions (each with a unique geometric shape/icon)
-            checked against system Brand Green, Warning Amber, and Danger Vermillion to guarantee zero visual collisions.
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-[#A855F7]/20 border border-[#A855F7]/40 text-[#A855F7] text-[10px] font-mono font-bold uppercase">
+              ATMOSPHERIC WORLD-BUILDING
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-wide mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Painted Backdrop Sample: Station Observation Lounge
+          </h2>
+          <p className="text-xs text-[#8F97B0] mt-0.5">
+            Lived-in cozy station interior overlooking the cosmic nebula, crescent sapphire planet, and dawn terminator city lights.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Faction 1: Cobalt Vanguard */}
-          <RetroPanel variant="default" className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-[#2962FF] font-mono">FACTION #01</span>
-              <Shield size={18} className="text-[#2962FF]" />
-            </div>
-            <div className="h-10 rounded-lg bg-[#2962FF] flex items-center justify-center font-black text-white text-xs shadow-[0_0_15px_rgba(41,98,255,0.4)]">
-              #2962FF
-            </div>
-            <h4 className="text-sm font-black uppercase text-white">COBALT VANGUARD</h4>
-            <span className="text-[10px] font-mono text-white/50">Silhouette: Hexagon Aegis Shield 🛡️</span>
-            <span className="text-[9px] font-mono text-[#2962FF] bg-[#2962FF]/10 px-2 py-0.5 rounded border border-[#2962FF]/30 w-fit">
-              Ultramarine Blue
-            </span>
-          </RetroPanel>
+        <PaintedBackdropSample />
+      </section>
 
-          {/* Faction 2: Solar Aureolin */}
-          <RetroPanel variant="default" className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-[#FFD600] font-mono">FACTION #02</span>
-              <Crown size={18} className="text-[#FFD600]" />
-            </div>
-            <div className="h-10 rounded-lg bg-[#FFD600] flex items-center justify-center font-black text-black text-xs shadow-[0_0_15px_rgba(255,214,0,0.4)]">
-              #FFD600
-            </div>
-            <h4 className="text-sm font-black uppercase text-white">SOLAR AUREOLIN</h4>
-            <span className="text-[10px] font-mono text-white/50">Silhouette: Triangle Solar Crown 👑</span>
-            <span className="text-[9px] font-mono text-[#FFD600] bg-[#FFD600]/10 px-2 py-0.5 rounded border border-[#FFD600]/30 w-fit">
-              Yellow-Gold (Distinct from Amber)
-            </span>
-          </RetroPanel>
-
-          {/* Faction 3: Astral Void */}
-          <RetroPanel variant="default" className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-[#8B5CF6] font-mono">FACTION #03</span>
-              <Sparkles size={18} className="text-[#8B5CF6]" />
-            </div>
-            <div className="h-10 rounded-lg bg-[#8B5CF6] flex items-center justify-center font-black text-white text-xs shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-              #8B5CF6
-            </div>
-            <h4 className="text-sm font-black uppercase text-white">ASTRAL VOID</h4>
-            <span className="text-[10px] font-mono text-white/50">Silhouette: Diamond Quantum Prism 💎</span>
-            <span className="text-[9px] font-mono text-[#8B5CF6] bg-[#8B5CF6]/10 px-2 py-0.5 rounded border border-[#8B5CF6]/30 w-fit">
-              Deep Neon Violet
-            </span>
-          </RetroPanel>
-
-          {/* Faction 4: Crimson Nova */}
-          <RetroPanel variant="default" className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-[#F43F5E] font-mono">FACTION #04</span>
-              <Target size={18} className="text-[#F43F5E]" />
-            </div>
-            <div className="h-10 rounded-lg bg-[#F43F5E] flex items-center justify-center font-black text-white text-xs shadow-[0_0_15px_rgba(244,63,94,0.4)]">
-              #F43F5E
-            </div>
-            <h4 className="text-sm font-black uppercase text-white">CRIMSON NOVA</h4>
-            <span className="text-[10px] font-mono text-white/50">Silhouette: Target Crosshair 🎯</span>
-            <span className="text-[9px] font-mono text-[#F43F5E] bg-[#F43F5E]/10 px-2 py-0.5 rounded border border-[#F43F5E]/30 w-fit">
-              Coral Berry (Non-Vermillion)
-            </span>
-          </RetroPanel>
-        </div>
-
-        {/* System Reference Colors Row (The Strict Boundary Checks) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl border border-white/10 bg-black/40">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#00FF66] flex-shrink-0 shadow-[0_0_12px_#00FF66]" />
-            <div>
-              <span className="text-xs font-black uppercase text-[#00FF66] block">BRAND SYSTEM GREEN (#00FF66)</span>
-              <span className="text-[10px] text-white/50">Active states, nav indicator, primary CTA</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#FF9900] flex-shrink-0 shadow-[0_0_12px_#FF9900]" />
-            <div>
-              <span className="text-xs font-black uppercase text-[#FF9900] block">WARNING AMBER (#FF9900)</span>
-              <span className="text-[10px] text-white/50">Reserved exclusively for cautions & cooldowns</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#FF2233] flex-shrink-0 shadow-[0_0_12px_#FF2233]" />
-            <div>
-              <span className="text-xs font-black uppercase text-[#FF2233] block">DANGER VERMILLION (#FF2233)</span>
-              <span className="text-[10px] text-white/50">Reserved exclusively for damage, hits, elimination</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── SECTION 3: TYPOGRAPHY HIERARCHY & JAPANESE GLYPH VERIFICATION ── */}
-      <div className="flex flex-col gap-4">
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 3: WARM RETRO PALETTE & FACTION COLLISION PROOF
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-6">
         <div>
-          <span className="text-[10px] text-[#00FF66] font-bold uppercase tracking-widest block font-mono">
-            // TYPOGRAPHY SPECIFICATION (SIL OFL 1.1)
-          </span>
-          <h3
-            className="text-lg sm:text-xl font-black uppercase text-white tracking-wider"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            TYPE SCALE & JAPANESE TELEMETRY
-          </h3>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-[#FF6B35]/20 border border-[#FF6B35]/40 text-[#FF6B35] text-[10px] font-mono font-bold uppercase">
+              COLOR BIBLE & HIERARCHY
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-wide mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Warm Saturated Palette & Faction Shapes
+          </h2>
+          <p className="text-xs text-[#8F97B0] mt-0.5">
+            Deep-space blues with warm practical amber lights. The 4 Ludo factions are assigned unique hues and distinct geometric silhouettes, completely isolated from System Danger and Warning.
+          </p>
+        </div>
+
+        {/* Side-by-side Swatches Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Faction 1: Cerulean Sky */}
+          <div className="p-4 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#8F97B0]">FACTION 01</span>
+              <Shield size={16} className="text-[#38BDF8]" />
+            </div>
+            <div className="h-16 rounded-xl bg-[#38BDF8] flex items-center justify-center shadow-[0_0_16px_rgba(56,189,248,0.4)]">
+              <span className="text-black font-extrabold text-xs font-mono">#38BDF8</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+                Cerulean Sky
+              </h4>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Hexagon Aegis 🛡️</p>
+            </div>
+          </div>
+
+          {/* Faction 2: Solar Gold */}
+          <div className="p-4 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#8F97B0]">FACTION 02</span>
+              <Crown size={16} className="text-[#FFC700]" />
+            </div>
+            <div className="h-16 rounded-xl bg-[#FFC700] flex items-center justify-center shadow-[0_0_16px_rgba(255,199,0,0.4)]">
+              <span className="text-black font-extrabold text-xs font-mono">#FFC700</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+                Solar Gold
+              </h4>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Crown Star 👑</p>
+            </div>
+          </div>
+
+          {/* Faction 3: Cosmic Violet */}
+          <div className="p-4 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#8F97B0]">FACTION 03</span>
+              <Sparkles size={16} className="text-[#A855F7]" />
+            </div>
+            <div className="h-16 rounded-xl bg-[#A855F7] flex items-center justify-center shadow-[0_0_16px_rgba(168,85,247,0.4)]">
+              <span className="text-white font-extrabold text-xs font-mono">#A855F7</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+                Cosmic Violet
+              </h4>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Diamond Prism 💎</p>
+            </div>
+          </div>
+
+          {/* Faction 4: Tangerine Coral */}
+          <div className="p-4 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#8F97B0]">FACTION 04</span>
+              <Target size={16} className="text-[#FF6B4A]" />
+            </div>
+            <div className="h-16 rounded-xl bg-[#FF6B4A] flex items-center justify-center shadow-[0_0_16px_rgba(255,107,74,0.4)]">
+              <span className="text-black font-extrabold text-xs font-mono">#FF6B4A</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+                Tangerine Coral
+              </h4>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Comet Crosshair 🎯</p>
+            </div>
+          </div>
+        </div>
+
+        {/* System Alert & Brand Comparison (Zero Clash Check) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-[#15192E] border border-white/10">
+          {/* Brand Accent */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-[#00FF66]/30">
+            <div className="w-10 h-10 rounded-lg bg-[#00FF66] flex-shrink-0 shadow-[0_0_12px_#00FF66]" />
+            <div>
+              <div className="text-[10px] font-mono text-[#00FF66] font-bold uppercase tracking-wider">
+                SIGNATURE BRAND ACCENT (#00FF66)
+              </div>
+              <div className="text-xs text-[#E5DACB]">Reserved for active tabs, selection rings, logo pip.</div>
+            </div>
+          </div>
+
+          {/* Warning Alert */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-[#FF9500]/30">
+            <div className="w-10 h-10 rounded-lg bg-[#FF9500] flex-shrink-0 shadow-[0_0_12px_#FF9500]" />
+            <div>
+              <div className="text-[10px] font-mono text-[#FF9500] font-bold uppercase tracking-wider">
+                SYSTEM WARNING (#FF9500)
+              </div>
+              <div className="text-xs text-[#E5DACB]">Reserved for hazards, cooldowns & caution states.</div>
+            </div>
+          </div>
+
+          {/* Danger Alert */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-[#FF3B30]/30">
+            <div className="w-10 h-10 rounded-lg bg-[#FF3B30] flex-shrink-0 shadow-[0_0_12px_#FF3B30]" />
+            <div>
+              <div className="text-[10px] font-mono text-[#FF3B30] font-bold uppercase tracking-wider">
+                SYSTEM DANGER (#FF3B30)
+              </div>
+              <div className="text-xs text-[#E5DACB]">Reserved for combat hits, low HP & defeat alerts.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 4: TWO CHOSEN FONTS & LICENSING
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] text-[10px] font-mono font-bold uppercase">
+              TYPOGRAPHY & LICENSING
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-wide mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Chosen Fonts & Glyph Coverage Confirmation
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <RetroPanel title="DISPLAY & MONOSPACE SCALE" tag="OFL 1.1" variant="default" className="flex flex-col gap-4">
-            <div>
-              <span className="text-[10px] text-white/40 block">Display Hero (Orbitron 900)</span>
-              <h1 className="text-3xl sm:text-4xl font-black uppercase text-white tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
-                SINGULARITY 08
-              </h1>
+          {/* Font 1: Fredoka */}
+          <div className="p-6 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#FF6B35]">DISPLAY & BUTTONS</span>
+              <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 rounded text-white/70">
+                SIL OFL 1.1 LICENSE
+              </span>
             </div>
-
-            <div>
-              <span className="text-[10px] text-white/40 block">Section Header H2 (Orbitron 700)</span>
-              <h2 className="text-xl font-bold uppercase text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                COLOSSEUM COMBAT PROTOCOL
-              </h2>
-            </div>
-
-            <div>
-              <span className="text-[10px] text-white/40 block">Technical Monospace (JetBrains Mono)</span>
-              <p className="text-xs text-white/80 font-mono">
-                ARMOR_INTEGRITY: 850/900 HP &bull; COOLDOWN: 2T &bull; BUFFER: OK
-              </p>
-            </div>
-          </RetroPanel>
-
-          <RetroPanel title="JAPANESE TECHNICAL LABELS" tag="Noto Sans JP" variant="default" className="flex flex-col gap-3">
-            <p className="text-xs text-white/60">
-              Verified military/sci-fi Japanese status glyphs used in machine annotations:
+            <h3 className="text-2xl font-bold text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+              Fredoka (Rounded Retro Display)
+            </h3>
+            <p className="text-xs text-[#8F97B0] leading-relaxed">
+              Warm, playful, highly legible rounded anime typography. Conveys the friendly Switch 2 cosmic adventure spirit.
             </p>
-
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">システム稼働</span>
-                <span className="text-[10px] text-[#00FF66]">System Online</span>
-              </div>
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">戦闘準備完了</span>
-                <span className="text-[10px] text-[#00FF66]">Combat Ready</span>
-              </div>
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">防護隔壁展開</span>
-                <span className="text-[10px] text-cyan-400">Barrier Shield</span>
-              </div>
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">臨界過負荷</span>
-                <span className="text-[10px] text-amber-400">Overdrive</span>
-              </div>
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">緊急修復中</span>
-                <span className="text-[10px] text-rose-400">Medbay Regen</span>
-              </div>
-              <div className="p-2 rounded bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="font-bold text-white font-jp">標的捕捉</span>
-                <span className="text-[10px] text-violet-400">Target Lock</span>
-              </div>
+            <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-sm font-bold text-white tracking-wide">
+              SINGULARITY // ORBITAL COLOSSEUM // TOURNAMENT READY
             </div>
-          </RetroPanel>
-        </div>
-      </div>
+          </div>
 
-      {/* ── SECTION 4: REUSABLE HARDWARE COMPONENTS SHOWCASE ── */}
-      <div className="flex flex-col gap-4">
+          {/* Font 2: Zen Maru Gothic */}
+          <div className="p-6 rounded-2xl bg-[#181D33] border border-white/10 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-[#38BDF8]">BODY & JAPANESE TELEMETRY</span>
+              <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 rounded text-white/70">
+                SIL OFL 1.1 LICENSE
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-[#FFF8EE]" style={{ fontFamily: 'var(--font-body)' }}>
+              Zen Maru Gothic (丸ゴシック)
+            </h3>
+            <p className="text-xs text-[#8F97B0] leading-relaxed">
+              Authentic rounded Japanese anime font with full coverage of Hiragana, Katakana, and Kanji characters.
+            </p>
+            <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-sm font-bold text-[#38BDF8] tracking-wide" style={{ fontFamily: 'var(--font-body)' }}>
+              軌道コロシアム // 準備完了 // 推進力全開 // 標的捕捉
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 5: PLAYFUL SQUASH-AND-STRETCH BUTTONS
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-4">
         <div>
-          <span className="text-[10px] text-[#00FF66] font-bold uppercase tracking-widest block font-mono">
-            // COMPONENT SPECIFICATION
-          </span>
-          <h3
-            className="text-lg sm:text-xl font-black uppercase text-white tracking-wider"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            TACTILE MACHINE CONTROLS & GAUGES
-          </h3>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-[#FFAA00]/20 border border-[#FFAA00]/40 text-[#FFAA00] text-[10px] font-mono font-bold uppercase">
+              INTERACTION DYNAMICS
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-wide mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Playful Rounded Components & Bouncy States
+          </h2>
+          <p className="text-xs text-[#8F97B0]">
+            Childlike charm with squash-and-stretch on hover and active clicks.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Button States */}
-          <RetroPanel title="HOLO BUTTON SUITE" tag="TACTILE" variant="default" className="flex flex-col gap-3">
-            <HoloButton variant="primary" size="md">
-              Primary System Action
-            </HoloButton>
-            <HoloButton variant="cyan" size="md">
-              Tactical Analysis
-            </HoloButton>
-            <HoloButton variant="gold" size="md">
-              Victory Claim
-            </HoloButton>
-            <HoloButton variant="danger" size="md">
-              Emergency Override
-            </HoloButton>
-            <HoloButton variant="secondary" size="md" disabled>
-              Locked Protocol (Disabled)
-            </HoloButton>
-          </RetroPanel>
-
-          {/* CRT Data Screen */}
-          <CRTDisplay statusLabel="DIAGNOSTICS" className="h-full flex flex-col justify-between">
-            <div className="flex flex-col gap-2 font-mono text-xs">
-              <p className="text-[#00FF66] leading-snug">
-                &gt; INITIATING RETRO-ANIME GRAPHICS PIPELINE...
-              </p>
-              <p className="text-white/70 leading-snug">
-                &gt; STEPPED GRADIENT MAP: 3-TONE LOADED.
-              </p>
-              <p className="text-white/70 leading-snug">
-                &gt; INK CONTOUR OUTLINES: ACTIVE (0.035).
-              </p>
-              <p className="text-cyan-300 leading-snug">
-                &gt; RIM ILLUMINATION: BACKLIGHT SYNCHRONIZED.
-              </p>
-            </div>
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40">
-              <span>STATUS: NOMINAL</span>
-              <span className="text-[#00FF66]">READY FOR PHASE 2</span>
-            </div>
-          </CRTDisplay>
-
-          {/* Telemetry Stat Gauges */}
-          <RetroPanel title="TELEMETRY GAUGES" tag="METRICS" variant="brand" className="flex flex-col gap-4">
-            <StatDisplay label="CHASSIS INTEGRITY (HP)" value={850} max={900} color="#00FF66" unit=" HP" />
-            <StatDisplay label="OVERDRIVE ENERGY" value={78} max={100} color="#FFD600" unit="%" />
-            <StatDisplay label="TACTICAL SHIELD BARRIER" value={92} max={100} color="#00E5FF" unit="%" />
-            <StatDisplay label="SYSTEM CORE THERMAL" value={34} max={100} color="#F43F5E" unit="°C" />
-          </RetroPanel>
+        <div className="flex items-center gap-4 flex-wrap p-6 rounded-2xl bg-[#181D33] border border-white/10">
+          <button className="px-6 py-3 rounded-2xl bg-[#FF6B35] hover:bg-[#FF8A3D] active:scale-95 transition-all text-white font-bold text-sm tracking-wide shadow-[0_4px_16px_rgba(255,107,53,0.4)]" style={{ fontFamily: 'var(--font-display)' }}>
+            PLAY MATCH 🚀
+          </button>
+          <button className="px-6 py-3 rounded-2xl bg-[#38BDF8] hover:bg-[#60A5FA] active:scale-95 transition-all text-black font-extrabold text-sm tracking-wide shadow-[0_4px_16px_rgba(56,189,248,0.4)]" style={{ fontFamily: 'var(--font-display)' }}>
+            ROLL QUANTUM DICE 🎲
+          </button>
+          <button className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-[#FFF8EE] border border-white/15 font-bold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
+            STATION LOUNGE ☕
+          </button>
         </div>
-      </div>
+      </section>
+
+      {/* FOOTER CALL-TO-ACTION FOR USER REVIEW */}
+      <footer className="mt-8 p-6 rounded-3xl bg-gradient-to-r from-[#181D33] via-[#202742] to-[#181D33] border border-[#FFAA00]/30 text-center flex flex-col items-center gap-2 shadow-xl">
+        <span className="w-3 h-3 rounded-full bg-[#FFAA00] animate-ping" />
+        <h3 className="text-lg font-bold text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
+          PHASE 1 COMPLETE — STANDING BY FOR YOUR REVIEW
+        </h3>
+        <p className="text-xs text-[#E5DACB] max-w-xl">
+          Please review the live 3-way Character Bake-Off on this page. Let me know your preferred character approach (<strong className="text-[#38BDF8]">Approach A: Smooth Toon 3D</strong> vs <strong className="text-[#A855F7]">Approach B: VRM</strong> vs <strong className="text-[#FF6B35]">Approach C: 2D Paper-Doll</strong>) to proceed with Phase 2 (Global Nav + Background + Arena Landing).
+        </p>
+      </footer>
     </div>
   );
 }

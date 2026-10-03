@@ -34,11 +34,17 @@ export function createToonGradientMap(steps: 2 | 3 | 4 = 3): THREE.DataTexture {
  * Hook to memoize and reuse stepped MeshToonMaterial.
  */
 export function useToonMaterial(
-  colorHex: string,
+  colorOrOptions: string | { color: string; steps?: 2 | 3 | 4; emissive?: string; emissiveIntensity?: number },
   emissiveHex?: string,
   emissiveIntensity = 0,
-  steps: 2 | 3 | 4 = 3
+  stepsArg: 2 | 3 | 4 = 3
 ) {
+  const isObj = typeof colorOrOptions === 'object';
+  const colorHex = isObj ? colorOrOptions.color : colorOrOptions;
+  const steps = isObj ? (colorOrOptions.steps ?? 3) : stepsArg;
+  const emissive = isObj ? colorOrOptions.emissive : emissiveHex;
+  const intensity = isObj ? (colorOrOptions.emissiveIntensity ?? 0) : emissiveIntensity;
+
   const gradientMap = useMemo(() => createToonGradientMap(steps), [steps]);
 
   return useMemo(() => {
@@ -46,12 +52,12 @@ export function useToonMaterial(
       color: new THREE.Color(colorHex),
       gradientMap,
     });
-    if (emissiveHex) {
-      mat.emissive = new THREE.Color(emissiveHex);
-      mat.emissiveIntensity = emissiveIntensity;
+    if (emissive) {
+      mat.emissive = new THREE.Color(emissive);
+      mat.emissiveIntensity = intensity;
     }
     return mat;
-  }, [colorHex, gradientMap, emissiveHex, emissiveIntensity]);
+  }, [colorHex, gradientMap, emissive, intensity]);
 }
 
 /**
