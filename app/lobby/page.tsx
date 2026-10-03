@@ -1285,7 +1285,7 @@ export default function LobbyPage() {
               </div>
 
               {/* ─── FLOATING BOTTOM: Action Deck or Match Resolution Deck ─── */}
-              {opponentFighter.hp <= 0 ? (
+              {(tournamentStage === 'champion' || opponentFighter.hp <= 0) ? (
                 <div className="hud-float bottom-4 left-1/2 -translate-x-1/2 p-3 sm:p-4 w-[92%] sm:w-[620px] z-20 flex flex-col items-center gap-3 bg-black/90 border border-[#00FF66]/40 backdrop-blur-xl rounded-2xl shadow-[0_0_30px_rgba(0,255,102,0.25)]">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />

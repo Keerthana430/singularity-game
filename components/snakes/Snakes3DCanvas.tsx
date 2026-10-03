@@ -248,35 +248,35 @@ function MechaSerpent3D({ headTile, tailTile }: { headTile: number; tailTile: nu
 
   return (
     <group>
-      {/* Segmented Exoskeleton Mechanical Spine */}
+      {/* Sinuous Cyber Plasma Spine */}
       <group ref={bodyGroupRef}>
         {points.map((pt, i) => {
           if (i === 0) return null;
-          const scale = Math.max(0.08, 0.22 * (1 - (i / points.length) * 0.65));
+          const scale = Math.max(0.04, 0.12 * (1 - (i / points.length) * 0.5));
           const isSpineRib = i % 2 === 0;
 
           return (
             <group key={i} position={[pt.x, pt.y, pt.z]}>
-              {/* Armored Vertebrae Shell */}
+              {/* Sleek Armored Shell */}
               <mesh castShadow>
-                <boxGeometry args={[scale * 1.5, scale * 1.1, scale * 1.3]} />
+                <boxGeometry args={[scale * 0.9, scale * 0.6, scale * 0.9]} />
                 <meshStandardMaterial
                   color="#0F1713"
                   metalness={0.9}
                   roughness={0.25}
                   emissive={isSpineRib ? '#DC2626' : '#7F1D1D'}
-                  emissiveIntensity={isSpineRib ? 0.8 : 0.2}
+                  emissiveIntensity={isSpineRib ? 0.7 : 0.2}
                 />
               </mesh>
 
-              {/* Glowing Red Plasma Energy Conduit Node */}
+              {/* Glowing Red Plasma Node */}
               {isSpineRib && (
-                <mesh position={[0, scale * 0.6, 0]}>
-                  <sphereGeometry args={[scale * 0.35, 8, 8]} />
+                <mesh position={[0, scale * 0.35, 0]}>
+                  <sphereGeometry args={[scale * 0.25, 6, 6]} />
                   <meshStandardMaterial
                     color="#EF4444"
                     emissive="#EF4444"
-                    emissiveIntensity={2.5}
+                    emissiveIntensity={2.0}
                   />
                 </mesh>
               )}
@@ -285,15 +285,15 @@ function MechaSerpent3D({ headTile, tailTile }: { headTile: number; tailTile: nu
         })}
       </group>
 
-      {/* Giant Mechanical Serpent Head */}
+      {/* Sleek Cyber Serpent Head */}
       <group
         ref={headRef}
-        position={[pHead[0], pHead[1] + 0.36, pHead[2]]}
-        scale={0.34}
+        position={[pHead[0], pHead[1] + 0.22, pHead[2]]}
+        scale={0.20}
       >
         {/* Armored Cranium */}
         <mesh castShadow>
-          <boxGeometry args={[1.0, 0.8, 1.4]} />
+          <boxGeometry args={[0.7, 0.5, 0.9]} />
           <meshStandardMaterial
             color="#080F0A"
             metalness={0.95}
@@ -304,38 +304,28 @@ function MechaSerpent3D({ headTile, tailTile }: { headTile: number; tailTile: nu
         </mesh>
 
         {/* Angular Mecha Visor Optics (Glowing Red) */}
-        <mesh position={[0, 0.25, 0.72]}>
-          <boxGeometry args={[0.82, 0.18, 0.08]} />
+        <mesh position={[0, 0.15, 0.48]}>
+          <boxGeometry args={[0.55, 0.12, 0.06]} />
           <meshStandardMaterial
             color="#FF2222"
             emissive="#FF2222"
-            emissiveIntensity={4.0}
+            emissiveIntensity={3.5}
           />
         </mesh>
 
-        {/* Lower Hydraulic Mecha Mandible / Jaw */}
-        <mesh ref={jawRef} position={[0, -0.38, 0.4]}>
-          <boxGeometry args={[0.8, 0.25, 0.9]} />
+        {/* Lower Mandible */}
+        <mesh ref={jawRef} position={[0, -0.22, 0.25]}>
+          <boxGeometry args={[0.5, 0.16, 0.6]} />
           <meshStandardMaterial
             color="#050906"
             metalness={0.9}
             roughness={0.3}
             emissive="#EF4444"
-            emissiveIntensity={0.6}
+            emissiveIntensity={0.5}
           />
         </mesh>
 
-        {/* Mecha Horns / Antennas */}
-        <mesh position={[-0.45, 0.5, -0.2]} rotation={[-0.3, 0, -0.4]}>
-          <cylinderGeometry args={[0.04, 0.08, 0.7, 6]} />
-          <meshStandardMaterial color="#DC2626" emissive="#EF4444" emissiveIntensity={1.5} />
-        </mesh>
-        <mesh position={[0.45, 0.5, -0.2]} rotation={[-0.3, 0, 0.4]}>
-          <cylinderGeometry args={[0.04, 0.08, 0.7, 6]} />
-          <meshStandardMaterial color="#DC2626" emissive="#EF4444" emissiveIntensity={1.5} />
-        </mesh>
-
-        <pointLight color="#EF4444" intensity={3.5} distance={2.5} />
+        <pointLight color="#EF4444" intensity={2.0} distance={1.8} />
       </group>
     </group>
   );
@@ -411,29 +401,6 @@ function MountainEnvironment() {
             </div>
           </Html>
         </group>
-      </group>
-
-      {/* ── ALTITUDE MILESTONE HOLOGRAMS ALONG THE MOUNTAIN ── */}
-      <group position={[3.6, 2.5, 1.0]}>
-        <Html center distanceFactor={14}>
-          <div className="px-2 py-0.5 rounded bg-black/75 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] uppercase tracking-wider select-none whitespace-nowrap">
-            ▲ RIDGE // 1,200M
-          </div>
-        </Html>
-      </group>
-      <group position={[3.0, 5.2, -0.8]}>
-        <Html center distanceFactor={14}>
-          <div className="px-2 py-0.5 rounded bg-black/75 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] uppercase tracking-wider select-none whitespace-nowrap">
-            ▲ DATA CRAGS // 2,500M
-          </div>
-        </Html>
-      </group>
-      <group position={[1.4, 8.2, -3.8]}>
-        <Html center distanceFactor={14}>
-          <div className="px-2 py-0.5 rounded bg-black/75 border border-purple-500/40 text-purple-300 font-mono text-[9px] uppercase tracking-wider select-none whitespace-nowrap">
-            ▲ HIGH APEX // 3,800M
-          </div>
-        </Html>
       </group>
 
       {/* ── 4. GIANT CYBERPUNK SUMMIT (PLATFORM #40 // 5,000M APEX) ── */}
@@ -555,28 +522,19 @@ function SteppedPlatforms3D() {
               </Html>
             </group>
 
-            {/* Energy Bridge indicator */}
+            {/* Flush Holographic Rune on Platform Surface (Zero Screen Occlusion) */}
             {isLadderStart && (
-              <group position={[0, 0.45, 0]}>
-                <Html center distanceFactor={12}>
-                  <div className="px-2 py-0.5 rounded-full bg-cyan-500 text-black font-black font-mono text-[9px] uppercase shadow-[0_0_12px_#38BDF8] select-none whitespace-nowrap animate-bounce flex items-center gap-1">
-                    <span>⚡</span>
-                    <span>BRIDGE #{LADDERS[t.id]}</span>
-                  </div>
-                </Html>
-              </group>
+              <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.38, 0.46, 24]} />
+                <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3} />
+              </mesh>
             )}
 
-            {/* Mecha serpent hazard indicator */}
             {isSnakeHead && (
-              <group position={[0, 0.45, 0]}>
-                <Html center distanceFactor={12}>
-                  <div className="px-2 py-0.5 rounded-full bg-red-600 text-white font-black font-mono text-[9px] uppercase shadow-[0_0_12px_#EF4444] select-none whitespace-nowrap animate-pulse flex items-center gap-1">
-                    <span>⚠️</span>
-                    <span>MECHA SERPENT #{SNAKES[t.id]}</span>
-                  </div>
-                </Html>
-              </group>
+              <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.38, 0.46, 24]} />
+                <meshStandardMaterial color="#EF4444" emissive="#EF4444" emissiveIntensity={3} />
+              </mesh>
             )}
           </group>
         );
@@ -862,25 +820,25 @@ function MountainCameraController({
 
     if (cameraMode === 'action') {
       const climber = climberPosRef.current;
-      // Dynamic follow camera gliding smoothly with the climber in real time!
-      targetX = climber.x * 0.75 + 1.2;
-      targetY = climber.y + 2.8; // Elevated close eye level
-      targetZ = climber.z + 5.2; // Optimal 3D follow distance
+      // High-angle clear tactical follow: never occluded by platforms or terrain
+      targetX = climber.x * 0.5 + 2.2;
+      targetY = climber.y + 4.5; // Elevated high angle looking down at platforms
+      targetZ = climber.z + 6.8; // Safe distance with zero tile clipping
       lookX = climber.x;
-      lookY = climber.y + 0.6; // Center directly on climber avatar
+      lookY = climber.y + 0.4;
       lookZ = climber.z;
     } else if (cameraMode === 'summit') {
       targetX = 0;
-      targetY = 13.5;
-      targetZ = -1.5;
+      targetY = 15.0;
+      targetZ = -1.0;
       lookX = 0;
       lookY = 11.0;
       lookZ = -6.8;
     } else {
-      // Full Mountain Overview
-      targetX = 0;
-      targetY = 12.0;
-      targetZ = 14.0;
+      // Full Mountain Overview (Elevated isometric view)
+      targetX = 3.5;
+      targetY = 15.5;
+      targetZ = 16.5;
       lookX = 0;
       lookY = 5.5;
       lookZ = -1.5;

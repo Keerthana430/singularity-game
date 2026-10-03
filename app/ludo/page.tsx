@@ -169,6 +169,12 @@ export default function LudoPage() {
 
   // Butter-smooth 60fps movement state
   const [activeMovement, setActiveMovement] = useState<ActiveMovement | null>(null);
+  const [consecutiveSixes, setConsecutiveSixes] = useState<number>(0);
+  const [activePowerUpBanner, setActivePowerUpBanner] = useState<{
+    type: 'boost' | 'shield' | 'warp';
+    text: string;
+    color: string;
+  } | null>(null);
 
   // 3D Combat clash & floating text state
   const [activeClash, setActiveClash] = useState<CombatClash | null>(null);
@@ -289,6 +295,20 @@ export default function LudoPage() {
       setIsRolling(false);
 
       logAction(`🎲 ${activePlayer.name} rolled a ${roll}!`);
+
+      if (roll === 6) {
+        const nextSixes = consecutiveSixes + 1;
+        if (nextSixes >= 3) {
+          logAction(`⚠️ 3 consecutive sixes! Turn forfeited per official rules.`);
+          addToast('⚠️ Three 6s in a row! Turn forfeited.', 'info');
+          setConsecutiveSixes(0);
+          setTimeout(() => advanceToNextPlayer(false), turnDelay);
+          return;
+        }
+        setConsecutiveSixes(nextSixes);
+      } else {
+        setConsecutiveSixes(0);
+      }
 
       const valid = getValidMoves(activePlayer, roll);
 
@@ -434,22 +454,53 @@ export default function LudoPage() {
       if (powerup) {
         sound.playEquip();
         if (powerup.type === 'boost') {
-          addToast(`⚡ ${movedPlayer.name} landed on Overdrive! +2 Step Boost!`, 'success');
+          setActivePowerUpBanner({
+            type: 'boost',
+            text: `⚡ OVERDRIVE BOOST! +2 EXTRA TILES`,
+            color: '#00FF66',
+          });
+          addToast(`⚡ ${movedPlayer.name} triggered Overdrive! +2 Step Boost!`, 'success');
           addFloatingText('⚡ +2 OVERDRIVE!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#00FF66');
           const nextStep = Math.min(57, finalStep + 2);
-          setPlayers((prev) =>
-            prev.map((pl) =>
-              pl.id === color
-                ? {
-                    ...pl,
-                    pieces: pl.pieces.map((pc) => (pc.id === pieceId ? { ...pc, step: nextStep } : pc)),
-                  }
-                : pl
-            )
-          );
-          checkCombatAfterLanding(color, pieceId, roll, nextStep);
+
+          // Staged secondary animation: Pawn visibly hops the 2 bonus tiles!
+          const bonusWaypoints: [number, number, number][] = [
+            getPieceWorldPosition(color, finalStep, pieceId),
+            getPieceWorldPosition(color, finalStep + 1, pieceId),
+            getPieceWorldPosition(color, nextStep, pieceId),
+          ];
+
+          setTimeout(() => {
+            setActiveMovement({
+              color,
+              pieceId,
+              waypoints: bonusWaypoints,
+              speed: 1.8,
+              onComplete: () => {
+                setActiveMovement(null);
+                setActivePowerUpBanner(null);
+                setPlayers((prev) =>
+                  prev.map((pl) =>
+                    pl.id === color
+                      ? {
+                          ...pl,
+                          pieces: pl.pieces.map((pc) => (pc.id === pieceId ? { ...pc, step: nextStep } : pc)),
+                        }
+                      : pl
+                  )
+                );
+                checkCombatAfterLanding(color, pieceId, roll, nextStep);
+              },
+            });
+          }, 350);
           return;
         } else if (powerup.type === 'shield') {
+          setActivePowerUpBanner({
+            type: 'shield',
+            text: `🛡️ QUANTUM SHIELD EQUIPPED! PROTECTED FROM KNOCKOUT`,
+            color: '#38BDF8',
+          });
+          setTimeout(() => setActivePowerUpBanner(null), 2000);
           setPlayers((prev) =>
             prev.map((pl) =>
               pl.id === color
@@ -463,20 +514,44 @@ export default function LudoPage() {
           addToast(`🛡️ ${movedPlayer.name} gained a Quantum Shield!`, 'info');
           addFloatingText('🛡️ SHIELD EQUIPPED!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#38BDF8');
         } else if (powerup.type === 'warp') {
+          setActivePowerUpBanner({
+            type: 'warp',
+            text: `🌀 QUANTUM WARP! +4 EXTRA TILES`,
+            color: '#C084FC',
+          });
           addToast(`🌀 ${movedPlayer.name} triggered Cyber Warp! +4 Warp!`, 'success');
           addFloatingText('🌀 +4 WARP!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#C084FC');
           const nextStep = Math.min(57, finalStep + 4);
-          setPlayers((prev) =>
-            prev.map((pl) =>
-              pl.id === color
-                ? {
-                    ...pl,
-                    pieces: pl.pieces.map((pc) => (pc.id === pieceId ? { ...pc, step: nextStep } : pc)),
-                  }
-                : pl
-            )
-          );
-          checkCombatAfterLanding(color, pieceId, roll, nextStep);
+
+          // Staged secondary animation: Pawn visibly hops the 4 warp tiles!
+          const bonusWaypoints: [number, number, number][] = [];
+          for (let s = 0; s <= 4; s++) {
+            bonusWaypoints.push(getPieceWorldPosition(color, Math.min(57, finalStep + s), pieceId));
+          }
+
+          setTimeout(() => {
+            setActiveMovement({
+              color,
+              pieceId,
+              waypoints: bonusWaypoints,
+              speed: 2.2,
+              onComplete: () => {
+                setActiveMovement(null);
+                setActivePowerUpBanner(null);
+                setPlayers((prev) =>
+                  prev.map((pl) =>
+                    pl.id === color
+                      ? {
+                          ...pl,
+                          pieces: pl.pieces.map((pc) => (pc.id === pieceId ? { ...pc, step: nextStep } : pc)),
+                        }
+                      : pl
+                  )
+                );
+                checkCombatAfterLanding(color, pieceId, roll, nextStep);
+              },
+            });
+          }, 350);
           return;
         }
       }
@@ -720,6 +795,25 @@ export default function LudoPage() {
             ══════════════════════════════════════════════════════════ */}
 
         {/* ─── TOP CONSOLE HUD STRIP ─── */}
+        <AnimatePresence>
+          {activePowerUpBanner && (
+            <motion.div
+              initial={{ scale: 0.85, y: -20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="absolute top-20 left-1/2 -translate-x-1/2 z-30 px-6 py-2.5 rounded-2xl bg-black/90 backdrop-blur-xl border font-mono font-black text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2.5 pointer-events-none"
+              style={{
+                borderColor: activePowerUpBanner.color,
+                color: activePowerUpBanner.color,
+                boxShadow: `0 0 35px ${activePowerUpBanner.color}70`,
+              }}
+            >
+              <span className="w-2.5 h-2.5 rounded-full animate-ping" style={{ backgroundColor: activePowerUpBanner.color }} />
+              <span>{activePowerUpBanner.text}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="absolute top-3 left-4 right-4 z-20 flex items-start justify-between pointer-events-none">
           {/* Top-Left: Player Tag & Health Bar */}
           <div className="pointer-events-auto flex flex-col gap-1.5 px-4 py-2.5 rounded-2xl bg-black/75 backdrop-blur-md border border-white/10 shadow-[0_4px_25px_rgba(0,0,0,0.8)]">
