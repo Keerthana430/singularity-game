@@ -685,3 +685,25 @@ body::after {
   box-shadow: 0 3px 12px rgba(0, 255, 102, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   border: 1.5px solid #33FF88;
 }
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-20vh);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(120vh);
+    opacity: 0;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 9s ease-in-out infinite;
+}
+

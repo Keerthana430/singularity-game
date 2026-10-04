@@ -31,6 +31,9 @@ import { useContestStore } from '@/store/contestStore';
 import { AvatarViewer } from '@/components/avatar/AvatarViewer';
 import { PRESET_AVATARS } from '@/data/presets';
 import { useToast } from '@/components/Toast';
+import { InteractiveAmbientBackground } from '@/components/home/InteractiveAmbientBackground';
+import { InteractiveHeroStage } from '@/components/home/InteractiveHeroStage';
+import { sound } from '@/lib/audio';
 
 interface BattleLeaderboardEntry {
   id?: string;
@@ -50,12 +53,29 @@ const DEFAULT_BATTLE_LEADERBOARD: BattleLeaderboardEntry[] = [
   { name: 'PIXEL-BYTE', rating: 2310, victories: 31, losses: 11, winRate: 74, classRole: 'Rogue Hacker' },
 ];
 
+const TICKER_ITEMS = [
+  { icon: '⚔️', tag: 'COLOSSEUM', text: 'Operative KAGE-07 advanced to Grand Finals (+650 COINS bounty)', color: '#F59E0B', link: '/lobby' },
+  { icon: '🏰', tag: 'DUNGEON', text: 'Explorer VEX-TITAN breached Floor 4 // Overgrown Sanctuary', color: '#00FF66', link: '/dungeon' },
+  { icon: '🎲', tag: 'LUDO', text: 'Cerulean Vanguard rolled double 6 for an instant sanctuary sprint', color: '#38BDF8', link: '/ludo' },
+  { icon: '👑', tag: 'RUNWAY', text: 'Celestial AURA-V achieved 2,400+ style likes in Hall of Fashion', color: '#F472B6', link: '/contest' },
+  { icon: '🗡️', tag: 'STUDIO', text: 'New Relic "Photon Katana" cel-shaded and tuned in Outfitting Bay', color: '#34D399', link: '/studio' },
+];
+
 export default function HomePage() {
   const { currentAvatar, randomizeAvatar, updateAvatar } = useAvatarStore();
   const { entries: contestEntries } = useContestStore();
   const { add: addToast } = useToast();
   const [leaderboardTab, setLeaderboardTab] = useState<'overall' | 'battle' | 'beauty'>('overall');
   const [battleLeaderboard, setBattleLeaderboard] = useState<BattleLeaderboardEntry[]>(DEFAULT_BATTLE_LEADERBOARD);
+  const [tickerIndex, setTickerIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % TICKER_ITEMS.length);
+    }, 3800);
+    return () => clearInterval(timer);
+  }, []);
+
 
   useEffect(() => {
     fetch('/api/leaderboard')
@@ -123,25 +143,11 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen rpg-wood-container text-[#FFF5E6] selection:bg-[#F59E0B] selection:text-black overflow-x-hidden pt-16">
-      {/* Rich Layered Atmosphere — deep forest meets neon myth */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Primary glow orbs */}
-        <div className="absolute -top-48 -left-48 w-[800px] h-[800px] bg-[#00FF66]/12 rounded-full blur-[200px]" />
-        <div className="absolute top-1/4 -right-64 w-[700px] h-[700px] bg-[#10B981]/10 rounded-full blur-[220px]" />
-        <div className="absolute bottom-0 left-1/4 w-[650px] h-[650px] bg-[#D97706]/12 rounded-full blur-[180px]" />
-        {/* Secondary accent orbs */}
-        <div className="absolute top-2/3 right-1/3 w-[400px] h-[400px] bg-[#F59E0B]/8 rounded-full blur-[140px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00FF66]/5 rounded-full blur-[200px]" />
-        {/* Scan-line grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,255,102,0.015)_50%)] [background-size:100%_4px] opacity-60" />
-        {/* Diamond dot grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(#C88A4B10_1px,transparent_1px)] [background-size:28px_28px] opacity-50" />
-        {/* Top edge glow bar */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00FF66]/40 to-transparent" />
-      </div>
+      {/* Dynamic Interactive Moving Background with Canvas Spores, Mouse Spotlight, and Nebulae */}
+      <InteractiveAmbientBackground />
 
       {/* HERO SECTION */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Hero Content */}
           <motion.div
@@ -150,7 +156,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-6 flex flex-col gap-6"
           >
-          {/* Tagline Ribbon Badge */}
+            {/* Tagline Ribbon Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -196,83 +202,112 @@ export default function HomePage() {
               Step into an overgrown realm of mossy ancient ruins and indie fantasy survivors. Hand-tailor your cel-shaded adventurer with organic proportions, weathered iron armor, explorer rucksacks, cloth wraps, and signature weapons.
             </motion.p>
 
-            {/* Action Buttons (Ref: Almost a Hero / RPG Buttons) */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/studio"
-                className="rpg-auto-equip-btn flex items-center gap-2.5 px-8 py-4 text-sm font-black uppercase text-[#2A1608] shadow-xl hover:scale-105 transition-all"
+                onClick={() => sound.playClick()}
+                className="rpg-auto-equip-btn flex items-center gap-2 px-6 py-3.5 text-xs font-black uppercase text-[#2A1608] shadow-xl hover:scale-105 transition-all"
               >
-                <Layers size={18} />
+                <Layers size={16} />
                 <span>OUTFITTING BAY</span>
-                <ChevronRight size={16} />
+                <ChevronRight size={15} />
               </Link>
 
               <Link
                 href="/lobby"
-                className="flex items-center gap-2 px-7 py-4 rounded-full border-2 border-[#8C6239] bg-[#2C180E]/90 hover:bg-[#3E2516] text-[#FDE68A] font-bold text-sm uppercase transition-all shadow-md"
+                onClick={() => sound.playClick()}
+                className="flex items-center gap-2 px-5 py-3.5 rounded-full border-2 border-[#8C6239] bg-[#2C180E]/90 hover:bg-[#3E2516] text-[#FDE68A] font-bold text-xs uppercase transition-all shadow-md hover:scale-105"
               >
-                <Swords size={18} className="text-[#F59E0B]" />
-                <span>COLOSSEUM ARENA</span>
+                <Swords size={16} className="text-[#F59E0B]" />
+                <span>COLOSSEUM</span>
+              </Link>
+
+              <Link
+                href="/dungeon"
+                onClick={() => sound.playClick()}
+                className="flex items-center gap-2 px-5 py-3.5 rounded-full border border-[#00FF66]/50 bg-[#00FF66]/10 hover:bg-[#00FF66]/20 text-[#00FF66] text-xs font-bold uppercase transition-all shadow-md hover:scale-105"
+              >
+                <Compass size={16} />
+                <span>DUNGEON</span>
               </Link>
 
               <Link
                 href="/ludo"
-                className="flex items-center gap-2 px-5 py-4 rounded-full border border-[#38BDF8]/40 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] text-xs font-bold uppercase transition-all"
+                onClick={() => sound.playClick()}
+                className="flex items-center gap-2 px-4 py-3.5 rounded-full border border-[#38BDF8]/40 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] text-xs font-bold uppercase transition-all hover:scale-105"
               >
-                <Dices size={18} />
-                <span className="hidden sm:inline">LUDO LOUNGE</span>
+                <Dices size={16} />
+                <span>LUDO</span>
               </Link>
 
               <button
                 onClick={handleRandomize}
-                className="flex items-center gap-2 px-4 py-4 rounded-full border border-[#D97706]/40 bg-[#24160E]/80 hover:bg-[#382417] text-[#F59E0B] text-xs font-bold transition-all shadow-sm"
+                className="flex items-center gap-2 px-3.5 py-3.5 rounded-full border border-[#D97706]/40 bg-[#24160E]/80 hover:bg-[#382417] text-[#F59E0B] text-xs font-bold transition-all shadow-sm hover:scale-105"
                 title="Randomize Adventurer"
               >
-                <Dices size={18} />
-                <span className="hidden sm:inline">RANDOM HERO</span>
+                <Dices size={16} />
               </button>
             </div>
-
           </motion.div>
 
-          {/* Right Column: Interactive 3D Avatar Hero Preview with Ancient Ruin Frame */}
+          {/* Right Column: Interactive 3D Avatar Hero Stage with Mouse Tilt & Action Triggers */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="lg:col-span-6 relative flex flex-col items-center"
           >
-            {/* Ancient Ruin Stone & Brass Frame */}
-            <div className="relative w-full aspect-[4/5] max-h-[620px] rounded-3xl p-3 overflow-hidden border-2 border-[#8C6239] bg-[#16211B] shadow-[0_12px_45px_rgba(0,0,0,0.7)]">
-              {/* Corner status tag matching Almost a Hero badge */}
-              <div className="absolute top-5 left-5 z-20 flex items-center gap-2 bg-[#2B1B12]/95 px-3.5 py-1.5 rounded-full border border-[#8C6239] text-xs font-bold text-[#FDE68A] shadow-md">
-                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
-                <span>EXPEDITION RIG &bull; {currentAvatar.name.toUpperCase()}</span>
-              </div>
-
-              <div className="absolute top-5 right-5 z-20 flex items-center gap-1.5">
-                <Link
-                  href="/studio"
-                  className="px-3.5 py-1.5 rounded-full bg-[#00FF66] text-black text-xs font-black uppercase tracking-wider hover:bg-white transition-all shadow-md"
-                >
-                  <span>CUSTOMIZE &gt;</span>
-                </Link>
-              </div>
-
-              {/* 3D Canvas */}
-              <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#14231B] via-[#0E1A14] to-[#0A120E]">
-                <AvatarViewer config={currentAvatar} className="w-full h-full" showControls={true} animate={true} />
-              </div>
-            </div>
+            <InteractiveHeroStage />
           </motion.div>
         </div>
       </section>
 
+      {/* Interactive Live Adventurer Activity Stream Ticker */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 z-10">
+        <Link
+          href={TICKER_ITEMS[tickerIndex].link}
+          onClick={() => sound.playClick()}
+          className="group block rounded-2xl border border-[#00FF66]/25 bg-[#08150D]/85 backdrop-blur-xl p-3 sm:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.6)] hover:border-[#00FF66]/60 transition-all"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-[10px] font-mono uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
+                <span className="text-[#00FF66] font-bold">LIVE SIGNAL</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                <span className="text-base">{TICKER_ITEMS[tickerIndex].icon}</span>
+                <span
+                  className="font-mono text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded border"
+                  style={{
+                    color: TICKER_ITEMS[tickerIndex].color,
+                    borderColor: `${TICKER_ITEMS[tickerIndex].color}40`,
+                    background: `${TICKER_ITEMS[tickerIndex].color}15`,
+                  }}
+                >
+                  [{TICKER_ITEMS[tickerIndex].tag}]
+                </span>
+                <span className="text-white/85 group-hover:text-white transition-colors">
+                  {TICKER_ITEMS[tickerIndex].text}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#00FF66] group-hover:translate-x-1 transition-transform self-end sm:self-center">
+              <span>EXPLORE</span>
+              <ChevronRight size={13} />
+            </div>
+          </div>
+        </Link>
+      </div>
+
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* SECTION 1: THE THREE OFFICIAL GAME EXPEDITIONS              */}
+      {/* SECTION 1: THE FOUR OFFICIAL GAME EXPEDITIONS               */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#5C3D27]/40">
-        <div className="text-center max-w-3xl mx-auto mb-14">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[#5C3D27]/40 z-10">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2C180E] border border-[#8C6239] text-xs font-bold text-[#F59E0B] mb-3">
             <Swords size={13} aria-hidden="true" />
             <span>ACTIVE EXPEDITION QUESTS</span>
@@ -281,107 +316,144 @@ export default function HomePage() {
             SELECT YOUR ADVENTURE
           </h2>
           <p className="text-[#CBB49C] mt-3 text-xs sm:text-sm">
-            Deploy your custom hand-drawn avatar into tactical 3D colosseums, 4-faction real-time board warfare, and global adventurer runways.
+            Deploy your custom hand-drawn avatar into tactical 3D colosseums, procedural ruin descents, 4-faction board warfare, and global runway showcases.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Game 1: Battle Royale */}
-          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#F59E0B] transition-all shadow-xl">
+          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#F59E0B] hover:-translate-y-1.5 transition-all shadow-xl">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#D97706]/15 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
-                  <Swords size={24} />
+                <div className="w-11 h-11 rounded-xl bg-[#D97706]/15 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B] group-hover:scale-110 transition-transform">
+                  <Swords size={22} />
                 </div>
                 <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#D97706]/20 border border-[#F59E0B]/40 text-[#FDE68A]">
-                  8-Hero Tournament
+                  8-Hero Arena
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#F59E0B] transition-colors mb-2">
+              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#F59E0B] transition-colors mb-2">
                 COLOSSEUM ARENA
               </h3>
               <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
-                Step onto the ancient mossy ruin grounds. Battle through Quarter-Finals, Semi-Finals, and Grand Finals with species combat arts, tactical dodges, and cinematic critical hits.
+                Step onto the ancient mossy ruin grounds. Battle through Quarter-Finals, Semi-Finals, and Grand Finals with species combat arts and tactical parries.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">3D Particle VFX</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Species Shields</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650 COINS Bounty</span>
+              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">3D VFX</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Species Arts</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650 COINS</span>
               </div>
             </div>
 
             <Link
               href="/lobby"
-              className="rpg-auto-equip-btn w-full py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:scale-102 transition-all shadow-md"
+              onClick={() => sound.playClick()}
+              className="rpg-auto-equip-btn w-full py-2.5 px-3 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 hover:scale-102 transition-all shadow-md"
             >
               <span>Deploy to Arena</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} />
             </Link>
           </div>
 
-          {/* Game 2: Colosseum Ludo */}
-          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#38BDF8] transition-all shadow-xl">
+          {/* Game 2: Dungeon Roguelike */}
+          <div className="rpg-leather-panel p-5 border-2 border-[#1E4D34] flex flex-col justify-between group hover:border-[#00FF66] hover:-translate-y-1.5 transition-all shadow-xl bg-gradient-to-b from-[#08150E] to-[#040B07]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/15 border border-[#38BDF8]/40 flex items-center justify-center text-[#38BDF8]">
-                  <Dices size={24} />
+                <div className="w-11 h-11 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66] group-hover:scale-110 transition-transform">
+                  <Compass size={22} />
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#BAE6FD]">
-                  4-Player Lounge
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66]">
+                  6-Floor Descent
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#38BDF8] transition-colors mb-2">
+              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#00FF66] transition-colors mb-2">
+                DUNGEON // DESCENT
+              </h3>
+              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
+                Descend into procedural ruin chambers. Battle adaptive hostiles, acquire relic builds, conquer multi-phase bosses, and decide the Core&apos;s fate.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
+                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624]">Procedural</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624]">Relic Builds</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624] text-[#00FF66]">+850 COINS</span>
+              </div>
+            </div>
+
+            <Link
+              href="/dungeon"
+              onClick={() => sound.playClick()}
+              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#00FF66] to-[#00993D] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
+            >
+              <span>Descend Ruin</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          {/* Game 3: Colosseum Ludo */}
+          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#38BDF8] hover:-translate-y-1.5 transition-all shadow-xl">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/40 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
+                  <Dices size={22} />
+                </div>
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#BAE6FD]">
+                  4-Player Table
+                </span>
+              </div>
+              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#38BDF8] transition-colors mb-2">
                 COLOSSEUM LUDO
               </h3>
               <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
-                Gather at the grand colosseum table. Choose between 4 distinct factions, roll physical 3D dice, capture opposing tokens, and sprint to the center sanctuary.
+                Gather at the grand colosseum table. Choose between 4 distinct factions, roll physical 3D dice, capture opposing tokens, and sprint to sanctuary.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Physics Dice</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Token Clash</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#BAE6FD]">Tactical Safe Zones</span>
+              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Physics Dice</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Clash</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#BAE6FD]">Safe Havens</span>
               </div>
             </div>
 
             <Link
               href="/ludo"
-              className="w-full py-3 px-4 rounded-full bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
+              onClick={() => sound.playClick()}
+              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
             >
               <span>Enter Ludo Table</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} />
             </Link>
           </div>
 
-          {/* Game 3: Beauty Contest */}
-          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#FF5C93] transition-all shadow-xl">
+          {/* Game 4: Beauty Contest */}
+          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#FF5C93] hover:-translate-y-1.5 transition-all shadow-xl">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#FF5C93]/15 border border-[#FF5C93]/40 flex items-center justify-center text-[#FF5C93]">
-                  <Crown size={24} />
+                <div className="w-11 h-11 rounded-xl bg-[#FF5C93]/15 border border-[#FF5C93]/40 flex items-center justify-center text-[#FF5C93] group-hover:scale-110 transition-transform">
+                  <Crown size={22} />
                 </div>
                 <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FF5C93]/20 border border-[#FF5C93]/40 text-[#FBCFE8]">
-                  Community Runway
+                  Community Stage
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#FF5C93] transition-colors mb-2">
+              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#FF5C93] transition-colors mb-2">
                 BEAUTY RUNWAY
               </h3>
               <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
                 Showcase your customized hero in the Hall of Fashion. Gain likes, climb the global popularity rankings, and win exclusive cosmetics and crowns.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Global Voting</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Seasonal Crowns</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FBCFE8]">Profile Badges</span>
+              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Voting</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Crowns</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#FBCFE8]">Badges</span>
               </div>
             </div>
 
             <Link
               href="/contest"
-              className="w-full py-3 px-4 rounded-full bg-gradient-to-b from-[#F472B6] to-[#DB2777] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
+              onClick={() => sound.playClick()}
+              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#F472B6] to-[#DB2777] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
             >
               <span>Enter Runway</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} />
             </Link>
           </div>
         </div>
@@ -401,15 +473,16 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Rules: Battle Royale */}
-          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col gap-5">
+          <div className="hud-box glass-panel p-5 border border-[#00FF66]/30 flex flex-col gap-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#00FF66]/20">
               <Swords size={20} className="text-[#00FF66]" />
-              <h3 className="text-base font-black uppercase font-mono text-white">
+              <h3 className="text-sm font-black uppercase font-mono text-white">
                 Battle Royale Protocol
               </h3>
             </div>
+
 
             <div className="space-y-3.5 text-xs font-mono text-white/80">
               <div className="flex items-start gap-2.5">
@@ -439,14 +512,52 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Rules: Dungeon Descent */}
+          <div className="hud-box glass-panel p-5 border border-[#00FF66]/30 flex flex-col gap-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#00FF66]/20">
+              <Compass size={20} className="text-[#00FF66]" />
+              <h3 className="text-sm font-black uppercase font-mono text-white">
+                Dungeon Protocol
+              </h3>
+            </div>
+
+            <div className="space-y-3.5 text-xs font-mono text-white/80">
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">01.</span>
+                <p><strong className="text-white">Procedural Route:</strong> Node chamber map with Combat, Elites, Relic Caches, and Merchants.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">02.</span>
+                <p><strong className="text-white">Active Combat:</strong> Real-time WASD movement, dodges, arc pulses, and Overdrive abilities.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">03.</span>
+                <p><strong className="text-white">Adaptive Relics:</strong> Shape your build per floor with attack mods, health restores, and soul shards.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">04.</span>
+                <p><strong className="text-white">Multi-Phase Bosses:</strong> Defeat floor guardians with bullet patterns and stage transitions.</p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="text-[#00FF66] font-bold">05.</span>
+                <p><strong className="text-white">Core Endings:</strong> Resolve the Core at Floor 6 for up to +850 COINS and narrative epilogues.</p>
+              </div>
+            </div>
+          </div>
+
           {/* Rules: Cyber Ludo */}
-          <div className="hud-box glass-panel p-6 border border-cyan-500/30 flex flex-col gap-5">
+          <div className="hud-box glass-panel p-5 border border-cyan-500/30 flex flex-col gap-4">
             <div className="flex items-center gap-3 pb-3 border-b border-cyan-500/20">
               <Dices size={20} className="text-cyan-400" />
-              <h3 className="text-base font-black uppercase font-mono text-white">
+              <h3 className="text-sm font-black uppercase font-mono text-white">
                 Cyber Ludo Protocol
               </h3>
             </div>
+
 
             <div className="space-y-3.5 text-xs font-mono text-white/80">
               <div className="flex items-start gap-2.5">
@@ -477,13 +588,14 @@ export default function HomePage() {
           </div>
 
           {/* Rules: Beauty Contest */}
-          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/30 flex flex-col gap-5">
+          <div className="hud-box glass-panel p-5 border border-[#FF69B4]/30 flex flex-col gap-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#FF69B4]/20">
               <Heart size={20} className="text-[#FF69B4]" />
-              <h3 className="text-base font-black uppercase font-mono text-white">
+              <h3 className="text-sm font-black uppercase font-mono text-white">
                 Beauty Runway Protocol
               </h3>
             </div>
+
 
             <div className="space-y-3.5 text-xs font-mono text-white/80">
               <div className="flex items-start gap-2.5">
