@@ -128,21 +128,16 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   
   <div style="font-family:var(--font-d);font-size:14px;color:var(--fg);margin-bottom:4px;">PLAY MODE</div>
   <div class="mode-row" id="mode-cnt">
-    <button data-mode="ai" class="sel">VS AI</button>
-    <button data-mode="friends">FRIENDS</button>
+    <button data-mode="ai" class="sel">PLAY WITH AI</button>
+    <button data-mode="friends">PLAY WITH FRIENDS</button>
   </div>
   
-  <div id="diff-section">
-    <div style="font-family:var(--font-d);font-size:14px;color:var(--fg);margin-bottom:4px;">AI DIFFICULTY</div>
-    <div class="mode-row" id="diff-cnt">
-      <button data-diff="easy">EASY</button>
-      <button data-diff="normal" class="sel">NORMAL</button>
-      <button data-diff="hard">HARD</button>
-    </div>
+  <div style="font-family:var(--font-d);font-size:14px;color:var(--fg);margin-bottom:4px;margin-top:10px;">HOW MANY PLAYERS?</div>
+  <div class="cnt" id="cnt">
+    <button data-n="2">2 PLAYERS</button>
+    <button data-n="3">3 PLAYERS</button>
+    <button data-n="4" class="sel">4 PLAYERS</button>
   </div>
-
-  <div style="font-family:var(--font-d);font-size:14px;color:var(--fg);margin-bottom:4px;margin-top:10px;">PLAYERS</div>
-  <div class="cnt" id="cnt"><button data-n="2">2 players</button><button data-n="3">3 players</button><button data-n="4" class="sel">4 players</button></div>
   <div class="seed-row">
     <label for="custom-seed">Custom Seed:</label>
     <input id="custom-seed" type="text" placeholder="Random (or enter custom number)" maxlength="12">
@@ -976,18 +971,10 @@ function resolveDuelMove(m1, m2) {
   return MATCHUP[m1][m2];
 }
 
-function getAiMove(diff) {
-  const moves = ['attack', 'heavy', 'dodge', 'block'];
-  if(diff === 'easy') return moves[Math.floor(Math.random()*4)];
+function getAiMove() {
   const r = Math.random();
-  if(diff === 'normal') {
-    if(r < 0.4) return 'attack';
-    if(r < 0.6) return 'heavy';
-    if(r < 0.8) return 'dodge';
-    return 'block';
-  }
-  if(r < 0.3) return 'attack';
-  if(r < 0.5) return 'heavy';
+  if(r < 0.4) return 'attack';
+  if(r < 0.6) return 'heavy';
   if(r < 0.8) return 'dodge';
   return 'block';
 }
@@ -1067,8 +1054,8 @@ async function runDuel(p1, p2) {
     
     for(let t=0; t<30; t++) {
       if(gameMode === 'ai') {
-        if(p1.isAi && !duelState.p1Action) duelState.p1Action = getAiMove(aiDifficulty);
-        if(p2.isAi && !duelState.p2Action) duelState.p2Action = getAiMove(aiDifficulty);
+        if(p1.isAi && !duelState.p1Action) duelState.p1Action = getAiMove();
+        if(p2.isAi && !duelState.p2Action) duelState.p2Action = getAiMove();
       }
       if(duelState.p1Action && duelState.p2Action) break;
       await sleep(100);
@@ -1134,9 +1121,15 @@ function newGame(n,seedVal){
   P=[];
   for(let k=0;k<n;k++){
     const d=PL[k],c=ModelRegistry.createCharacter(d);
-    // P1 is human, others are AI if gameMode === 'ai'
     const isAi = (gameMode === 'ai' && k > 0);
-    const p={idx:k,name:d.n,col:d.c,i:1,c,walk:false,climb:false,isAi};
+    let pName = d.n;
+    if(gameMode === 'ai') {
+       if(k === 0) pName = "YOU";
+       else pName = "AI";
+    } else {
+       pName = "PLAYER " + (k+1);
+    }
+    const p={idx:k,name:pName,col:d.c,i:1,c,walk:false,climb:false,isAi};
     c.g.position.copy(stand(p,1));c.g.rotation.y=Math.PI*.75;
     P.push(p);
   }
@@ -1230,11 +1223,6 @@ document.querySelectorAll('#cnt button').forEach(b=>b.onclick=()=>{
 document.querySelectorAll('#mode-cnt button').forEach(b=>b.onclick=()=>{
   gameMode = b.dataset.mode;
   document.querySelectorAll('#mode-cnt button').forEach(x=>x.classList.toggle('sel',x===b));
-  document.getElementById('diff-section').style.display = gameMode==='ai'?'block':'none';
-});
-document.querySelectorAll('#diff-cnt button').forEach(b=>b.onclick=()=>{
-  aiDifficulty = b.dataset.diff;
-  document.querySelectorAll('#diff-cnt button').forEach(x=>x.classList.toggle('sel',x===b));
 });
 $('go').onclick=()=>{
   const sIn=$('custom-seed')?$('custom-seed').value.trim():'';
