@@ -611,14 +611,12 @@ const dice=new THREE.Mesh(new THREE.BoxGeometry(.8,.8,.8),dMats);dice.visible=fa
 
 // Tactical Floating Dice Tray
 const tray=new THREE.Group();
-const trayRim=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.8,.28,8),std(0x0e1428,{roughness:.85,metalness:0}));
-trayRim.position.y=.14;tray.add(trayRim);
-const trayFelt=new THREE.Mesh(new THREE.CylinderGeometry(1.52,1.52,.08,8),std(0x131a48,{roughness:.95,metalness:0,emissive:0x091030}));
-trayFelt.position.y=.25;tray.add(trayFelt);
-const trayLaser=new THREE.Mesh(new THREE.TorusGeometry(1.55,.035,6,8),new THREE.MeshBasicMaterial({color:0x22d3ee}));
-trayLaser.rotation.x=Math.PI/2;trayLaser.position.y=.28;tray.add(trayLaser);
-const trayGlow=new THREE.Mesh(new THREE.TorusGeometry(1.35,.02,6,32),new THREE.MeshBasicMaterial({color:0xff4fa3,transparent:true,opacity:.6}));
-trayGlow.rotation.x=Math.PI/2;trayGlow.position.y=.05;tray.add(trayGlow);
+const trayBase=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,.05,8),new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:0.25,blending:THREE.AdditiveBlending,depthWrite:false}));
+trayBase.position.y=.05;tray.add(trayBase);
+const trayLaser=new THREE.Mesh(new THREE.TorusGeometry(1.6,.035,6,8),new THREE.MeshBasicMaterial({color:0x22d3ee}));
+trayLaser.rotation.x=Math.PI/2;trayLaser.position.y=.1;tray.add(trayLaser);
+const trayGlow=new THREE.Mesh(new THREE.CircleGeometry(1.9,32),new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:.4,blending:THREE.AdditiveBlending,depthWrite:false}));
+trayGlow.rotation.x=-Math.PI/2;trayGlow.position.y=.05;tray.add(trayGlow);
 tray.visible=false;scene.add(tray);
 
 // ---------- game state ----------
@@ -676,7 +674,7 @@ function animateHudDice(val,playerCol){
 async function rollDice(p,v){
   animateHudDice(v,p.col);
   const a=ang(p.i);
-  const trayPos=p.c.g.position.clone().add(V(Math.cos(a+.38)*2.3,.25,Math.sin(a+.38)*2.3));
+  const trayPos=p.c.g.position.clone().add(V(Math.cos(a+.38)*3.4,.25,Math.sin(a+.38)*3.4));
   tray.position.copy(trayPos);
   tray.scale.set(.01,.01,.01);
   tray.visible=true;
