@@ -24,6 +24,7 @@ import {
   Award,
   Coins,
   Flame,
+  Compass,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useContestStore } from '@/store/contestStore';

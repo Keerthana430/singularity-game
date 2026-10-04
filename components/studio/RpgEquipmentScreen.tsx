@@ -31,6 +31,16 @@ import {
   Sliders,
   Palette,
   Package,
+  Gem,
+  Scroll,
+  Leaf,
+  HardHat,
+  Backpack,
+  Hammer,
+  Star,
+  Layers,
+  Box,
+  Wrench,
 } from 'lucide-react';
 import { AvatarConfig, StudioCategory } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
@@ -137,7 +147,7 @@ export function RpgEquipmentScreen() {
     sound.playClick();
   };
 
-  // Handle Auto-Equip (matching [ 自動装着 ] from reference image)
+  // Handle Auto-Equip
   const handleAutoEquip = () => {
     const randomWeapon = weapons[Math.floor(Math.random() * (weapons.length - 1))];
     const bestTops = ['armor', 'futuristic-suit', 'jacket', 'hoodie'];
@@ -159,7 +169,7 @@ export function RpgEquipmentScreen() {
     setSparkleActive(true);
     setTimeout(() => setSparkleActive(false), 1400);
     sound.playEquip();
-    addToast('⚔️ Auto-Equipped: Highest Power Gear Fitted!', 'success');
+    addToast('Auto-Equipped: Highest Power Gear Fitted!', 'success');
   };
 
   // Handle preset loadout switch [ 1 ] [ 2 ] [ 3 ]
@@ -178,6 +188,46 @@ export function RpgEquipmentScreen() {
     <div className="relative w-screen h-screen overflow-hidden rpg-wood-container flex flex-col select-none text-[#E2F5EC] font-sans">
       {/* Subtle diamond hatch pattern overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(#00FF6610_1px,transparent_1px)] [background-size:20px_20px]" />
+
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* GAME LAUNCHER NAV BAR — links to all game routes              */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      <nav className="relative z-40 w-full flex items-center justify-between px-3 sm:px-6 py-1 bg-[#050C08]/95 border-b border-[#0F2318] backdrop-blur-sm shrink-0">
+        {/* Left: Back to Home */}
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[#8CA79B] hover:text-[#00FF66] transition-colors"
+          title="Return to Home"
+        >
+          <ChevronLeft size={13} />
+          <span>Home</span>
+        </Link>
+
+        {/* Center: Game route links */}
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          {([
+            { href: '/lobby', label: 'Arena', icon: <Swords size={11} /> },
+            { href: '/dungeon', label: 'Dungeon', icon: <Flame size={11} /> },
+            { href: '/ludo', label: 'Ludo', icon: <Compass size={11} /> },
+            { href: '/snakes', label: 'Snakes', icon: <Wind size={11} /> },
+            { href: '/contest', label: 'Contest', icon: <Crown size={11} /> },
+          ] as { href: string; label: string; icon: React.ReactNode }[]).map((route) => (
+            <Link
+              key={route.href}
+              href={route.href}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-[#6B8A77] hover:text-[#00FF66] hover:bg-[#00FF66]/8 transition-all border border-transparent hover:border-[#00FF66]/20"
+            >
+              {route.icon}
+              <span className="hidden sm:inline">{route.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Right: Studio label */}
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#00FF66]/60 select-none">
+          Studio
+        </span>
+      </nav>
 
       {/* ═════════════════════════════════════════════════════════════ */}
       {/* 1. TOP STATUS & CURRENCY BAR (REF IMAGE 2 TOP)                */}
@@ -233,7 +283,7 @@ export function RpgEquipmentScreen() {
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/95 border border-[#1E3E2F] cursor-pointer hover:border-[#00FF66] transition-all shadow-sm"
           >
             <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#D97706] to-[#FCD34D] flex items-center justify-center text-black font-black text-[9px] shadow-sm">
-              🪙
+              <Coins size={10} strokeWidth={3} />
             </div>
             <span className="text-xs font-mono font-black text-[#FCD34D]">
               {coins.toLocaleString()}
@@ -242,7 +292,7 @@ export function RpgEquipmentScreen() {
 
           {/* Gems */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/95 border border-[#1E3E2F] shadow-sm">
-            <span className="text-xs">💎</span>
+            <Gem size={12} className="text-[#67E8F9]" />
             <span className="text-xs font-mono font-black text-[#67E8F9]">
               100
             </span>
@@ -250,7 +300,7 @@ export function RpgEquipmentScreen() {
 
           {/* Relic Scrolls */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/95 border border-[#1E3E2F] shadow-sm">
-            <span className="text-xs">📜</span>
+            <Scroll size={12} className="text-[#86EFAC]" />
             <span className="text-xs font-mono font-black text-[#86EFAC]">
               12
             </span>
@@ -283,7 +333,7 @@ export function RpgEquipmentScreen() {
                   activeCategory === 'weapons' && drawerOpen ? 'active' : ''
                 }`}
               >
-                <div className="text-xl sm:text-2xl mb-0.5">⚔️</div>
+                <div className="mb-0.5 text-[#00FF66]"><Swords size={22} /></div>
                 <span className="text-[9px] font-bold text-[#00FF66] leading-tight truncate w-full px-1">
                   {weaponDetails.name}
                 </span>
@@ -301,7 +351,7 @@ export function RpgEquipmentScreen() {
                 activeCategory === 'hair' && drawerOpen ? 'active' : ''
               }`}
             >
-              <div className="text-xl sm:text-2xl mb-0.5 opacity-80">🪖</div>
+              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><HardHat size={22} /></div>
               <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
                 {headDetails.name}
               </span>
@@ -314,7 +364,7 @@ export function RpgEquipmentScreen() {
                 activeCategory === 'tops' && drawerOpen ? 'active' : ''
               }`}
             >
-              <div className="text-xl sm:text-2xl mb-0.5 opacity-80">🛡️</div>
+              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Shield size={22} /></div>
               <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
                 {chestDetails.name}
               </span>
@@ -341,33 +391,33 @@ export function RpgEquipmentScreen() {
                   exit={{ opacity: 0, scale: 1.6 }}
                   className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
                 >
-                  <div className="text-[#00FF66] animate-spin text-5xl">✨</div>
+                  <div className="text-[#00FF66] animate-spin"><Sparkles size={48} /></div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Sub-Hero Action Cluster: Buff pill + [ AUTO EQUIP ] button */}
             <div className="absolute bottom-2 z-20 flex flex-col items-center gap-2">
-              {/* Buff pill (e.g. バフなし / No Buff) with (i) popup */}
+              {/* Buff pill with (i) popup */}
               <button
                 onClick={() => setShowBuffInfo(!showBuffInfo)}
                 className="flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] text-[#8CA79B] text-[10px] font-bold shadow-md hover:border-[#00FF66] transition-all"
               >
-                <span>バフなし (Ready)</span>
+                <span>No Buff (Ready)</span>
                 <Info size={11} className="text-[#00FF66]" />
               </button>
 
-              {/* Prominent Auto Equip Button (Ref Image: 自動装着) */}
+              {/* Auto Equip Button */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleAutoEquip}
                   className="rpg-auto-equip-btn px-6 py-2 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg"
                 >
                   <Sparkles size={14} className="text-[#00FF66]" />
-                  <span>自動装着 (Auto Equip)</span>
+                  <span>Auto Equip</span>
                 </button>
 
-                {/* Codex / Catalog Button */}
+                {/* Equipment Catalog Button */}
                 <button
                   onClick={() => {
                     setActiveTab('costume');
@@ -377,7 +427,7 @@ export function RpgEquipmentScreen() {
                   className="flex flex-col items-center text-[#7E9F90] hover:text-[#00FF66] transition-colors p-1"
                 >
                   <BookOpen size={18} />
-                  <span className="text-[8px] font-bold mt-0.5">装備図鑑</span>
+                  <span className="text-[8px] font-bold mt-0.5">Catalog</span>
                 </button>
               </div>
             </div>
@@ -392,7 +442,7 @@ export function RpgEquipmentScreen() {
                 activeCategory === 'shoes' && drawerOpen ? 'active' : ''
               }`}
             >
-              <div className="text-xl sm:text-2xl mb-0.5 opacity-80">👢</div>
+              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Footprints size={22} /></div>
               <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
                 {bootsDetails.name}
               </span>
@@ -405,7 +455,7 @@ export function RpgEquipmentScreen() {
                 activeCategory === 'accessories' && drawerOpen ? 'active' : ''
               }`}
             >
-              <div className="text-xl sm:text-2xl mb-0.5 opacity-80">📿</div>
+              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Eye size={22} /></div>
               <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
                 {faceDetails.name}
               </span>
@@ -418,7 +468,7 @@ export function RpgEquipmentScreen() {
                 activeCategory === 'accessories' && drawerOpen ? 'active' : ''
               }`}
             >
-              <div className="text-xl sm:text-2xl mb-0.5 opacity-80">🎒</div>
+              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Backpack size={22} /></div>
               <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
                 {backDetails.name}
               </span>
@@ -432,30 +482,30 @@ export function RpgEquipmentScreen() {
         <div className="w-full rpg-leather-panel p-3 sm:p-4 mb-2 z-20 shadow-2xl">
           {/* Golden Laurel Wreath Combat Power Header (Ref: ⚔️ 1,459) */}
           <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-sm text-[#00FF66]">🌿</span>
+            <Leaf size={14} className="text-[#00FF66]" />
             <div className="rpg-laurel-banner px-5 py-1 flex items-center gap-2">
               <Swords size={16} className="text-[#00FF66]" />
               <span className="font-mono font-black text-lg text-[#00FF66] tracking-wider">
                 {combatPower.toLocaleString()}
               </span>
             </div>
-            <span className="text-sm text-[#00FF66] scale-x-[-1]">🌿</span>
+            <Leaf size={14} className="text-[#00FF66] scale-x-[-1]" />
           </div>
 
           {/* 10-Stat Matrix Grid (2 Columns, matching Ref Image 2) */}
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-mono max-w-xl mx-auto">
             {/* Left Column Stats */}
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">攻撃力 (ATK)</span>
+              <span className="text-[#8CA79B]">ATK</span>
               <span className="font-bold text-[#F0FDF4]">{stats.power}</span>
             </div>
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">攻撃速度 (ATK Spd)</span>
+              <span className="text-[#8CA79B]">ATK Spd</span>
               <span className="font-bold text-[#F0FDF4]">{atkSpeed}%</span>
             </div>
 
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">防御力 (DEF)</span>
+              <span className="text-[#8CA79B]">DEF</span>
               <span className="font-bold text-[#F0FDF4]">{stats.defense}</span>
             </div>
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
@@ -464,29 +514,29 @@ export function RpgEquipmentScreen() {
             </div>
 
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">HP回復 (HP Regen)</span>
+              <span className="text-[#8CA79B]">HP Regen</span>
               <span className="font-bold text-[#F0FDF4]">{hpRegen}</span>
             </div>
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">スキルダメージ (Skill)</span>
+              <span className="text-[#8CA79B]">Skill Dmg</span>
               <span className="font-bold text-[#F0FDF4]">{skillDmg}%</span>
             </div>
 
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">クリティカル率 (Crit)</span>
+              <span className="text-[#8CA79B]">Crit Rate</span>
               <span className="font-bold text-[#F0FDF4]">{stats.criticalRate}%</span>
             </div>
             <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">クリダメ (Crit Dmg)</span>
+              <span className="text-[#8CA79B]">Crit Dmg</span>
               <span className="font-bold text-[#F0FDF4]">{critDmg}%</span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-[#8CA79B]">クールダウン (CD Red.)</span>
+              <span className="text-[#8CA79B]">CD Reduce</span>
               <span className="font-bold text-[#F0FDF4]">{cooldownReduction}%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#8CA79B]">移動速度 (Move Spd)</span>
+              <span className="text-[#8CA79B]">Move Spd</span>
               <span className="font-bold text-[#F0FDF4]">{moveSpeed}</span>
             </div>
           </div>
@@ -497,13 +547,13 @@ export function RpgEquipmentScreen() {
         {/* ═════════════════════════════════════════════════════════════ */}
         <div className="w-full flex items-center justify-between bg-[#091510]/95 border-t border-[#162E23] py-2 px-2 sm:px-4 rounded-t-2xl z-20">
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
-            {[
-              { id: 'equipment' as const, label: '装備 (Gear)', icon: '⚔️' },
-              { id: 'skills' as const, label: 'スキル (Species)', icon: '🔮' },
-              { id: 'traits' as const, label: '特性 (Body)', icon: '🌟' },
-              { id: 'costume' as const, label: '遺物 (Wardrobe)', icon: '🎨' },
-              { id: 'vault' as const, label: '倉庫 (Vault)', icon: '🎒' },
-            ].map((tab) => {
+            {([
+              { id: 'equipment' as const, label: 'Gear', icon: <Swords size={13} /> },
+              { id: 'skills' as const, label: 'Species', icon: <Zap size={13} /> },
+              { id: 'traits' as const, label: 'Body', icon: <Sliders size={13} /> },
+              { id: 'costume' as const, label: 'Wardrobe', icon: <Palette size={13} /> },
+              { id: 'vault' as const, label: 'Vault', icon: <Archive size={13} /> },
+            ] as { id: 'equipment' | 'skills' | 'traits' | 'costume' | 'vault'; label: string; icon: React.ReactNode }[]).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
@@ -585,7 +635,7 @@ export function RpgEquipmentScreen() {
             title="Equip Creature Mascot"
             className="text-[#7E9F90] hover:text-[#00FF66] p-1.5 transition-colors"
           >
-            <span className="text-xl">🐾</span>
+            <Package size={20} />
           </button>
 
           {/* World Map to Arena / Ludo */}
@@ -615,7 +665,7 @@ export function RpgEquipmentScreen() {
               {/* Drawer Header */}
               <div className="px-4 py-2.5 bg-[#0B1712] border-b border-[#1E3E2F] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-[#00FF66]">⚒️</span>
+                  <Wrench size={14} className="text-[#00FF66]" />
                   <h3 className="text-xs font-black uppercase tracking-wider text-[#00FF66]">
                     {activeCategory} Equipment Bay
                   </h3>

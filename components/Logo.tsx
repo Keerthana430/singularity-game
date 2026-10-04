@@ -82,9 +82,6 @@ export function Logo({ size = 'md', showSubtitle = false }: LogoProps) {
             >
               OS // SYSTEM
             </span>
-            <span className="text-[8px] text-[#00FF66]/50 font-jp tracking-wider">
-              シンギュラリティ
-            </span>
           </div>
         )}
       </div>

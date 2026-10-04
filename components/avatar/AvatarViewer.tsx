@@ -104,49 +104,46 @@ export function AvatarViewer({
         />
       </div>
 
-      {/* Floating Camera Control HUD */}
+      {/* Floating Camera Control HUD — top-right to avoid overlap with Auto-Equip at bottom */}
       {showControls && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 max-w-[95%] overflow-x-auto p-1"
+          className="absolute top-2 right-2 flex items-center gap-1.5 z-20"
         >
           {/* Main Control Bar */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-black/80 backdrop-blur-md border border-[#00FF66]/25 shadow-[0_4px_25px_rgba(0,0,0,0.7)]">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-black/75 backdrop-blur-md border border-[#00FF66]/20 shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
             {/* Quick Zoom Focus Buttons */}
-            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
-              {FOCUS_OPTIONS.map((opt) => {
-                const isActive = focusMode === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => setFocusMode(opt.id)}
-                    title={`Zoom to ${opt.label}`}
-                    aria-label={`Zoom to ${opt.label}`}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all touch-target ${
-                      isActive
-                        ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.6)]'
-                        : 'text-white/60 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    {opt.icon}
-                    <span>{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {FOCUS_OPTIONS.map((opt) => {
+              const isActive = focusMode === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setFocusMode(opt.id)}
+                  title={`Zoom to ${opt.label}`}
+                  aria-label={`Zoom to ${opt.label}`}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
+                    isActive
+                      ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.5)]'
+                      : 'text-white/55 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {opt.icon}
+                </button>
+              );
+            })}
 
-            <div className="w-px h-5 bg-white/15 mx-0.5" />
+            <div className="w-px h-4 bg-white/15 mx-0.5" />
 
             {/* Reset Camera button */}
             <button
               onClick={handleResetCamera}
               title="Reset camera focus"
               aria-label="Reset camera position"
-              className="p-2 rounded-xl text-white/50 hover:text-[#00FF66] hover:bg-white/10 transition-colors touch-target"
+              className="p-1 rounded-lg text-white/45 hover:text-[#00FF66] hover:bg-white/10 transition-colors"
             >
-              <RotateCcw size={14} />
+              <RotateCcw size={12} />
             </button>
 
             {/* Toggle auto-rotate */}
@@ -154,19 +151,14 @@ export function AvatarViewer({
               onClick={() => setAutoRotate((r) => !r)}
               title="Toggle auto-rotate"
               aria-label="Toggle auto-rotate"
-              className={`p-2 rounded-xl transition-colors touch-target ${
+              className={`p-1 rounded-lg transition-colors ${
                 autoRotate
-                  ? 'text-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_10px_rgba(0,255,102,0.4)]'
-                  : 'text-white/50 hover:text-white hover:bg-white/10'
+                  ? 'text-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_8px_rgba(0,255,102,0.35)]'
+                  : 'text-white/45 hover:text-white hover:bg-white/10'
               }`}
             >
-              <RefreshCw size={14} className={autoRotate ? 'animate-spin' : ''} style={{ animationDuration: '6s' }} />
+              <RefreshCw size={12} className={autoRotate ? 'animate-spin' : ''} style={{ animationDuration: '6s' }} />
             </button>
-
-            <div className="hidden sm:flex items-center gap-1.5 pl-1.5 pr-1 text-[10px] text-white/40 uppercase tracking-widest font-mono select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]/60 animate-pulse" />
-              <span>360° Drag</span>
-            </div>
           </div>
         </motion.div>
       )}

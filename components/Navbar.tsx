@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices, Trees } from 'lucide-react';
+import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices, Trees, Compass } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 const navLinks = [
   { href: '/studio',    label: 'STUDIO',   sub: 'HANGAR BAY',        icon: Layers },
   { href: '/lobby',     label: 'ARENA',    sub: 'ORBITAL COLOSSEUM', icon: Swords },
+  { href: '/dungeon',   label: 'DUNGEON',  sub: 'PET LABYRINTH',     icon: Compass },
   { href: '/ludo',      label: 'LUDO',     sub: 'LOUNGE TABLE',      icon: Dices },
   { href: '/snakes',    label: 'SNAKES',   sub: 'ELEVATOR ASCENT',   icon: Trees },
   { href: '/contest',   label: 'CONTEST',  sub: 'OBSERVATION DECK',  icon: Heart },
