@@ -330,3 +330,22 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Numbers and number borders remain bright and readable - PASS.
 - **Known issues**: None.
 - **Deferred**: None.
+
+---
+
+## Reference Lighting & Color Calibration (2026-10-04)
+- **Built**:
+  - Cleaned pillar into a smooth, textureless dark indigo cylinder (std(0x181c42, emissive 0x070918 @ 0.25)) matching the reference screenshot exactly.
+  - Thin, vibrant neon magenta/pink torus rings (0xff388e) wrapping cleanly around the column.
+  - Restored clean solid structural spokes (sideMat = std(0x121738)) without extra trim lines.
+  - Calibrated radiant sky-blue entrance pool at steps 1-4 (entranceLight + baseGlow disc).
+  - Polished warm glowing golden amber ladders (0xffd54f / 0xf59e0b) with soft accent lights.
+  - Ground plaza simplified to dark sleek circular platform with concentric cyan and pink neon rings.
+- **Files created/changed**:
+  - public/snake-and-ladder.html
+  - docs/PROGRESS.md
+- **Exit criteria**:
+  - Visual appearance matches user reference screenshot 1-to-1 - PASS.
+  - All tests and TypeScript compile pass - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
