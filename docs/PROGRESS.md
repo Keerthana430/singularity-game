@@ -311,3 +311,22 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Camera tracking and smooth transitions preserved - PASS (zero changes to cam, ctl, or tracking formulas).
 - **Known issues**: None.
 - **Deferred**: None.
+
+---
+
+## Pillar Contrast & Pink Accent Lines Refinement (2026-10-04)
+- **Built**:
+  - Lowered pillar body lighting and base color to a deep, dark matte midnight indigo (#070a1a / 0x080c20, emissive 0x030510 @ 0.12) to ensure the central column remains dark and understated.
+  - Removed internal close-range point lights (sL1, sL2) to prevent washing out the column surface.
+  - Kept all horizontal rings around the pillar in vibrant, bright neon pink (0xf472b6) for high-contrast architectural framing.
+  - Maintained crisp number borders, tile faces, summit crown, and warm golden illuminated ladders.
+  - Retained dark structural spoke bodies with pink top neon runner lines.
+- **Files created/changed**:
+  - public/snake-and-ladder.html
+  - docs/PROGRESS.md
+- **Exit criteria**:
+  - Central pillar appears dark with low light - PASS.
+  - Pink lines and rings stand out vividly - PASS.
+  - Numbers and number borders remain bright and readable - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
