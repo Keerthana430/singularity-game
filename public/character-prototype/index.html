@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Character Prototype — Phase 1: Idle</title>
+<title>Character Prototype — Phase 2: Walking</title>
 <style>
   :root { color-scheme: dark }
   * { margin: 0; padding: 0; box-sizing: border-box }
@@ -26,12 +26,12 @@
 <body>
 
 <div id="hud">
-  <div class="phase">Phase 1</div>
-  <h2>Idle Breathing Stance</h2>
-  <div>Drag to orbit · Scroll to zoom</div>
+  <div class="phase">Phase 2</div>
+  <h2>Walking &amp; Running</h2>
+  <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move · <kbd>Shift</kbd> to run</div>
   <div style="margin-top:8px;font-size:11px;color:#9aa3cf">
-    Character: Procedural Humanoid<br>
-    Animation: Idle Breathing Loop
+    Scroll to zoom · Right-drag to orbit<br>
+    Smooth acceleration · Third-person camera
   </div>
 </div>
 
@@ -55,19 +55,30 @@
   // ─── SCENE ──────────────────────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x050816);
-  scene.fog = new THREE.FogExp2(0x050816, 0.018);
+  scene.fog = new THREE.FogExp2(0x050816, 0.008);
 
-  // ─── CAMERA ─────────────────────────────────────────────────
-  const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
-  cam.position.set(3, 2.8, 5);
+  // ─── CAMERA (Third-Person Follow) ──────────────────────────
+  const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 400);
+  cam.position.set(0, 3.5, 6);
 
+  // OrbitControls for manual override (right-drag orbit, scroll zoom)
   const ctl = new THREE.OrbitControls(cam, renderer.domElement);
   ctl.enableDamping = true;
   ctl.dampingFactor = 0.08;
   ctl.target.set(0, 1.2, 0);
   ctl.minDistance = 2;
-  ctl.maxDistance = 15;
+  ctl.maxDistance = 20;
   ctl.maxPolarAngle = Math.PI * 0.48;
+  ctl.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+  ctl.enablePan = false;
+
+  // Third-person follow cam config
+  const CAM_FOLLOW = {
+    offset: new THREE.Vector3(0, 2.8, 5.5),   // behind and above
+    lookOffset: new THREE.Vector3(0, 1.3, 0),  // look at chest height
+    smoothPos: 0.06,  // position lerp factor
+    smoothLook: 0.08  // look-at lerp factor
+  };
 
   // ─── LIGHTING ───────────────────────────────────────────────
   // Hemisphere: sky + ground bounce
@@ -103,11 +114,11 @@
   scene.add(topLight);
 
   // ─── ARENA FLOOR ────────────────────────────────────────────
-  // Main platform
+  // Main platform (expanded for walking space)
   const floorMat = new THREE.MeshStandardMaterial({
     color: 0x0c1228, roughness: 0.85, metalness: 0.15
   });
-  const floor = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.15, 64), floorMat);
+  const floor = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 0.15, 64), floorMat);
   floor.position.y = -0.075;
   floor.receiveShadow = true;
   scene.add(floor);
@@ -117,14 +128,14 @@
     color: 0x22d3ee, transparent: true, opacity: 0.5,
     blending: THREE.AdditiveBlending, depthWrite: false
   });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(6, 0.04, 8, 96), ringMat);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(25, 0.06, 8, 128), ringMat);
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.01;
   scene.add(ring);
 
   // Inner ring (magenta)
   const innerRing = new THREE.Mesh(
-    new THREE.TorusGeometry(4, 0.03, 8, 64),
+    new THREE.TorusGeometry(18, 0.04, 8, 96),
     new THREE.MeshBasicMaterial({ color: 0xff4fa3, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false })
   );
   innerRing.rotation.x = -Math.PI / 2;
@@ -136,14 +147,14 @@
     color: 0x22d3ee, transparent: true, opacity: 0.06,
     blending: THREE.AdditiveBlending, depthWrite: false
   });
-  const glow = new THREE.Mesh(new THREE.CircleGeometry(5.5, 48), glowMat);
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(24, 48), glowMat);
   glow.rotation.x = -Math.PI / 2;
   glow.position.y = 0.02;
   scene.add(glow);
 
   // Grid lines on the floor
   (function() {
-    const gridHelper = new THREE.GridHelper(12, 24, 0x1a2855, 0x111a33);
+    const gridHelper = new THREE.GridHelper(50, 50, 0x1a2855, 0x111a33);
     gridHelper.position.y = 0.01;
     gridHelper.material.transparent = true;
     gridHelper.material.opacity = 0.3;
@@ -450,13 +461,13 @@
 
   // ─── FLOATING DUST PARTICLES ────────────────────────────────
   (function() {
-    const count = 80;
+    const count = 120;
     const positions = new Float32Array(count * 3);
     const velocities = [];
     for (let i = 0; i < count; i++) {
-      positions[i * 3]     = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = Math.random() * 5;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      positions[i * 3]     = (Math.random() - 0.5) * 40;
+      positions[i * 3 + 1] = Math.random() * 6;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
       velocities.push({
         x: (Math.random() - 0.5) * 0.003,
         y: Math.random() * 0.002 + 0.001,
@@ -471,10 +482,50 @@
     });
     const particles = new THREE.Points(geom, mat);
     scene.add(particles);
-
-    // Store for animation
     window._dustParticles = { positions, velocities, geom };
   })();
+
+
+  // ─── INPUT SYSTEM ───────────────────────────────────────────
+  const keys = { w: false, a: false, s: false, d: false, shift: false };
+  window.addEventListener('keydown', function(e) {
+    const k = e.key.toLowerCase();
+    if (k === 'w') keys.w = true;
+    if (k === 'a') keys.a = true;
+    if (k === 's') keys.s = true;
+    if (k === 'd') keys.d = true;
+    if (e.key === 'Shift') keys.shift = true;
+  });
+  window.addEventListener('keyup', function(e) {
+    const k = e.key.toLowerCase();
+    if (k === 'w') keys.w = false;
+    if (k === 'a') keys.a = false;
+    if (k === 's') keys.s = false;
+    if (k === 'd') keys.d = false;
+    if (e.key === 'Shift') keys.shift = false;
+  });
+  // Prevent keys from sticking if window loses focus
+  window.addEventListener('blur', function() {
+    keys.w = keys.a = keys.s = keys.d = keys.shift = false;
+  });
+
+
+  // ─── MOVEMENT PHYSICS ───────────────────────────────────────
+  const MOVE = {
+    walkSpeed: 2.8,        // units/sec
+    runSpeed: 5.5,         // units/sec
+    accel: 12.0,           // acceleration (units/sec²)
+    decel: 8.0,            // deceleration when no input
+    turnSpeed: 10.0,       // rotation lerp speed (rad/sec)
+    arenaRadius: 23.5      // keep character inside arena
+  };
+
+  // Movement state
+  const velocity = new THREE.Vector3(0, 0, 0);
+  let speed = 0;                // current speed magnitude
+  let moveBlend = 0;            // 0 = idle, 1 = full walk/run
+  let walkCyclePhase = 0;       // accumulated walk animation phase
+  let facingAngle = 0;          // current Y rotation of character
 
 
   // ─── IDLE BREATHING ANIMATION ───────────────────────────────
@@ -482,35 +533,29 @@
   // No frame-count dependency. Fully deterministic given elapsed time.
 
   const IDLE = {
-    // Breathing cycle (chest scale Y)
-    breathFreq: 1.8,     // cycles per second (slightly less than 2)
-    breathAmp: 0.015,    // Y scale oscillation amount
+    breathFreq: 1.8, breathAmp: 0.015,
+    hipSwayFreq: 0.7, hipSwayAmp: 0.008,
+    headBobFreq: 1.2, headBobAmp: 0.003,
+    headTiltFreq: 0.5, headTiltAmp: 0.015,
+    shoulderFreq: 0.9, shoulderAmp: 0.012,
+    armSwingFreq: 0.6, armSwingAmp: 0.04,
+    bodyBobFreq: 1.8, bodyBobAmp: 0.006,
+    leanFreq: 0.35, leanAmp: 0.01
+  };
 
-    // Hip sway
-    hipSwayFreq: 0.7,
-    hipSwayAmp: 0.008,
-
-    // Head bob
-    headBobFreq: 1.2,
-    headBobAmp: 0.003,
-    headTiltFreq: 0.5,
-    headTiltAmp: 0.015,
-
-    // Shoulder rotation
-    shoulderFreq: 0.9,
-    shoulderAmp: 0.012,
-
-    // Arm pendulum
-    armSwingFreq: 0.6,
-    armSwingAmp: 0.04,
-
-    // Subtle body rise/fall
-    bodyBobFreq: 1.8,
-    bodyBobAmp: 0.006,
-
-    // Weight shift (lean)
-    leanFreq: 0.35,
-    leanAmp: 0.01
+  // Walk cycle animation config
+  const WALK = {
+    legSwing: 0.55,       // max leg rotation (radians)
+    armSwing: 0.45,       // max arm counter-swing
+    hipBob: 0.025,        // vertical hip bounce
+    hipSway: 0.03,        // lateral hip sway
+    chestTwist: 0.04,     // torso counter-rotation
+    headStabilize: 0.02,  // head counter-twist
+    leanForward: 0.06,    // chest forward lean when moving
+    footLift: 0.04,       // foot lifts off ground
+    kneeFlexion: 0.35,    // max knee bend during swing
+    cycleSpeed: 8.0,      // walk cycle frequency multiplier
+    runMultiplier: 1.4    // amplify walk cycle for running
   };
 
   // Store base positions/rotations
@@ -519,72 +564,218 @@
 
   // ─── RENDER LOOP ────────────────────────────────────────────
   const clock = new THREE.Clock();
+  const _tempVec = new THREE.Vector3(); // reusable vector (no per-frame alloc)
+  const _camTarget = new THREE.Vector3();
+  const _camLookAt = new THREE.Vector3();
 
   function animate() {
     requestAnimationFrame(animate);
-    const dt = clock.getDelta();
+    const dt = Math.min(clock.getDelta(), 0.05); // cap delta to prevent huge jumps
     const t = clock.getElapsedTime();
-
-    // ── Idle Breathing Animation ──
     const sin = Math.sin;
     const cos = Math.cos;
     const PI2 = Math.PI * 2;
 
-    // Chest breathing (Y scale)
+    // ── MOVEMENT PHYSICS ──
+    // Build input direction from WASD (camera-relative)
+    let inputX = 0, inputZ = 0;
+    if (keys.w) inputZ -= 1;
+    if (keys.s) inputZ += 1;
+    if (keys.a) inputX -= 1;
+    if (keys.d) inputX += 1;
+    const hasInput = inputX !== 0 || inputZ !== 0;
+
+    // Get camera forward/right projected onto XZ plane
+    const camForward = new THREE.Vector3();
+    cam.getWorldDirection(camForward);
+    camForward.y = 0;
+    camForward.normalize();
+    const camRight = new THREE.Vector3().crossVectors(camForward, new THREE.Vector3(0, -1, 0)).normalize();
+
+    if (hasInput) {
+      // Normalize diagonal input
+      const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
+      inputX /= len;
+      inputZ /= len;
+
+      // Compute world-space desired direction (camera-relative)
+      const desiredDir = new THREE.Vector3();
+      desiredDir.addScaledVector(camRight, inputX);
+      desiredDir.addScaledVector(camForward, inputZ);
+      desiredDir.normalize();
+
+      // Target speed
+      const targetSpeed = keys.shift ? MOVE.runSpeed : MOVE.walkSpeed;
+
+      // Accelerate toward target speed
+      speed = Math.min(speed + MOVE.accel * dt, targetSpeed);
+
+      // Set velocity
+      velocity.copy(desiredDir).multiplyScalar(speed);
+
+      // Compute facing angle from desired direction
+      const targetAngle = Math.atan2(desiredDir.x, desiredDir.z);
+
+      // Smooth rotation toward facing direction
+      let angleDiff = targetAngle - facingAngle;
+      // Normalize to [-PI, PI]
+      while (angleDiff > Math.PI) angleDiff -= PI2;
+      while (angleDiff < -Math.PI) angleDiff += PI2;
+      facingAngle += angleDiff * Math.min(1, MOVE.turnSpeed * dt);
+
+    } else {
+      // Decelerate
+      speed = Math.max(speed - MOVE.decel * dt, 0);
+      velocity.multiplyScalar(speed > 0.01 ? (speed / (speed + MOVE.decel * dt)) : 0);
+    }
+
+    // Apply velocity to character position
+    charGroup.position.x += velocity.x * dt;
+    charGroup.position.z += velocity.z * dt;
+
+    // Clamp to arena bounds
+    const distFromCenter = Math.sqrt(charGroup.position.x * charGroup.position.x + charGroup.position.z * charGroup.position.z);
+    if (distFromCenter > MOVE.arenaRadius) {
+      const scale = MOVE.arenaRadius / distFromCenter;
+      charGroup.position.x *= scale;
+      charGroup.position.z *= scale;
+      speed *= 0.5; // bounce dampening
+    }
+
+    // Apply facing rotation
+    charGroup.rotation.y = facingAngle;
+
+    // Compute movement blend (0 = idle, 1 = full walk/run)
+    const targetBlend = speed > 0.1 ? Math.min(speed / MOVE.walkSpeed, 1.5) : 0;
+    moveBlend += (targetBlend - moveBlend) * Math.min(1, 8 * dt); // smooth blend
+    const isRunning = speed > MOVE.walkSpeed * 1.1;
+    const runFactor = isRunning ? WALK.runMultiplier : 1.0;
+
+    // Advance walk cycle phase based on actual speed
+    walkCyclePhase += speed * WALK.cycleSpeed * dt;
+
+    // ── ANIMATION BLENDING ──
+    // idleWeight: 1 when standing, 0 when fully moving
+    // walkWeight: 0 when standing, 1 when fully moving
+    const walkWeight = Math.min(moveBlend, 1);
+    const idleWeight = 1 - walkWeight;
+
+    // ── IDLE ANIMATION (weighted) ──
     const breathPhase = sin(t * PI2 * IDLE.breathFreq);
-    chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp;
-    chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3;
 
-    // Body bob (hips go up/down with breath)
-    hipsBone.position.y = baseHipsY + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp;
+    // ── WALK ANIMATION (weighted) ──
+    const wc = walkCyclePhase; // walk cycle shorthand
+    const legSwing = sin(wc) * WALK.legSwing * runFactor;
+    const armSwing = sin(wc) * WALK.armSwing * runFactor;
+    const hipBob = Math.abs(sin(wc * 2)) * WALK.hipBob * runFactor;
+    const hipSway = sin(wc) * WALK.hipSway;
+    const chestTwist = sin(wc) * WALK.chestTwist * runFactor;
+    const kneeBend = Math.max(0, -sin(wc)) * WALK.kneeFlexion * runFactor;
+    const kneeOpp = Math.max(0, sin(wc)) * WALK.kneeFlexion * runFactor;
+    const footLift = Math.max(0, sin(wc)) * WALK.footLift * runFactor;
+    const footOpp = Math.max(0, -sin(wc)) * WALK.footLift * runFactor;
 
-    // Hip sway (subtle side-to-side)
-    hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp;
-    hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp;
+    // ── APPLY BLENDED POSE ──
 
-    // Head bob and tilt
-    headBone.position.y = 0.12 + sin(t * PI2 * IDLE.headBobFreq) * IDLE.headBobAmp;
-    headBone.rotation.z = sin(t * PI2 * IDLE.headTiltFreq) * IDLE.headTiltAmp;
-    headBone.rotation.x = sin(t * PI2 * 0.4) * 0.01; // very subtle nod
+    // Chest breathing + forward lean
+    chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp * idleWeight;
+    chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3 * idleWeight;
+    chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor; // lean forward when moving
+    chestBone.rotation.y = walkWeight * chestTwist; // torso counter-twist
 
-    // Shoulder oscillation (breathing feel)
-    lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp;
-    rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp;
+    // Hips: bob + sway
+    hipsBone.position.y = baseHipsY
+      + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight  // idle bob
+      + hipBob * walkWeight;                                             // walk bob
+    hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp * idleWeight
+      + hipSway * walkWeight;
+    hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp * idleWeight;
 
-    // Arm pendulum (slight swing)
-    lUpperArmBone.rotation.x = sin(t * PI2 * IDLE.armSwingFreq) * IDLE.armSwingAmp;
-    rUpperArmBone.rotation.x = -sin(t * PI2 * IDLE.armSwingFreq + 0.5) * IDLE.armSwingAmp;
+    // Head: stabilize against body motion
+    headBone.position.y = 0.12
+      + sin(t * PI2 * IDLE.headBobFreq) * IDLE.headBobAmp * idleWeight;
+    headBone.rotation.z = sin(t * PI2 * IDLE.headTiltFreq) * IDLE.headTiltAmp * idleWeight
+      - walkWeight * chestTwist * 0.5; // counter chest twist
+    headBone.rotation.x = sin(t * PI2 * 0.4) * 0.01 * idleWeight
+      - walkWeight * WALK.headStabilize; // slight nod stabilization
 
-    // Lower arm subtle bend
-    lLowerArmBone.rotation.x = -0.12 + sin(t * PI2 * 0.8) * 0.02;
-    rLowerArmBone.rotation.x = -0.12 - sin(t * PI2 * 0.8 + 0.5) * 0.02;
+    // Shoulders
+    lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
+    rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
 
-    // Knee micro-flex (weight shifting)
-    lLowerLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015;
-    rLowerLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015;
+    // Arms: idle pendulum + walk counter-swing
+    lUpperArmBone.rotation.x = sin(t * PI2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight
+      + armSwing * walkWeight;   // counter-swing: left arm goes forward when right leg goes forward
+    rUpperArmBone.rotation.x = -sin(t * PI2 * IDLE.armSwingFreq + 0.5) * IDLE.armSwingAmp * idleWeight
+      - armSwing * walkWeight;   // opposite swing
 
-    // ── Floating Dust Particles ──
+    // Lower arms: slight bend + walk bounce
+    lLowerArmBone.rotation.x = (-0.12 + sin(t * PI2 * 0.8) * 0.02) * idleWeight
+      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
+    rLowerArmBone.rotation.x = (-0.12 - sin(t * PI2 * 0.8 + 0.5) * 0.02) * idleWeight
+      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
+
+    // Legs: idle micro-flex + walk cycle
+    lUpperLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
+      + legSwing * walkWeight;     // left leg swing
+    rUpperLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
+      - legSwing * walkWeight;     // right leg (opposite)
+
+    // Knees: flex during swing phase
+    lLowerLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
+      + kneeBend * walkWeight;
+    rLowerLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
+      + kneeOpp * walkWeight;
+
+    // Feet: lift during swing
+    lFootBone.rotation.x = footLift * walkWeight * 0.3;
+    rFootBone.rotation.x = footOpp * walkWeight * 0.3;
+
+    // ── FLOATING DUST PARTICLES ──
     if (window._dustParticles) {
       const dp = window._dustParticles;
       for (let i = 0; i < dp.velocities.length; i++) {
         dp.positions[i * 3]     += dp.velocities[i].x;
         dp.positions[i * 3 + 1] += dp.velocities[i].y;
         dp.positions[i * 3 + 2] += dp.velocities[i].z;
-        // Reset particle if it goes too high
-        if (dp.positions[i * 3 + 1] > 5) {
+        if (dp.positions[i * 3 + 1] > 6) {
           dp.positions[i * 3 + 1] = 0;
-          dp.positions[i * 3]     = (Math.random() - 0.5) * 10;
-          dp.positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+          dp.positions[i * 3]     = charGroup.position.x + (Math.random() - 0.5) * 20;
+          dp.positions[i * 3 + 2] = charGroup.position.z + (Math.random() - 0.5) * 20;
         }
       }
       dp.geom.attributes.position.needsUpdate = true;
     }
 
-    // ── Glowing ring pulse ──
+    // ── GLOWING RING PULSE ──
     ring.material.opacity = 0.35 + sin(t * 1.5) * 0.15;
     innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
 
-    // ── Orbit controls ──
+    // ── THIRD-PERSON CAMERA FOLLOW ──
+    // Camera follows behind the character based on facing direction
+    const charPos = charGroup.position;
+    const behindOffset = CAM_FOLLOW.offset.clone();
+    // Rotate offset by character facing angle so camera stays behind
+    const cosF = cos(facingAngle);
+    const sinF = sin(facingAngle);
+    const rotatedX = behindOffset.x * cosF + behindOffset.z * sinF;
+    const rotatedZ = -behindOffset.x * sinF + behindOffset.z * cosF;
+    _camTarget.set(
+      charPos.x + rotatedX,
+      charPos.y + behindOffset.y,
+      charPos.z + rotatedZ
+    );
+    _camLookAt.set(
+      charPos.x + CAM_FOLLOW.lookOffset.x,
+      charPos.y + CAM_FOLLOW.lookOffset.y,
+      charPos.z + CAM_FOLLOW.lookOffset.z
+    );
+
+    // Smooth interpolation
+    cam.position.lerp(_camTarget, CAM_FOLLOW.smoothPos);
+    ctl.target.lerp(_camLookAt, CAM_FOLLOW.smoothLook);
+
+    // ── Orbit controls (for manual override) ──
     ctl.update();
 
     // ── Render ──
