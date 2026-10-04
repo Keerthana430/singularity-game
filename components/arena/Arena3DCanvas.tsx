@@ -987,15 +987,49 @@ export function Arena3DCanvas({
       case 'grassland':
       default:
         return {
-          bg: '#07150e',
-          fog: '#07150e',
-          ambientColor: '#a7f3d0',
+          bg: '#101426',
+          fog: '#12162B',
+          ambientColor: '#2A2440',
           ambientInt: 1.1,
-          sunColor: '#ecfdf5',
-          sunInt: 2.2,
+          sunColor: '#FFE5C4',
+          sunInt: 2.6,
         };
     }
   }, [biome]);
+
+// ─── ORBITAL PLANET HORIZON (PLANET BELOW THE COLOSSEUM) ───────────────────
+function OrbitalPlanetBelow() {
+  const planetRef = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (planetRef.current) {
+      planetRef.current.rotation.y += delta * 0.02;
+    }
+  });
+
+  return (
+    <group position={[0, -25.2, -4]}>
+      {/* Massive curved sapphire planet below the orbital colosseum */}
+      <mesh ref={planetRef}>
+        <sphereGeometry args={[24, 48, 48]} />
+        <meshStandardMaterial
+          color="#1E3A8A"
+          roughness={0.7}
+          metalness={0.2}
+        />
+      </mesh>
+      {/* Glowing atmospheric rim halo */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[24.4, 48, 48]} />
+        <meshBasicMaterial
+          color="#38BDF8"
+          transparent
+          opacity={0.22}
+          side={THREE.BackSide}
+        />
+      </mesh>
+    </group>
+  );
+}
 
 // ─── AMBIENT COMBAT CYBER PARTICLES ─────────────────────────────────────────
 function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
@@ -1043,6 +1077,9 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
         <color attach="background" args={[lighting.bg]} />
         <fog attach="fog" args={[lighting.fog, 6, 24]} />
 
+        {/* Planet Horizon Curved Below */}
+        <OrbitalPlanetBelow />
+
         <ambientLight color={lighting.ambientColor} intensity={lighting.ambientInt} />
         <directionalLight
           position={[0, 6, 4]}
@@ -1053,6 +1090,10 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           shadow-mapSize-height={2048}
           shadow-bias={-0.0001}
         />
+
+        {/* Stadium Rim Lighting */}
+        <directionalLight position={[-4, 3, -3]} intensity={1.6} color="#FF9E3B" />
+        <directionalLight position={[4, 4, -4]} intensity={2.2} color="#38BDF8" />
 
         {/* Dynamic Dual Fighter Spotlights */}
         <spotLight

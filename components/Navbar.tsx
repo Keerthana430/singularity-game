@@ -10,12 +10,12 @@ import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
 
 const navLinks = [
-  { href: '/studio',    label: 'STUDIO',   icon: Layers },
-  { href: '/lobby',     label: 'ARENA',    icon: Swords },
-  { href: '/ludo',      label: 'LUDO',     icon: Dices },
-  { href: '/snakes',    label: 'SNAKES',   icon: Trees },
-  { href: '/contest',   label: 'CONTEST',  icon: Heart },
-  { href: '/#rankings', label: 'RANKINGS', icon: Trophy },
+  { href: '/studio',    label: 'STUDIO',   sub: 'HANGAR BAY',        icon: Layers },
+  { href: '/lobby',     label: 'ARENA',    sub: 'ORBITAL COLOSSEUM', icon: Swords },
+  { href: '/ludo',      label: 'LUDO',     sub: 'LOUNGE TABLE',      icon: Dices },
+  { href: '/snakes',    label: 'SNAKES',   sub: 'ELEVATOR ASCENT',   icon: Trees },
+  { href: '/contest',   label: 'CONTEST',  sub: 'OBSERVATION DECK',  icon: Heart },
+  { href: '/#rankings', label: 'RANKINGS', sub: 'MISSION CONTROL',   icon: Trophy },
 ];
 
 export function Navbar() {
@@ -210,7 +210,7 @@ export function Navbar() {
             </div>
 
             <div className="flex flex-col gap-1" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
-              {navLinks.map(({ href, label, icon: Icon }) => {
+              {navLinks.map(({ href, label, sub, icon: Icon }) => {
                 const active = isActive(href);
                 return (
                   <Link
@@ -218,14 +218,19 @@ export function Navbar() {
                     href={href}
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? 'page' : undefined}
-                    className={`relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-[11px] font-bold tracking-[0.14em] uppercase transition-all overflow-hidden ${
+                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-lg text-[11px] font-bold tracking-[0.14em] uppercase transition-all overflow-hidden ${
                       active
                         ? 'text-[#00FF66] bg-[#00FF66]/10 border border-[#00FF66]/40 shadow-[0_0_10px_rgba(0,255,102,0.15)]'
-                        : 'text-[#9AA8A0] hover:text-[#F0F4F1] hover:bg-white/5 border border-transparent'
+                        : 'text-[#9AA8A0] hover:text-[#FFF8EE] hover:bg-white/5 border border-transparent'
                     }`}
                   >
-                    <Icon size={14} className={active ? 'text-[#00FF66]' : 'text-current'} aria-hidden="true" />
-                    <span>{label}</span>
+                    <div className="flex items-center gap-3">
+                      <Icon size={14} className={active ? 'text-[#00FF66]' : 'text-current'} aria-hidden="true" />
+                      <span>{label}</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-white/40 tracking-wider">
+                      // {sub}
+                    </span>
                     {active && (
                       <div
                         className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full bg-[#00FF66] shadow-[0_0_8px_#00FF66]"

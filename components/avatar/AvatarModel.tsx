@@ -7,6 +7,7 @@ import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AvatarConfig } from '@/types/avatar';
+import { createToonGradientMap } from '@/components/retro/ToonShading';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -14,12 +15,13 @@ function hexToColor(hex: string): THREE.Color {
   return new THREE.Color(hex);
 }
 
+const sharedToonMap = createToonGradientMap(3);
+
 function useMaterial(hex: string, roughness = 0.6, metalness = 0, emissive?: string, emissiveIntensity = 0) {
   return useMemo(() => {
-    const mat = new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshToonMaterial({
       color: hexToColor(hex),
-      roughness,
-      metalness,
+      gradientMap: sharedToonMap,
     });
     if (emissive) {
       mat.emissive = hexToColor(emissive);
@@ -27,7 +29,7 @@ function useMaterial(hex: string, roughness = 0.6, metalness = 0, emissive?: str
     }
     return mat;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hex, roughness, metalness, emissive, emissiveIntensity]);
+  }, [hex, emissive, emissiveIntensity]);
 }
 
 // ─── Body proportions ───────────────────────────────────────────────────────

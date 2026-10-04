@@ -1452,11 +1452,12 @@ export default function LobbyPage() {
           )}
 
           {/* ───────────────────────────────────────────────────────────── */}
-          {/* IDLE HERO ARENA: REVERSED HIERARCHY (3D ARENA AS HERO)        */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* IDLE HERO ARENA: ORBITAL COLOSSEUM VERTICAL SLICE             */}
           {/* ───────────────────────────────────────────────────────────── */}
           {tournamentStage === 'idle' && (
-            <div className="relative flex-1 min-h-0 w-full rounded-2xl overflow-hidden border border-[#00FF66]/35 shadow-[0_0_50px_rgba(0,255,102,0.18)] bg-gradient-to-b from-[#030c05] via-[#020502] to-black">
-              {/* 3D ARENA VIEWPORT (FILLS 100% OF THIS IMMERSIVE CONTAINER) */}
+            <div className="relative flex-1 min-h-0 w-full rounded-3xl overflow-hidden border border-white/15 shadow-[0_12px_48px_rgba(0,0,0,0.85)] bg-gradient-to-b from-[#141830] via-[#101426] to-[#0D1020]">
+              {/* 3D ARENA VIEWPORT (HERO AVATAR IN ORBITAL COLOSSEUM WITH PLANET BELOW) */}
               <div className="absolute inset-0 z-0">
                 <Arena3DView
                   playerConfig={currentAvatar}
@@ -1467,115 +1468,124 @@ export default function LobbyPage() {
                   roundKey={battleRoundKey}
                   className="w-full h-full"
                 />
-                {/* Subtle Ambient Vignette */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/85 via-transparent to-black/45" />
+                {/* Subtle Cinematic Vignette */}
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#101426]/90 via-transparent to-[#101426]/50" />
               </div>
 
-              {/* TOP HUD ROW */}
-              <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
-                {/* Left: 3D Colosseum Badge + Biome selector */}
+              {/* TOP HUD BROADCAST OVERLAY */}
+              <div className="absolute top-3.5 left-4 right-4 z-10 flex items-center justify-between pointer-events-none flex-wrap gap-2">
+                {/* Left: Station Deck Badge + Biome selector */}
                 <div className="flex items-center gap-2 pointer-events-auto">
-                  <div className="px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-[#00FF66]/40 text-xs font-mono text-[#00FF66] font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,102,0.2)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
-                    <span>3D COLOSSEUM // READY</span>
+                  <div className="px-3.5 py-1.5 rounded-full bg-[#181D33]/90 backdrop-blur-md border border-[#FF9E3B]/40 text-xs font-mono text-[#FFF8EE] font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(255,158,59,0.25)]">
+                    <span className="w-2 h-2 rounded-full bg-[#FF9E3B] animate-pulse" />
+                    <span>ORBITAL COLOSSEUM // DOCK 01</span>
                   </div>
 
-                  <div className="hidden sm:flex items-center gap-1 bg-black/85 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[10px] font-mono">
+                  <div className="hidden sm:flex items-center gap-1 bg-[#181D33]/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[10px] font-mono">
                     {(['grassland', 'volcano', 'mystic'] as BiomeType[]).map((b) => (
                       <button
                         key={b}
                         onClick={() => setCurrentBiome(b)}
-                        className={`px-2 py-0.5 rounded-full uppercase transition-all ${
+                        className={`px-2.5 py-0.5 rounded-full uppercase transition-all ${
                           currentBiome === b
-                            ? 'bg-[#00FF66] text-black font-bold shadow-[0_0_10px_#00FF66]'
-                            : 'text-white/50 hover:text-white'
+                            ? 'bg-[#38BDF8] text-black font-extrabold shadow-[0_0_10px_#38BDF8]'
+                            : 'text-white/60 hover:text-white'
                         }`}
                       >
-                        {b}
+                        {b === 'grassland' ? 'Verdant' : b === 'volcano' ? 'Caldera' : 'Twilight'}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Center: Invitational Badge */}
-                <div className="hidden md:inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/85 border border-[#00FF66]/30 shadow-[0_0_20px_rgba(0,255,102,0.15)] pointer-events-auto">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-ping" />
-                  <span className="text-xs font-mono font-black text-[#00FF66] tracking-[0.2em] uppercase">
-                    INVITATIONAL // 08 PLAYERS
+                {/* Center: Broadcast Title Card */}
+                <div className="hidden md:inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#181D33]/90 backdrop-blur-md border border-[#FFC700]/30 shadow-[0_0_20px_rgba(255,199,0,0.15)] pointer-events-auto">
+                  <span className="w-2 h-2 rounded-full bg-[#FF6B35] animate-ping" />
+                  <span
+                    className="text-xs font-bold text-[#FFF8EE] tracking-wider uppercase"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    SINGULARITY 8-MAN INVITATIONAL
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 uppercase font-black">
-                    COMBAT
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#FF6B35]/20 text-[#FF8A3D] border border-[#FF6B35]/40 uppercase font-black">
+                    LIVE
                   </span>
                 </div>
 
-                {/* Right: Tune Rig */}
+                {/* Right: Hangar Tuning Quicklink */}
                 <div className="pointer-events-auto">
                   <Link
                     href="/studio"
-                    className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 hover:border-[#00FF66] text-xs font-mono text-white/80 hover:text-white uppercase transition-all flex items-center gap-1.5 shadow-lg group"
+                    className="px-3.5 py-1.5 rounded-full bg-[#181D33]/90 backdrop-blur-md border border-white/15 hover:border-[#38BDF8] text-xs font-mono text-[#FFF8EE] hover:text-[#38BDF8] uppercase transition-all flex items-center gap-1.5 shadow-lg group"
                   >
-                    <Layers size={13} className="text-[#00FF66] group-hover:rotate-45 transition-transform" />
-                    <span>Tune Rig</span>
+                    <Layers size={13} className="text-[#38BDF8] group-hover:rotate-45 transition-transform" />
+                    <span>TUNING HANGAR</span>
                   </Link>
                 </div>
               </div>
 
-              {/* BOTTOM HUD FLOATING CONTROLS & STATS (NO SCROLLING NEEDED!) */}
-              <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col items-center gap-2 pointer-events-none">
-                {/* 1. Avatar Name & Role pill */}
-                <div className="px-5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-[#00FF66]/30 shadow-[0_0_25px_rgba(0,0,0,0.9)] flex items-center gap-2.5 pointer-events-auto">
+              {/* BOTTOM HUD FLOATING CONTROLS & REAL STORE STATS */}
+              <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-col items-center gap-2.5 pointer-events-none">
+                {/* 1. Pilot & Avatar Name Pill */}
+                <div className="px-5 py-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.85)] flex items-center gap-3 pointer-events-auto">
                   <span
-                    className="text-base sm:text-lg font-black text-white tracking-widest uppercase"
-                    style={{ fontFamily: "'Orbitron', sans-serif" }}
+                    className="text-base sm:text-lg font-bold text-[#FFF8EE] tracking-wide"
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {currentAvatar.name}
                   </span>
                   <span className="w-1 h-3.5 bg-white/20" />
-                  <span className="text-xs font-mono font-bold text-[#00FF66] tracking-wider uppercase">
-                    {((currentAvatar.classRole || calculatedPlayerStats.className || 'MAGE') as string).toUpperCase()}
+                  <span className="text-xs font-mono font-bold text-[#38BDF8] tracking-wider uppercase">
+                    [{((currentAvatar.classRole || calculatedPlayerStats.className || 'OPERATIVE') as string).toUpperCase()}]
                   </span>
                   <span className="text-white/30 text-xs">&bull;</span>
-                  <span className="text-xs font-mono text-white/70 uppercase">
+                  <span className="text-xs font-mono text-[#FF9E3B] uppercase font-bold">
                     {currentAvatar.species || 'Human'}
                   </span>
-                </div>
-
-                {/* 2. Sleek compact Stats Strip */}
-                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-4 sm:px-8 py-2 rounded-xl bg-black/85 border border-white/10 backdrop-blur-md shadow-2xl pointer-events-auto">
-                  <div className="flex items-center gap-1.5 font-mono text-xs">
-                    <span className="text-white/50 font-bold uppercase">HP</span>
-                    <span className="font-black text-emerald-400 font-mono">{calculatedPlayerStats.maxHp}</span>
-                  </div>
-                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 font-mono text-xs">
-                    <span className="text-white/50 font-bold uppercase">PWR</span>
-                    <span className="font-black text-rose-400 font-mono">{calculatedPlayerStats.power}</span>
-                  </div>
-                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 font-mono text-xs">
-                    <span className="text-white/50 font-bold uppercase">AGI</span>
-                    <span className="font-black text-amber-400 font-mono">{calculatedPlayerStats.agility}</span>
-                  </div>
-                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 font-mono text-xs">
-                    <span className="text-white/50 font-bold uppercase">MAG</span>
-                    <span className="font-black text-violet-400 font-mono">{calculatedPlayerStats.magic}</span>
-                  </div>
-                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 font-mono text-xs">
-                    <span className="text-white/50 font-bold uppercase">DEF</span>
-                    <span className="font-black text-cyan-400 font-mono">{calculatedPlayerStats.defense}</span>
+                  <span className="text-white/30 text-xs">&bull;</span>
+                  <div className="flex items-center gap-1 text-xs font-mono text-[#FFC700] font-bold">
+                    <CoinsIcon size={12} className="text-[#FFC700]" />
+                    <span>{coins} COINS</span>
                   </div>
                 </div>
 
-                {/* 3. Glowing [ ENTER ARENA ] CTA Button */}
-                <div className="pointer-events-auto pt-0.5">
+                {/* 2. Sleek Compact Stats Strip with Warm Color Coding */}
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-5 sm:px-8 py-2 rounded-2xl bg-[#181D33]/90 border border-white/15 backdrop-blur-xl shadow-2xl pointer-events-auto">
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[#8F97B0] font-bold uppercase">HP</span>
+                    <span className="font-black text-[#34D399] font-mono">{calculatedPlayerStats.maxHp}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[#8F97B0] font-bold uppercase">PWR</span>
+                    <span className="font-black text-[#FF6584] font-mono">{calculatedPlayerStats.power}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[#8F97B0] font-bold uppercase">AGI</span>
+                    <span className="font-black text-[#FFC700] font-mono">{calculatedPlayerStats.agility}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[#8F97B0] font-bold uppercase">MAG</span>
+                    <span className="font-black text-[#A855F7] font-mono">{calculatedPlayerStats.magic}</span>
+                  </div>
+                  <div className="w-px h-3.5 bg-white/10 hidden sm:block" />
+                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[#8F97B0] font-bold uppercase">DEF</span>
+                    <span className="font-black text-[#38BDF8] font-mono">{calculatedPlayerStats.defense}</span>
+                  </div>
+                </div>
+
+                {/* 3. Single Major CTA Button with Playful Squash-and-Stretch */}
+                <div className="pointer-events-auto pt-1">
                   <button
                     onClick={handleStartTournament}
-                    className="hud-action-btn px-10 py-2.5 text-xs sm:text-sm font-black uppercase tracking-[0.25em] flex items-center gap-2.5 shadow-[0_0_35px_rgba(0,255,102,0.45)] hover:shadow-[0_0_65px_rgba(0,255,102,0.75)] transition-all hover:scale-105 active:scale-95"
+                    className="px-10 sm:px-12 py-3 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF8A3D] hover:from-[#FF8A3D] hover:to-[#FFAA00] text-white font-bold text-xs sm:text-sm tracking-[0.20em] uppercase flex items-center gap-2.5 shadow-[0_4px_28px_rgba(255,107,53,0.5)] hover:shadow-[0_6px_36px_rgba(255,107,53,0.7)] transition-all hover:scale-105 active:scale-95"
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
                     <Play size={16} fill="currentColor" />
-                    <span>ENTER ARENA</span>
+                    <span>ENTER ORBITAL COLOSSEUM</span>
                   </button>
                 </div>
               </div>
