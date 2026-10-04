@@ -7,6 +7,12 @@ and NPC Tactical Combat Decision-Making.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import os
+
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import random
@@ -17,14 +23,21 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for Next.js frontend running on port 3000
+# Enable CORS — restrict origins via ALLOWED_ORIGINS env var
+allowed = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+    allow_origins=allowed,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configure rate limiter (uses remote address by default)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(429, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 # ─── Data Schemas ────────────────────────────────────────────────────────────
@@ -88,6 +101,7 @@ def read_root():
     }
 
 
+@limiter.limit("30/minute")
 @app.post("/api/ai/lore", response_model=AvatarLoreResponse)
 def generate_avatar_lore(profile: AvatarProfileRequest):
     """
@@ -144,6 +158,7 @@ def generate_avatar_lore(profile: AvatarProfileRequest):
     )
 
 
+@limiter.limit("60/minute")
 @app.post("/api/ai/commentary", response_model=CommentaryResponse)
 def generate_combat_commentary(req: CombatCommentaryRequest):
     """
@@ -174,6 +189,7 @@ def generate_combat_commentary(req: CombatCommentaryRequest):
     )
 
 
+@limiter.limit("30/minute")
 @app.post("/api/ai/tactics", response_model=TacticalMoveResponse)
 def decide_tactical_move(req: TacticalMoveRequest):
     """

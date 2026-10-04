@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 // ─── Pre-defined Team Credentials ─────────────────────────────────────────────
 // Admin distributes these to each team. Teams can change their display name
@@ -25,11 +26,37 @@ const TEAM_ACCOUNTS: TeamAccount[] = [
   { teamId: 'team-juliet',  username: 'juliet',  password: 'singularity2026J', displayName: 'Team Juliet' },
 ];
 
-// Simple session tokens (in production, use JWT or proper session management)
-const activeSessions = new Map<string, { teamId: string; expiresAt: number }>();
+// Use a signed HMAC-based token (JWT-like) stored in an HttpOnly cookie.
+// This is a lightweight replacement until a real session store / DB is used.
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
 
-function generateToken(): string {
-  return `sg_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+function base64url(input: Buffer | string) {
+  return Buffer.from(input).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function sign(payload: Record<string, any>) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const body = { ...payload };
+  const encoded = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(body))}`;
+  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64');
+  // base64 -> base64url
+  const sigUrl = signature.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return `${encoded}.${sigUrl}`;
+}
+
+function verify(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [header, body, sig] = parts;
+    const encoded = `${header}.${body}`;
+    const expected = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    if (expected !== sig) return null;
+    const payload = JSON.parse(Buffer.from(body, 'base64').toString());
+    return payload;
+  } catch (e) {
+    return null;
+  }
 }
 
 // POST /api/auth — Login
@@ -49,9 +76,10 @@ export async function POST(request: Request) {
       const safeUser = String(username).trim().toLowerCase();
       const safePwd = String(password).trim();
 
-      const team = TEAM_ACCOUNTS.find(
-        (t) => t.username.toLowerCase() === safeUser && t.password === safePwd
-      );
+      // NOTE: TEAM_ACCOUNTS currently stores plaintext passwords for demo/dev.
+      // In production migrate these to hashed passwords in a secure DB and remove
+      // the plaintext entries from source control.
+      const team = TEAM_ACCOUNTS.find((t) => t.username.toLowerCase() === safeUser && t.password === safePwd);
 
       if (!team) {
         return NextResponse.json(
@@ -60,44 +88,43 @@ export async function POST(request: Request) {
         );
       }
 
-      // Revoke any existing sessions for this team
-      for (const [tok, session] of activeSessions.entries()) {
-        if (session.teamId === team.teamId) {
-          activeSessions.delete(tok);
-        }
-      }
+      // Issue signed token (valid 24 hours) and set as HttpOnly cookie.
+      const expiresIn = 24 * 60 * 60; // seconds
+      const payload = { teamId: team.teamId, exp: Math.floor(Date.now() / 1000) + expiresIn };
+      const jwt = sign(payload);
 
-      // Create new session (24-hour expiry)
-      const sessionToken = generateToken();
-      activeSessions.set(sessionToken, {
-        teamId: team.teamId,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-      });
+      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      const cookie = `sg_session=${jwt}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${expiresIn}${secureFlag}`;
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
-        token: sessionToken,
         team: {
           teamId: team.teamId,
           displayName: team.displayName,
           username: team.username,
         },
       });
+      res.headers.set('Set-Cookie', cookie);
+      return res;
     }
 
     // ─── VERIFY SESSION ───────────────────────────────────────────
     if (action === 'verify') {
-      if (!token) {
+      // Check cookie first
+      const cookieHeader = request.headers.get('cookie') || '';
+      const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
+      const providedToken = cookieMatch ? cookieMatch[1] : token;
+
+      if (!providedToken) {
         return NextResponse.json({ success: false, error: 'No token provided' }, { status: 401 });
       }
 
-      const session = activeSessions.get(token);
-      if (!session || session.expiresAt < Date.now()) {
-        if (session) activeSessions.delete(token);
+      const payload = verify(providedToken);
+      if (!payload || (payload.exp && payload.exp < Math.floor(Date.now() / 1000))) {
         return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
       }
 
-      const team = TEAM_ACCOUNTS.find((t) => t.teamId === session.teamId);
+      const team = TEAM_ACCOUNTS.find((t) => t.teamId === payload.teamId);
       if (!team) {
         return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 });
       }
@@ -114,13 +141,13 @@ export async function POST(request: Request) {
 
     // ─── CHANGE TEAM NAME ─────────────────────────────────────────
     if (action === 'rename') {
-      if (!token) {
-        return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
-      }
+      // Read token from cookie if present
+      const cookieHeader = request.headers.get('cookie') || '';
+      const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
+      const providedToken = cookieMatch ? cookieMatch[1] : token;
 
-      const session = activeSessions.get(token);
-      if (!session || session.expiresAt < Date.now()) {
-        if (session) activeSessions.delete(token);
+      const payload = providedToken ? verify(providedToken) : null;
+      if (!payload || (payload.exp && payload.exp < Math.floor(Date.now() / 1000))) {
         return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
       }
 
@@ -132,14 +159,14 @@ export async function POST(request: Request) {
       }
 
       const safeName = displayName.replace(/<[^>]*>/g, '').trim().slice(0, 30);
-      const team = TEAM_ACCOUNTS.find((t) => t.teamId === session.teamId);
+      const team = TEAM_ACCOUNTS.find((t) => t.teamId === payload.teamId);
       if (!team) {
         return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 });
       }
 
       // Check if name is already taken by another team
       const nameTaken = TEAM_ACCOUNTS.some(
-        (t) => t.teamId !== session.teamId && t.displayName.toLowerCase() === safeName.toLowerCase()
+        (t) => t.teamId !== payload.teamId && t.displayName.toLowerCase() === safeName.toLowerCase()
       );
       if (nameTaken) {
         return NextResponse.json(
@@ -163,10 +190,12 @@ export async function POST(request: Request) {
 
     // ─── LOGOUT ───────────────────────────────────────────────────
     if (action === 'logout') {
-      if (token) {
-        activeSessions.delete(token);
-      }
-      return NextResponse.json({ success: true, message: 'Logged out' });
+      // Clear cookie
+      const res = NextResponse.json({ success: true, message: 'Logged out' });
+      // Overwrite cookie with expired value
+      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      res.headers.set('Set-Cookie', `sg_session=deleted; Path=/; HttpOnly; Max-Age=0; SameSite=Strict${secureFlag}`);
+      return res;
     }
 
     return NextResponse.json({ success: false, error: 'Unknown action' }, { status: 400 });

@@ -13,7 +13,6 @@ export interface TeamInfo {
 interface AuthStore {
   isLoggedIn: boolean;
   team: TeamInfo | null;
-  token: string | null;
   isLoading: boolean;
   error: string | null;
 
@@ -29,7 +28,6 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       isLoggedIn: false,
       team: null,
-      token: null,
       isLoading: false,
       error: null,
 
@@ -47,7 +45,6 @@ export const useAuthStore = create<AuthStore>()(
             set({
               isLoggedIn: true,
               team: json.team,
-              token: json.token,
               isLoading: false,
               error: null,
             });
@@ -63,31 +60,24 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        const { token } = get();
         try {
           await fetch('/api/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'logout', token }),
+            body: JSON.stringify({ action: 'logout' }),
           });
         } catch {
-          // Logout locally regardless
+          // ignore network errors
         }
-        set({ isLoggedIn: false, team: null, token: null, error: null });
+        set({ isLoggedIn: false, team: null, error: null });
       },
 
       verifySession: async () => {
-        const { token } = get();
-        if (!token) {
-          set({ isLoggedIn: false, team: null });
-          return false;
-        }
-
         try {
           const res = await fetch('/api/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'verify', token }),
+            body: JSON.stringify({ action: 'verify' }),
           });
           const json = await res.json();
 
@@ -95,25 +85,21 @@ export const useAuthStore = create<AuthStore>()(
             set({ isLoggedIn: true, team: json.team });
             return true;
           } else {
-            set({ isLoggedIn: false, team: null, token: null });
+            set({ isLoggedIn: false, team: null });
             return false;
           }
         } catch {
-          // Keep local state if network fails
           return get().isLoggedIn;
         }
       },
 
       renameTeam: async (newName) => {
-        const { token } = get();
-        if (!token) return false;
-
         set({ isLoading: true, error: null });
         try {
           const res = await fetch('/api/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'rename', token, displayName: newName }),
+            body: JSON.stringify({ action: 'rename', displayName: newName }),
           });
           const json = await res.json();
 
@@ -146,10 +132,10 @@ export const useAuthStore = create<AuthStore>()(
           };
         }
       }),
+      // Only persist minimal UI state; do not persist tokens in localStorage.
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         team: state.team,
-        token: state.token,
       }),
     }
   )
