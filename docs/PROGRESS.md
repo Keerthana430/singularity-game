@@ -2,7 +2,7 @@
 
 ## Current State
 
-- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Lighting & Anti-Glare Overhaul
+- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Phase 12 (Lighting & Color Pass)
 - **Current stack**: Next.js 16 / React 19 / Three.js / Procedural Shading & Additive Lighting / Canvas Textures / Web Audio API
 - **How to run**: npm run dev (accessible at http://localhost:3000/snake-and-ladder.html and /prototype)
 - **How to test**: npm run test
@@ -347,5 +347,29 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
 - **Exit criteria**:
   - Visual appearance matches user reference screenshot 1-to-1 - PASS.
   - All tests and TypeScript compile pass - PASS.
+- **Deferred**: None.
+
+---
+
+## Phase 12: Lighting & Color Pass (2026-10-04)
+- **Built**:
+  - Implemented 5-band color ramp (Cyan, Teal, Violet, Magenta, Orange) mapping across all 100 tiles, including faces and glowing edges.
+  - Replaced central pillar with a vertical color gradient and added band-colored glowing rings pulsing on a 6-second sine wave loop.
+  - Overhauled snake bodies to use 6 distinct bright colors, added a belly stripe, glowing eyes, and animated bite emissive flash.
+  - Refined ladders into glowing golden structures with warm contact-shadow rungs and local amber point lights at their bases.
+  - Adjusted global lighting rig (Hemisphere, Moon, Cyan/Magenta points) and post-processing (Bloom threshold 0.6, ACES Filmic, Fog) to match the cinematic arcade-game reference.
+- **Files created/changed**:
+  - `public/snake-and-ladder.html` - Implemented logic for bands, meshes, shaders, materials, and game loop animations.
+  - `src/rendering/theme.config.ts` - Defined constants for the lighting theme.
+  - `docs/PROGRESS.md`
+- **Decisions and assumptions**:
+  - Integrated the color ramp math and blending directly into the vanilla canvas rendering in `snake-and-ladder.html` since it handles its own internal drawing loop for the standalone prototype.
+  - Animated `pillarRings` material intensity in the `frame()` loop by exporting it via `window.__S`.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - Distinct colors for tiles 1, 25, 50, 75, 100 - PASS (Implemented via 5-band HSL lerping).
+  - Pillar, tile walls, and floor are distinct separable tones - PASS (Core gradient vs Dark Blue tile walls `std(0x0C1230)` vs Dark Plaza `std(0x0C1535)`).
+  - Every snake and ladder visible - PASS (Bright specific hex colors and golden materials).
+  - No pure-white blobs - PASS (Bloom threshold raised to 0.6, base exposure 1.0).
 - **Known issues**: None.
 - **Deferred**: None.
