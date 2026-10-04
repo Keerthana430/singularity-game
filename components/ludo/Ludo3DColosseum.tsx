@@ -30,7 +30,7 @@ import {
   YARD_PODS,
   SAFE_TRACK_INDICES,
   CYBER_POWERUPS,
-} from '@/app/ludo/page';
+} from '@/components/ludo/constants';
 
 // ─── 3D MATH & CONSTANTS ───────────────────────────────────────────────────
 export const GRID_SCALE = 1.08;
