@@ -78,6 +78,9 @@ export default function DungeonPage() {
   const [attackPulse, setAttackPulse] = useState(0);
   const [playerHitPulse, setPlayerHitPulse] = useState(0);
   const keysRef = useRef<Set<string>>(new Set());
+  const positionRef = useRef<Position>({ x: 20, y: 50 });
+  const velocityRef = useRef<Position>({ x: 0, y: 0 });
+  const invulnerableUntilRef = useRef(0);
   const floatId = useRef(0);
 
   const floorData = FLOORS[floor];
@@ -91,7 +94,7 @@ export default function DungeonPage() {
   const startRun = useCallback(() => {
     const nextRooms = makeRoomMap(0, Date.now());
     setFloor(0); setRoomIndex(0); setRooms(nextRooms); setPlayer(initialPlayer(baseStats)); setEnemies([]);
-    setPosition({ x: 20, y: 50 }); setMode('map'); setLoot(null); setEnding(null); setRunStartedAt(Date.now());
+    positionRef.current = { x: 20, y: 50 }; velocityRef.current = { x: 0, y: 0 }; setPosition(positionRef.current); setMode('map'); setLoot(null); setEnding(null); setRunStartedAt(Date.now());
     setLog(['Run initialized. Choose a path into the Forgotten Entrance.']);
     sound.playEquip();
   }, [baseStats]);
@@ -101,7 +104,7 @@ export default function DungeonPage() {
     setRoomIndex(index);
     setRooms((items) => items.map((item, itemIndex) => itemIndex === index || itemIndex === index + 1 ? { ...item, visited: itemIndex === index ? true : item.visited, discovered: true } : item));
     if (room.type === 'combat' || room.type === 'elite' || room.type === 'boss') {
-      setEnemies(spawnEnemies(floor, room)); setPosition({ x: 20, y: 50 }); setSelectedEnemy(null); setMode('combat');
+      positionRef.current = { x: 20, y: 50 }; velocityRef.current = { x: 0, y: 0 }; setEnemies(spawnEnemies(floor, room)); setPosition(positionRef.current); setSelectedEnemy(null); setMode('combat');
       addLog(room.type === 'boss' ? `${floorData.boss} enters the arena.` : `${room.label} chamber: hostiles are closing in.`);
       sound.playImpact();
     } else if (room.type === 'treasure') {
@@ -179,7 +182,14 @@ export default function DungeonPage() {
 
   const dodge = useCallback(() => {
     if (mode !== 'combat' || cooldowns.dodge > 0 || player.stamina < 18) return;
-    setPosition((point) => ({ x: Math.min(92, point.x + 12), y: point.y })); setPlayer((state) => ({ ...state, stamina: state.stamina - 18 })); setCooldowns((state) => ({ ...state, dodge: 10 })); addLog('Dodge roll: damage ignored for a brief window.');
+    const keys = keysRef.current;
+    const horizontal = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+    const vertical = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+    const length = Math.hypot(horizontal, vertical) || 1;
+    const direction = { x: horizontal / length || 1, y: vertical / length };
+    const next = { x: Math.max(14, Math.min(86, positionRef.current.x + direction.x * 13)), y: Math.max(16, Math.min(84, positionRef.current.y + direction.y * 13)) };
+    positionRef.current = next; velocityRef.current = { x: direction.x * 8, y: direction.y * 8 }; invulnerableUntilRef.current = performance.now() + 620;
+    setPosition(next); setPlayer((state) => ({ ...state, stamina: state.stamina - 18 })); setCooldowns((state) => ({ ...state, dodge: 10 })); addLog('Dodge roll: evasive movement active.');
   }, [cooldowns.dodge, mode, player.stamina, addLog]);
 
   useEffect(() => {
@@ -202,33 +212,60 @@ export default function DungeonPage() {
 
   useEffect(() => {
     if (mode !== 'combat' || isPaused) return;
+    let frame = 0;
+    let lastTime = performance.now();
+    const move = (time: number) => {
+      const delta = Math.min(0.05, (time - lastTime) / 1000);
+      lastTime = time;
+      const keys = keysRef.current;
+      const inputX = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+      const inputY = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+      const inputLength = Math.hypot(inputX, inputY) || 1;
+      const targetVelocity = { x: (inputX / inputLength) * 20, y: (inputY / inputLength) * 20 };
+      const smoothing = 1 - Math.exp(-delta * 14);
+      velocityRef.current.x += (targetVelocity.x - velocityRef.current.x) * smoothing;
+      velocityRef.current.y += (targetVelocity.y - velocityRef.current.y) * smoothing;
+      if (!inputX && !inputY) {
+        const brake = Math.exp(-delta * 10);
+        velocityRef.current.x *= brake;
+        velocityRef.current.y *= brake;
+      }
+      const next = { x: Math.max(14, Math.min(86, positionRef.current.x + velocityRef.current.x * delta)), y: Math.max(16, Math.min(84, positionRef.current.y + velocityRef.current.y * delta)) };
+      positionRef.current = next;
+      if (Math.abs(velocityRef.current.x) + Math.abs(velocityRef.current.y) > 0.02) setPosition(next);
+      frame = requestAnimationFrame(move);
+    };
+    frame = requestAnimationFrame(move);
+    return () => cancelAnimationFrame(frame);
+  }, [isPaused, mode]);
+
+  useEffect(() => {
+    if (mode !== 'combat' || isPaused) return;
     const timer = window.setInterval(() => {
-      setPosition((point) => {
-        const keys = keysRef.current; const speed = 2.6;
-        return { x: Math.max(8, Math.min(92, point.x + ((keys.has('d') || keys.has('arrowright') ? speed : 0) - (keys.has('a') || keys.has('arrowleft') ? speed : 0)))), y: Math.max(14, Math.min(86, point.y + ((keys.has('s') || keys.has('arrowdown') ? speed : 0) - (keys.has('w') || keys.has('arrowup') ? speed : 0)))) };
-      });
+      const currentPosition = positionRef.current;
       setCooldowns((state) => Object.fromEntries(Object.entries(state).map(([key, value]) => [key, Math.max(0, value - 1)])) as typeof state);
       setPlayer((state) => ({ ...state, stamina: Math.min(state.maxStamina, state.stamina + 1) }));
       setEnemies((items) => items.map((enemy) => {
         if (enemy.hp <= 0 || enemy.stunned > 0) return { ...enemy, stunned: Math.max(0, enemy.stunned - 1) };
-        const dx = position.x - enemy.position.x; const dy = position.y - enemy.position.y; const distance = Math.hypot(dx, dy) || 1;
+        const dx = currentPosition.x - enemy.position.x; const dy = currentPosition.y - enemy.position.y; const distance = Math.hypot(dx, dy) || 1;
         const wantsDistance = enemy.archetype === 'ranged' || enemy.archetype === 'mage' || enemy.archetype === 'support';
         const shouldMove = wantsDistance ? distance < enemy.range : distance > enemy.range;
-        const nextPosition = shouldMove ? { x: enemy.position.x + (dx / distance) * enemy.speed * 5 * (wantsDistance ? -1 : 1), y: enemy.position.y + (dy / distance) * enemy.speed * 5 * (wantsDistance ? -1 : 1) } : enemy.position;
+        const moveAmount = enemy.speed * 5;
+        const nextPosition = shouldMove ? { x: Math.max(14, Math.min(86, enemy.position.x + (dx / distance) * moveAmount * (wantsDistance ? -1 : 1))), y: Math.max(16, Math.min(84, enemy.position.y + (dy / distance) * moveAmount * (wantsDistance ? -1 : 1))) } : enemy.position;
         if (distance <= enemy.range && enemy.cooldown <= 0) {
-          if (enemy.archetype === 'support') return { ...enemy, position: nextPosition, cooldown: 18 };
+          if (enemy.archetype === 'support' || performance.now() < invulnerableUntilRef.current) return { ...enemy, position: nextPosition, cooldown: 12 };
           const incoming = Math.max(2, enemy.attack - (player.defense + player.defenseBonus) * 0.22);
           setPlayerHitPulse((value) => value + 1);
           setPlayer((state) => { const hp = Math.max(0, state.hp - Math.round(incoming)); if (hp <= 0) setTimeout(() => setMode('dead'), 0); return { ...state, hp }; });
-          addFloat(`-${Math.round(incoming)}`, position.x, position.y, '#fb7185');
+          addFloat(`-${Math.round(incoming)}`, currentPosition.x, currentPosition.y, '#fb7185');
           return { ...enemy, position: nextPosition, cooldown: enemy.archetype === 'boss' && enemy.phase > 1 ? 10 : 18 };
         }
         const phase = enemy.archetype === 'boss' && enemy.hp < enemy.maxHp * 0.66 ? 2 : enemy.archetype === 'boss' && enemy.hp < enemy.maxHp * 0.33 ? 3 : enemy.phase;
         return { ...enemy, position: nextPosition, cooldown: Math.max(0, enemy.cooldown - 1), phase };
       }));
-    }, 140);
+    }, 100);
     return () => window.clearInterval(timer);
-  }, [addFloat, isPaused, mode, player.defense, player.defenseBonus, position]);
+  }, [addFloat, isPaused, mode, player.defense, player.defenseBonus]);
 
   const usePotion = () => { if (player.potions <= 0 || player.hp >= player.maxHp) return; setPlayer((state) => ({ ...state, hp: Math.min(state.maxHp, state.hp + Math.round(state.maxHp * 0.35)), potions: state.potions - 1 })); addLog('Health Potion restored 35% HP.'); };
   const room = rooms[roomIndex];
