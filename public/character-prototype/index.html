@@ -751,16 +751,21 @@
     innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
 
     // ── THIRD-PERSON CAMERA FOLLOW ──
-    // Smoothly follow the character's position, but let OrbitControls handle the view angle.
-    // This allows free mouse look while moving.
+    // Smoothly follow the character's position.
+    // We must move BOTH the camera and the target by the same amount so the camera physically travels.
     _camLookAt.set(
       charGroup.position.x,
       charGroup.position.y + 1.2, // Look at chest height
       charGroup.position.z
     );
     
-    // Lerp the orbit target to the character
-    ctl.target.lerp(_camLookAt, CAM_FOLLOW.smoothLook);
+    // Calculate movement delta with smoothing
+    const panDelta = new THREE.Vector3().subVectors(_camLookAt, ctl.target);
+    panDelta.multiplyScalar(CAM_FOLLOW.smoothLook);
+
+    // Apply the translation to both target and camera
+    ctl.target.add(panDelta);
+    cam.position.add(panDelta);
 
     // ── Orbit controls (handles free look & auto-follows the target) ──
     ctl.update();
