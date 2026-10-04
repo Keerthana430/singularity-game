@@ -69,7 +69,6 @@
   ctl.minDistance = 2;
   ctl.maxDistance = 20;
   ctl.maxPolarAngle = Math.PI * 0.48;
-  ctl.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
   ctl.enablePan = false;
 
   // Third-person follow cam config
@@ -752,30 +751,18 @@
     innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
 
     // ── THIRD-PERSON CAMERA FOLLOW ──
-    // Camera follows behind the character based on facing direction
-    const charPos = charGroup.position;
-    const behindOffset = CAM_FOLLOW.offset.clone();
-    // Rotate offset by character facing angle so camera stays behind
-    const cosF = cos(facingAngle);
-    const sinF = sin(facingAngle);
-    const rotatedX = behindOffset.x * cosF + behindOffset.z * sinF;
-    const rotatedZ = -behindOffset.x * sinF + behindOffset.z * cosF;
-    _camTarget.set(
-      charPos.x + rotatedX,
-      charPos.y + behindOffset.y,
-      charPos.z + rotatedZ
-    );
+    // Smoothly follow the character's position, but let OrbitControls handle the view angle.
+    // This allows free mouse look while moving.
     _camLookAt.set(
-      charPos.x + CAM_FOLLOW.lookOffset.x,
-      charPos.y + CAM_FOLLOW.lookOffset.y,
-      charPos.z + CAM_FOLLOW.lookOffset.z
+      charGroup.position.x,
+      charGroup.position.y + 1.2, // Look at chest height
+      charGroup.position.z
     );
-
-    // Smooth interpolation
-    cam.position.lerp(_camTarget, CAM_FOLLOW.smoothPos);
+    
+    // Lerp the orbit target to the character
     ctl.target.lerp(_camLookAt, CAM_FOLLOW.smoothLook);
 
-    // ── Orbit controls (for manual override) ──
+    // ── Orbit controls (handles free look & auto-follows the target) ──
     ctl.update();
 
     // ── Render ──
