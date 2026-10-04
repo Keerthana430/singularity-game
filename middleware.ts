@@ -10,7 +10,9 @@ const MAX_REQUESTS = Number(process.env.NEXT_RATE_LIMIT || 60)
 const ipStore = new Map<string, { count: number; resetAt: number }>()
 
 function getIp(req: NextRequest) {
-  return (req.headers.get('x-forwarded-for') || req.ip || 'unknown') as string
+  return (
+    req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  ) as string
 }
 
 export function middleware(req: NextRequest) {

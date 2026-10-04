@@ -4,7 +4,6 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Ludo3DColosseumProps } from './Ludo3DColosseum';
 
 const Ludo3DColosseum = dynamic(
   () => import('./Ludo3DColosseum').then((m) => ({ default: m.Ludo3DColosseum })),
@@ -28,7 +27,7 @@ const Ludo3DColosseum = dynamic(
 
 import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
 
-export function Ludo3DView(props: Ludo3DColosseumProps) {
+export function Ludo3DView(props: any) {
   return (
     <WebGLErrorBoundary fallbackTitle="Ludo Cyber Colosseum Offline">
       <Ludo3DColosseum {...props} />
