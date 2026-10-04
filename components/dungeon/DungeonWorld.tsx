@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Html, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -42,12 +42,33 @@ function toWorld(point: { x: number; y: number }): [number, number, number] {
   return [(point.x - 50) * 0.075, 0, (point.y - 50) * 0.065];
 }
 
+export const dungeonLookYaw = { current: 0 };
+
 function CameraFollow({ player, boss }: { player: [number, number, number]; boss?: [number, number, number] }) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const focus = useRef(new THREE.Vector3());
   const lastPlayer = useRef(new THREE.Vector3(player[0], 0, player[2]));
   const travel = useRef(new THREE.Vector3());
   const heading = useRef(new THREE.Vector3(0, 0, -1));
+  const mouseLook = useRef(false);
+  const yaw = useRef(0);
+  const pitch = useRef(-0.08);
+  useEffect(() => {
+    const element = gl.domElement;
+    const capturePointer = () => element.requestPointerLock?.();
+    const handlePointerLockChange = () => { mouseLook.current = document.pointerLockElement === element; };
+    const handleMouseMove = (event: MouseEvent) => {
+      if (document.pointerLockElement !== element) return;
+      if (!mouseLook.current) yaw.current = Math.atan2(heading.current.x, -heading.current.z);
+      mouseLook.current = true;
+      yaw.current -= event.movementX * 0.0024;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0018, -0.55, 0.35);
+    };
+    element.addEventListener('click', capturePointer);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
+    return () => { element.removeEventListener('click', capturePointer); document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('pointerlockchange', handlePointerLockChange); };
+  }, [gl]);
   useFrame((_, delta) => {
     const next = new THREE.Vector3(player[0], 1.45, player[2]);
     travel.current.set(player[0] - lastPlayer.current.x, 0, player[2] - lastPlayer.current.z);
@@ -61,7 +82,14 @@ function CameraFollow({ player, boss }: { player: [number, number, number]; boss
     lastPlayer.current.set(player[0], 0, player[2]);
     focus.current.lerp(next, Math.min(1, delta * 3.5));
     camera.position.lerp(new THREE.Vector3(focus.current.x, focus.current.y, focus.current.z), Math.min(1, delta * 6));
-    camera.lookAt(focus.current.x + heading.current.x * 2.5, focus.current.y - 0.12, focus.current.z + heading.current.z * 2.5);
+    if (!mouseLook.current) {
+      yaw.current = Math.atan2(heading.current.x, -heading.current.z);
+    }
+    dungeonLookYaw.current = yaw.current;
+    const lookDirection = mouseLook.current
+      ? new THREE.Vector3(Math.sin(yaw.current) * Math.cos(pitch.current), Math.sin(pitch.current), -Math.cos(yaw.current) * Math.cos(pitch.current))
+      : heading.current;
+    camera.lookAt(focus.current.x + lookDirection.x * 2.5, focus.current.y + lookDirection.y * 2.5, focus.current.z + lookDirection.z * 2.5);
   });
   return null;
 }

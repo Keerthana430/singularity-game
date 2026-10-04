@@ -3,13 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, ArrowRight, Backpack, Coins, Crosshair, Heart,
-  Map, Pause, Play, RotateCcw, Shield, Sparkles, Swords, Target, Trophy, Wand2, Zap,
+  ArrowLeft, ArrowRight, Backpack, BookOpen, Coins, Crosshair, Heart, Keyboard,
+  Map, MousePointer2, Pause, Play, RotateCcw, Shield, Sparkles, Swords, Target, Trophy, Wand2, X, Zap,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { calculateAvatarStats } from '@/lib/statsCalculator';
-import { sound } from '@/lib/audio';
-import { DungeonWorld } from '@/components/dungeon/DungeonWorld';
+import { sound, music } from '@/lib/audio';
+import { DungeonWorld, dungeonLookYaw } from '@/components/dungeon/DungeonWorld';
 import {
   EnemyDefinition, FLOORS, getBossDefinition, getEnemyDefinition,
   LootItem, makeRoomMap, RoomNode, RoomType, rollLoot, xpForLevel,
@@ -77,6 +77,7 @@ export default function DungeonPage() {
   const [ending, setEnding] = useState<string | null>(null);
   const [attackPulse, setAttackPulse] = useState(0);
   const [playerHitPulse, setPlayerHitPulse] = useState(0);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const keysRef = useRef<Set<string>>(new Set());
   const positionRef = useRef<Position>({ x: 20, y: 50 });
   const velocityRef = useRef<Position>({ x: 0, y: 0 });
@@ -94,9 +95,11 @@ export default function DungeonPage() {
   const startRun = useCallback(() => {
     const nextRooms = makeRoomMap(0, Date.now());
     setFloor(0); setRoomIndex(0); setRooms(nextRooms); setPlayer(initialPlayer(baseStats)); setEnemies([]);
-    positionRef.current = { x: 20, y: 50 }; velocityRef.current = { x: 0, y: 0 }; setPosition(positionRef.current); setMode('map'); setLoot(null); setEnding(null); setRunStartedAt(Date.now());
+    positionRef.current = { x: 20, y: 50 }; velocityRef.current = { x: 0, y: 0 }; setPosition(positionRef.current); setMode('map'); setLoot(null); setEnding(null); setRunStartedAt(Date.now()); setTutorialOpen(true);
     setLog(['Run initialized. Choose a path into the Forgotten Entrance.']);
     sound.playEquip();
+    music.setTrack('dungeon');
+    if (!music.getIsPlaying()) music.start('dungeon');
   }, [baseStats]);
 
   const openRoom = useCallback((room: RoomNode, index: number) => {
@@ -106,17 +109,22 @@ export default function DungeonPage() {
     if (room.type === 'combat' || room.type === 'elite' || room.type === 'boss') {
       positionRef.current = { x: 20, y: 50 }; velocityRef.current = { x: 0, y: 0 }; setEnemies(spawnEnemies(floor, room)); setPosition(positionRef.current); setSelectedEnemy(null); setMode('combat');
       addLog(room.type === 'boss' ? `${floorData.boss} enters the arena.` : `${room.label} chamber: hostiles are closing in.`);
-      sound.playImpact();
+      sound.playWhoosh();
+      setTimeout(() => sound.playImpact(), 80);
     } else if (room.type === 'treasure') {
       const prize = rollLoot(floor, false); setLoot(prize); setMode('reward'); addLog('A sealed cache opens with a mechanical sigh.');
+      sound.playChestOpen();
     } else if (room.type === 'healing') {
       setPlayer((state) => ({ ...state, hp: Math.min(state.maxHp, state.hp + Math.round(state.maxHp * 0.35)), stamina: state.maxStamina }));
       setRooms((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, cleared: true } : item));
       addLog('The repair cradle restores 35% HP and all stamina.');
+      sound.playPotion();
     } else if (room.type === 'shop') {
       setMode('shop'); addLog('The merchant watches your hands, not your face.');
+      sound.playCoin();
     } else {
       setMode('event'); addLog('A voice asks what you are willing to lose.');
+      sound.playMagic();
     }
   }, [addLog, floor, floorData.boss]);
 
@@ -129,12 +137,17 @@ export default function DungeonPage() {
       const xpGain = room.type === 'boss' ? 180 + floor * 40 : 55 + floor * 22;
       const nextXp = state.xp + xpGain;
       const nextLevel = state.level + (nextXp >= xpForLevel(state.level) ? 1 : 0);
-      if (nextLevel > state.level) setLevelChoices(['+15% Attack', '+20 Maximum HP', '+10% Critical Chance']);
+      if (nextLevel > state.level) {
+        setLevelChoices(['+15% Attack', '+20 Maximum HP', '+10% Critical Chance']);
+        sound.playLevelUp();
+      } else {
+        sound.playWin();
+      }
       return { ...state, xp: nextXp >= xpForLevel(state.level) ? nextXp - xpForLevel(state.level) : nextXp, level: nextLevel, gold: state.gold + 25 + floor * 12, roomsCleared: state.roomsCleared + 1, kills: state.kills + (room.type === 'combat' || room.type === 'elite' || room.type === 'boss' ? enemies.length : 0) };
     });
     if (room.type === 'boss') {
-      if (floor === FLOORS.length - 1) { setMode('victory'); addLog('The Dungeon Core is silent. It is waiting for your answer.'); }
-      else { setMode('reward'); setLoot(null); addLog(`Floor ${floor + 1} cleared. The descent continues.`); }
+      if (floor === FLOORS.length - 1) { setMode('victory'); addLog('The Dungeon Core is silent. It is waiting for your answer.'); sound.playWin(); }
+      else { setMode('reward'); setLoot(null); addLog(`Floor ${floor + 1} cleared. The descent continues.`); sound.playWin(); }
     } else { setLoot(prize); setMode('reward'); }
   }, [addLog, enemies.length, floor, roomIndex, rooms]);
 
@@ -146,18 +159,21 @@ export default function DungeonPage() {
       maxHp: state.maxHp + (item.maxHp || 0), hp: state.hp + (item.maxHp || 0), crit: state.crit + (item.crit || 0),
       potions: state.potions + (item.kind === 'potion' ? 1 : 0), relics: item.kind === 'relic' ? [...state.relics, item.id] : state.relics,
     }));
+    sound.playEquip();
     addLog(`${item.name} equipped: ${item.description}`); setLoot(null);
   }, [addLog]);
 
   const chooseLevelUpgrade = useCallback((choice: string) => {
     setPlayer((state) => choice.includes('Attack') ? { ...state, attack: Math.round(state.attack * 1.15) } : choice.includes('Critical') ? { ...state, crit: state.crit + 10 } : { ...state, maxHp: state.maxHp + 20, hp: state.hp + 20 });
     setLevelChoices([]); addLog(`Level upgrade selected: ${choice}.`);
+    sound.playEquip();
   }, [addLog]);
 
   const descend = useCallback(() => {
     const nextFloor = floor + 1;
     setFloor(nextFloor); setRoomIndex(0); setRooms(makeRoomMap(nextFloor, Date.now())); setMode('map'); setLoot(null); setPlayer((state) => ({ ...state, hp: Math.min(state.maxHp, state.hp + Math.round(state.maxHp * 0.12)), stamina: state.maxStamina }));
     addLog(`Descending to Floor ${nextFloor + 1}: ${FLOORS[nextFloor].name}.`);
+    sound.playSweep();
   }, [addLog, floor]);
 
   const dealDamage = useCallback((type: 'basic' | 'heavy' | 'special' | 'ultimate') => {
@@ -176,31 +192,52 @@ export default function DungeonPage() {
       return d <= data.radius + 8 ? { ...enemy, hp: enemy.hp - Math.round(damage * (enemy.id === target.id ? 1 : 0.55)), stunned: type === 'ultimate' ? 1 : enemy.stunned } : enemy;
     }) : enemies.map((enemy) => enemy.id === target.id ? { ...enemy, hp: enemy.hp - damage, stunned: type === 'heavy' ? 1 : enemy.stunned } : enemy);
     setEnemies(hitEnemies); setCooldowns((state) => ({ ...state, [type]: data.cd })); setPlayer((state) => ({ ...state, stamina: state.stamina - data.cost }));
-    addFloat(`${crit ? 'CRIT ' : ''}-${damage}`, target.position.x, target.position.y, crit ? '#fbbf24' : 'var(--brand)'); addLog(`${data.label} hit ${target.name} for ${damage}.`); sound.playImpact();
+    addFloat(`${crit ? 'CRIT ' : ''}-${damage}`, target.position.x, target.position.y, crit ? '#fbbf24' : 'var(--brand)'); addLog(`${data.label} hit ${target.name} for ${damage}.`);
+
+    // Specific attack sounds
+    if (crit) {
+      sound.playCrit();
+    } else if (type === 'basic') {
+      sound.playSlash();
+    } else if (type === 'heavy') {
+      sound.playSlash();
+      setTimeout(() => sound.playImpact(), 70);
+    } else if (type === 'special') {
+      sound.playMagic();
+    } else if (type === 'ultimate') {
+      sound.playOverdrive();
+    }
+
     if (hitEnemies.every((enemy) => enemy.hp <= 0)) { setTimeout(completeRoom, 260); }
   }, [addFloat, addLog, completeRoom, cooldowns, enemies, isPaused, mode, player, position, selectedEnemy]);
 
   const dodge = useCallback(() => {
     if (mode !== 'combat' || cooldowns.dodge > 0 || player.stamina < 18) return;
     const keys = keysRef.current;
-    const horizontal = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-    const vertical = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
-    const length = Math.hypot(horizontal, vertical) || 1;
-    const direction = { x: horizontal / length || 1, y: vertical / length };
+    const strafe = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+    const forward = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+    const length = Math.hypot(strafe, forward) || 1;
+    const yaw = dungeonLookYaw.current;
+    const direction = { x: (Math.sin(yaw) * forward + Math.cos(yaw) * strafe) / length, y: (-Math.cos(yaw) * forward + Math.sin(yaw) * strafe) / length };
     const next = { x: Math.max(14, Math.min(86, positionRef.current.x + direction.x * 13)), y: Math.max(16, Math.min(84, positionRef.current.y + direction.y * 13)) };
     positionRef.current = next; velocityRef.current = { x: direction.x * 8, y: direction.y * 8 }; invulnerableUntilRef.current = performance.now() + 620;
     setPosition(next); setPlayer((state) => ({ ...state, stamina: state.stamina - 18 })); setCooldowns((state) => ({ ...state, dodge: 10 })); addLog('Dodge roll: evasive movement active.');
+    sound.playDodge();
   }, [cooldowns.dodge, mode, player.stamina, addLog]);
 
   useEffect(() => {
-    const down = (event: KeyboardEvent) => { keysRef.current.add(event.key.toLowerCase()); if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(event.key.toLowerCase())) event.preventDefault(); };
-    const up = (event: KeyboardEvent) => keysRef.current.delete(event.key.toLowerCase());
-    window.addEventListener('keydown', down); window.addEventListener('keyup', up); return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+    const movementCodes = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+    const down = (event: KeyboardEvent) => { if (!movementCodes.has(event.code)) return; keysRef.current.add(event.code); event.preventDefault(); };
+    const up = (event: KeyboardEvent) => keysRef.current.delete(event.code);
+    const clear = () => keysRef.current.clear();
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', clear); document.addEventListener('visibilitychange', clear);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', clear); document.removeEventListener('visibilitychange', clear); };
   }, []);
 
   useEffect(() => {
     const attackKeys: Record<string, 'basic' | 'heavy' | 'special' | 'ultimate'> = { '1': 'basic', '2': 'heavy', '3': 'special', '4': 'ultimate' };
     const triggerAttack = (event: KeyboardEvent) => {
+      if (event.key === 'Shift' && mode === 'combat' && !isPaused) { event.preventDefault(); dodge(); return; }
       const attack = attackKeys[event.key];
       if (!attack || mode !== 'combat' || isPaused) return;
       event.preventDefault();
@@ -208,7 +245,7 @@ export default function DungeonPage() {
     };
     window.addEventListener('keydown', triggerAttack);
     return () => window.removeEventListener('keydown', triggerAttack);
-  }, [dealDamage, isPaused, mode]);
+  }, [dealDamage, dodge, isPaused, mode]);
 
   useEffect(() => {
     if (mode !== 'combat' || isPaused) return;
@@ -218,10 +255,13 @@ export default function DungeonPage() {
       const delta = Math.min(0.05, (time - lastTime) / 1000);
       lastTime = time;
       const keys = keysRef.current;
-      const inputX = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-      const inputY = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
-      const inputLength = Math.hypot(inputX, inputY) || 1;
-      const targetVelocity = { x: (inputX / inputLength) * 20, y: (inputY / inputLength) * 20 };
+      const strafe = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+      const forward = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+      const inputLength = Math.hypot(strafe, forward) || 1;
+      const yaw = dungeonLookYaw.current;
+      const inputX = (Math.sin(yaw) * forward + Math.cos(yaw) * strafe) / inputLength;
+      const inputY = (-Math.cos(yaw) * forward + Math.sin(yaw) * strafe) / inputLength;
+      const targetVelocity = { x: inputX * 20, y: inputY * 20 };
       const smoothing = 1 - Math.exp(-delta * 14);
       velocityRef.current.x += (targetVelocity.x - velocityRef.current.x) * smoothing;
       velocityRef.current.y += (targetVelocity.y - velocityRef.current.y) * smoothing;
@@ -256,7 +296,15 @@ export default function DungeonPage() {
           if (enemy.archetype === 'support' || performance.now() < invulnerableUntilRef.current) return { ...enemy, position: nextPosition, cooldown: 12 };
           const incoming = Math.max(2, enemy.attack - (player.defense + player.defenseBonus) * 0.22);
           setPlayerHitPulse((value) => value + 1);
-          setPlayer((state) => { const hp = Math.max(0, state.hp - Math.round(incoming)); if (hp <= 0) setTimeout(() => setMode('dead'), 0); return { ...state, hp }; });
+          sound.playHurt();
+          setPlayer((state) => {
+            const hp = Math.max(0, state.hp - Math.round(incoming));
+            if (hp <= 0) {
+              sound.playDefeat();
+              setTimeout(() => setMode('dead'), 0);
+            }
+            return { ...state, hp };
+          });
           addFloat(`-${Math.round(incoming)}`, currentPosition.x, currentPosition.y, '#fb7185');
           return { ...enemy, position: nextPosition, cooldown: enemy.archetype === 'boss' && enemy.phase > 1 ? 10 : 18 };
         }
@@ -267,7 +315,12 @@ export default function DungeonPage() {
     return () => window.clearInterval(timer);
   }, [addFloat, isPaused, mode, player.defense, player.defenseBonus]);
 
-  const usePotion = () => { if (player.potions <= 0 || player.hp >= player.maxHp) return; setPlayer((state) => ({ ...state, hp: Math.min(state.maxHp, state.hp + Math.round(state.maxHp * 0.35)), potions: state.potions - 1 })); addLog('Health Potion restored 35% HP.'); };
+  const usePotion = () => {
+    if (player.potions <= 0 || player.hp >= player.maxHp) return;
+    sound.playPotion();
+    setPlayer((state) => ({ ...state, hp: Math.min(state.maxHp, state.hp + Math.round(state.maxHp * 0.35)), potions: state.potions - 1 }));
+    addLog('Health Potion restored 35% HP.');
+  };
   const room = rooms[roomIndex];
   const boss = enemies.find((enemy) => enemy.archetype === 'boss');
   const runtimeSeconds = runStartedAt ? Math.floor((Date.now() - runStartedAt) / 1000) : 0;
@@ -278,6 +331,8 @@ export default function DungeonPage() {
         <div className="flex items-center gap-4"><Link href="/" className="text-white/60 hover:text-[#00FF66] flex items-center gap-1 text-xs font-mono uppercase"><ArrowLeft size={14} /> Base</Link><div className="h-5 w-px bg-white/10" /><span className="font-black tracking-[0.18em] text-sm uppercase text-[#00FF66]">Dungeon // Descent Protocol</span></div>
         <div className="flex items-center gap-4 text-[11px] font-mono uppercase text-white/55"><span className="hidden sm:flex items-center gap-1"><Map size={13} /> Floor {floor + 1}/{FLOORS.length}</span><span className="flex items-center gap-1 text-amber-300"><Coins size={13} /> {player.gold}</span><button onClick={() => setIsPaused((value) => !value)} className="p-2 rounded-lg border border-white/10 hover:border-[#00FF66]/50" aria-label={isPaused ? 'Resume run' : 'Pause run'}>{isPaused ? <Play size={14} /> : <Pause size={14} />}</button></div>
       </header>
+
+      {tutorialOpen && <DungeonTutorial onClose={() => setTutorialOpen(false)} />}
 
       {mode === 'map' && <DungeonRouteMap floor={floor} floorData={floorData} rooms={rooms} roomIndex={roomIndex} onOpenRoom={openRoom} />}
 
@@ -301,6 +356,10 @@ export default function DungeonPage() {
       {mode === 'victory' && <EndScreen title="The Core Is Yours" icon={<Trophy size={30} />} copy="The living dungeon offers three futures. Choose what your past becomes." primary="Destroy the Core" onPrimary={() => setEnding('The cycle ends in fire.')} secondary="Become the Core" onSecondary={() => setEnding('You take the throne beneath the world.')} third="Free the Core" onThird={() => setEnding('The dungeon wakes, and finally lets everyone go.')} ending={ending} onRestart={startRun} />}
     </main>
   );
+}
+
+function DungeonTutorial({ onClose }: { onClose: () => void }) {
+  return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#020502]/80 px-4 py-8 backdrop-blur-md"><div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-[#00FF66]/30 bg-[#07120C] shadow-[0_0_70px_rgba(0,255,102,0.18)]"><div className="flex items-start justify-between border-b border-white/10 p-6"><div><p className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#00FF66]">Field manual // first deployment</p><h2 className="mt-2 text-2xl font-black uppercase">How to survive the descent</h2><p className="mt-1 text-sm text-white/50">Capture the viewport and move through each chamber before choosing your next route.</p></div><button onClick={onClose} className="rounded-lg border border-white/10 p-2 text-white/50 hover:border-[#00FF66]/50 hover:text-[#00FF66]" aria-label="Close tutorial"><X size={17} /></button></div><div className="grid gap-3 p-6 sm:grid-cols-2"><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center gap-3"><Keyboard size={18} className="text-[#00FF66]" /><h3 className="font-black uppercase">Move</h3></div><p className="mt-2 text-xs leading-relaxed text-white/55"><span className="font-mono text-white">W A S D</span> or arrow keys move through the corridor. Movement accelerates smoothly and stops with braking.</p></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center gap-3"><MousePointer2 size={18} className="text-[#00FF66]" /><h3 className="font-black uppercase">Look and target</h3></div><p className="mt-2 text-xs leading-relaxed text-white/55">Click the 3D viewport to capture the mouse, move the mouse to look around, then click a visible monster to lock your target.</p></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center gap-3"><Swords size={18} className="text-[#00FF66]" /><h3 className="font-black uppercase">Attack</h3></div><p className="mt-2 text-xs leading-relaxed text-white/55">Press <span className="font-mono text-white">1–4</span> for Basic, Heavy, Arc Pulse, and Overdrive. You can attack while moving.</p></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center gap-3"><Shield size={18} className="text-[#00FF66]" /><h3 className="font-black uppercase">Dodge</h3></div><p className="mt-2 text-xs leading-relaxed text-white/55">Press <span className="font-mono text-white">Shift</span> or use the Dodge button to roll in your current direction and briefly ignore hits.</p></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:col-span-2"><div className="flex items-center gap-3"><BookOpen size={18} className="text-[#00FF66]" /><h3 className="font-black uppercase">Explore the map</h3></div><p className="mt-2 text-xs leading-relaxed text-white/55">The route map reveals new chambers as you clear rooms. Return to the map after combat, then choose an open node to descend deeper.</p></div></div><div className="flex justify-end border-t border-white/10 p-5"><button onClick={onClose} className="neon-green-button rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest">Enter the dungeon</button></div></div></div>;
 }
 
 function DungeonRouteMap({ floor, floorData, rooms, roomIndex, onOpenRoom }: { floor: number; floorData: typeof FLOORS[number]; rooms: RoomNode[]; roomIndex: number; onOpenRoom: (room: RoomNode, index: number) => void }) {
