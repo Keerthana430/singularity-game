@@ -43,10 +43,17 @@ function toWorld(point: { x: number; y: number }): [number, number, number] {
 function CameraFollow({ player, boss }: { player: [number, number, number]; boss?: [number, number, number] }) {
   const { camera } = useThree();
   const focus = useRef(new THREE.Vector3());
+  const lastPlayer = useRef(new THREE.Vector3(player[0], 0, player[2]));
+  const travel = useRef(new THREE.Vector3());
   useFrame((_, delta) => {
     const next = boss ? new THREE.Vector3((player[0] + boss[0]) / 2, 0.65, (player[2] + boss[2]) / 2) : new THREE.Vector3(player[0], 0.65, player[2]);
+    travel.current.set(player[0] - lastPlayer.current.x, 0, player[2] - lastPlayer.current.z);
+    if (travel.current.lengthSq() > 0.0001) travel.current.normalize();
+    lastPlayer.current.set(player[0], 0, player[2]);
     focus.current.lerp(next, Math.min(1, delta * 3.5));
-    camera.position.lerp(new THREE.Vector3(focus.current.x + 4.7, 4.2, focus.current.z + 5.8), Math.min(1, delta * 3.5));
+    const cameraOffset = new THREE.Vector3(4.7, 4.2, 5.8);
+    if (travel.current.lengthSq() > 0.0001) cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(travel.current.x, travel.current.z));
+    camera.position.lerp(new THREE.Vector3(focus.current.x + cameraOffset.x, cameraOffset.y, focus.current.z + cameraOffset.z), Math.min(1, delta * 3.5));
     camera.lookAt(focus.current);
   });
   return null;

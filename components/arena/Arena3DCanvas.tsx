@@ -1004,9 +1004,9 @@ export function Arena3DCanvas({
       case 'grassland':
       default:
         return {
-          bg: '#101426',
-          fog: '#12162B',
-          ambientColor: '#2A2440',
+          bg: '#030A05',
+          fog: '#061009',
+          ambientColor: '#1A3D27',
           ambientInt: 1.1,
           sunColor: '#FFE5C4',
           sunInt: 2.6,

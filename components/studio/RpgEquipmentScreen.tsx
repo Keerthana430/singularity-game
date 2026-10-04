@@ -3,11 +3,12 @@
 // Modern Mobile/Indie RPG Character Build & Outfitting Screen
 // Theme: Deep Forest Obsidian Slate & Moss Emerald (unified with 3D canvas)
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
+  ChevronRight,
   X,
   Sparkles,
   Swords,
@@ -42,7 +43,7 @@ import {
   Box,
   Wrench,
 } from 'lucide-react';
-import { AvatarConfig, StudioCategory } from '@/types/avatar';
+import { AvatarConfig, StudioCategory, AvatarItem } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
 import { AvatarViewer } from '@/components/avatar/AvatarViewer';
 import { calculateAvatarStats } from '@/lib/statsCalculator';
@@ -72,11 +73,23 @@ export function RpgEquipmentScreen() {
 
   const { add: addToast } = useToast();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedLoadout, setSelectedLoadout] = useState<number>(1);
   const [showBuffInfo, setShowBuffInfo] = useState(false);
   const [sparkleActive, setSparkleActive] = useState(false);
   const [activeTab, setActiveTab] = useState<'equipment' | 'skills' | 'traits' | 'costume' | 'vault'>('equipment');
+  const [panelOpen, setPanelOpen] = useState(true);
+
+  // Hover-preview: temporarily show an item on the avatar without equipping it
+  const [hoverPreview, setHoverPreview] = useState<Partial<AvatarConfig> | null>(null);
+  const handleHoverPreview = useCallback((patch: Partial<AvatarConfig> | null) => {
+    setHoverPreview(patch);
+  }, []);
+
+  // Config seen by the 3D viewer — real config PLUS any hover preview overlay
+  const displayConfig = useMemo<AvatarConfig>(() => {
+    if (!hoverPreview) return currentAvatar;
+    return { ...currentAvatar, ...hoverPreview };
+  }, [currentAvatar, hoverPreview]);
 
   // Calculate live RPG combat stats
   const stats = useMemo(() => calculateAvatarStats(currentAvatar), [currentAvatar]);
@@ -143,7 +156,6 @@ export function RpgEquipmentScreen() {
   // Handle clicking an equipment slot
   const handleSlotClick = (category: StudioCategory) => {
     setActiveCategory(category);
-    setDrawerOpen(true);
     sound.playClick();
   };
 
@@ -274,9 +286,8 @@ export function RpgEquipmentScreen() {
           ))}
         </div>
 
-        {/* Right: Currencies (Gold, Gems, Scrolls) */}
+        {/* Right: Gold Coins only */}
         <div className="flex items-center gap-2">
-          {/* Gold Coins */}
           <div
             onClick={topUpCoins}
             title="Click to replenish Gold"
@@ -289,413 +300,186 @@ export function RpgEquipmentScreen() {
               {coins.toLocaleString()}
             </span>
           </div>
-
-          {/* Gems */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/95 border border-[#1E3E2F] shadow-sm">
-            <Gem size={12} className="text-[#67E8F9]" />
-            <span className="text-xs font-mono font-black text-[#67E8F9]">
-              100
-            </span>
-          </div>
-
-          {/* Relic Scrolls */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/95 border border-[#1E3E2F] shadow-sm">
-            <Scroll size={12} className="text-[#86EFAC]" />
-            <span className="text-xs font-mono font-black text-[#86EFAC]">
-              12
-            </span>
-          </div>
         </div>
       </header>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* 2. MAIN RPG EQUIPMENT STAGE (REF IMAGE 2 CENTER & SLOTS)      */}
+      {/* 2. MAIN STAGE — LEFT EQUIPMENT PANEL + RIGHT 3D AVATAR        */}
       {/* ═════════════════════════════════════════════════════════════ */}
-      <div className="relative flex-1 min-h-0 flex flex-col items-center justify-between px-3 sm:px-6 max-w-5xl mx-auto w-full overflow-hidden">
-        {/* UPPER HERO ARENA & 6 FLANKING SLOTS */}
-        <div className="relative w-full flex-1 min-h-[300px] flex items-center justify-between">
-          {/* ── LEFT FLANKING SLOTS: Weapon, Helmet, Armor ── */}
-          <div className="z-20 flex flex-col gap-3.5 sm:gap-4 shrink-0">
-            {/* Slot 1: WEAPON (with Roman Numeral Tab I/II) */}
-            <div className="relative">
-              {/* Tab I / II on top */}
-              <div className="absolute -top-3 left-1 z-10 flex">
-                <span className="px-2 py-0.5 rounded-t-md text-[9px] font-black bg-gradient-to-b from-[#00FF66] to-[#00B347] text-black border border-[#00B347] shadow-sm">
-                  I
-                </span>
-                <span className="px-2 py-0.5 rounded-t-md text-[9px] font-bold bg-[#13281E] text-[#8CA79B] border border-[#1E3E2F] opacity-60">
-                  II
-                </span>
-              </div>
+      <div className="relative flex-1 min-h-0 flex overflow-hidden w-full">
+
+        {/* ── LEFT: Equipment / Customization Panel (collapsible) ── */}
+        <AnimatePresence initial={false}>
+          {panelOpen && (
+            <motion.div
+              key="equip-panel"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="relative z-20 shrink-0 flex flex-col bg-[#050C08]/98 border-r border-[#1E3E2F] shadow-[4px_0_24px_rgba(0,0,0,0.5)] overflow-hidden"
+              style={{ minWidth: 0 }}
+            >
+
+          {/* Category slot pills at top of panel */}
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-3 pt-3 pb-2 border-b border-[#1E3E2F] shrink-0">
+            {([
+              { id: 'weapons' as StudioCategory, label: 'Weapons', icon: <Swords size={12} /> },
+              { id: 'species' as StudioCategory, label: 'Species', icon: <Zap size={12} /> },
+              { id: 'body' as StudioCategory, label: 'Body', icon: <Sliders size={12} /> },
+              { id: 'hair' as StudioCategory, label: 'Hair', icon: <Feather size={12} /> },
+              { id: 'tops' as StudioCategory, label: 'Tops', icon: <Shirt size={12} /> },
+              { id: 'shoes' as StudioCategory, label: 'Shoes', icon: <Footprints size={12} /> },
+              { id: 'accessories' as StudioCategory, label: 'Access.', icon: <Backpack size={12} /> },
+              { id: 'colors' as StudioCategory, label: 'Colors', icon: <Palette size={12} /> },
+            ] as { id: StudioCategory; label: string; icon: React.ReactNode }[]).map((tab) => (
               <button
-                onClick={() => handleSlotClick('weapons')}
-                className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                  activeCategory === 'weapons' && drawerOpen ? 'active' : ''
+                key={tab.id}
+                onClick={() => { setActiveCategory(tab.id); sound.playClick(); }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide shrink-0 transition-all ${
+                  activeCategory === tab.id
+                    ? 'bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/50'
+                    : 'text-[#7E9F90] hover:text-white hover:bg-white/8 border border-transparent'
                 }`}
               >
-                <div className="mb-0.5 text-[#00FF66]"><Swords size={22} /></div>
-                <span className="text-[9px] font-bold text-[#00FF66] leading-tight truncate w-full px-1">
-                  {weaponDetails.name}
-                </span>
-                {/* Level badge */}
-                <div className="absolute -bottom-2 bg-[#0A1811] border border-[#00FF66] px-1.5 py-0.2 rounded-full text-[9px] font-black text-[#00FF66]">
-                  Lv. 1
-                </div>
+                {tab.icon}
+                <span>{tab.label}</span>
               </button>
-            </div>
-
-            {/* Slot 2: HELMET / HEADGEAR */}
-            <button
-              onClick={() => handleSlotClick('hair')}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                activeCategory === 'hair' && drawerOpen ? 'active' : ''
-              }`}
-            >
-              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><HardHat size={22} /></div>
-              <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
-                {headDetails.name}
-              </span>
-            </button>
-
-            {/* Slot 3: ARMOR / CHEST */}
-            <button
-              onClick={() => handleSlotClick('tops')}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                activeCategory === 'tops' && drawerOpen ? 'active' : ''
-              }`}
-            >
-              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Shield size={22} /></div>
-              <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
-                {chestDetails.name}
-              </span>
-            </button>
+            ))}
           </div>
 
-          {/* ── CENTER 3D AVATAR HERO SHOWCASE ── */}
-          <div className="relative flex-1 h-full flex flex-col items-center justify-center overflow-hidden">
-            <div className="w-full h-full relative">
-              <AvatarViewer
-                config={currentAvatar}
-                className="w-full h-full"
-                showControls={true}
-                animate={true}
-              />
-            </div>
-
-            {/* Floating Sparkles when Auto-Equip is triggered */}
-            <AnimatePresence>
-              {sparkleActive && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1.2 }}
-                  exit={{ opacity: 0, scale: 1.6 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
-                >
-                  <div className="text-[#00FF66] animate-spin"><Sparkles size={48} /></div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Sub-Hero Action Cluster: Buff pill + [ AUTO EQUIP ] button */}
-            <div className="absolute bottom-2 z-20 flex flex-col items-center gap-2">
-              {/* Buff pill with (i) popup */}
-              <button
-                onClick={() => setShowBuffInfo(!showBuffInfo)}
-                className="flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] text-[#8CA79B] text-[10px] font-bold shadow-md hover:border-[#00FF66] transition-all"
+          {/* Hover-preview indicator banner */}
+          <AnimatePresence>
+            {hoverPreview && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden shrink-0"
               >
-                <span>No Buff (Ready)</span>
-                <Info size={11} className="text-[#00FF66]" />
+                <div className="mx-3 my-2 px-3 py-1.5 rounded-lg bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center gap-2">
+                  <Eye size={12} className="text-[#00FF66] shrink-0" />
+                  <span className="text-[10px] font-bold text-[#00FF66] uppercase tracking-wider">Preview Mode — hover any item to try it on</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Scrollable customization content */}
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+            <CustomizationPanel onHoverPreview={handleHoverPreview} />
+          </div>
+
+          {/* Bottom action row in left panel */}
+          <div className="shrink-0 px-3 py-2 border-t border-[#1E3E2F] flex items-center gap-2 bg-[#050C08]">
+            <button
+              onClick={handleAutoEquip}
+              className="flex-1 rpg-auto-equip-btn py-1.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5"
+            >
+              <Sparkles size={13} className="text-[#00FF66]" />
+              <span>Auto Equip</span>
+            </button>
+            <button
+              onClick={() => { saveAvatar(); sound.playEquip(); addToast(`"${currentAvatar.name}" saved!`, 'success'); }}
+              className="px-3 py-1.5 rounded-full bg-[#00FF66] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1 hover:scale-105 transition-all shadow-[0_0_10px_rgba(0,255,102,0.35)]"
+            >
+              <Check size={11} />
+              Save
+            </button>
+          </div>
+        </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* ── RIGHT: 3D Avatar Showcase (never blocked) ── */}
+        <div className="relative flex-1 h-full flex flex-col items-center justify-center overflow-hidden">
+
+          {/* Panel toggle button — left edge of avatar side */}
+          <button
+            onClick={() => setPanelOpen((v) => !v)}
+            title={panelOpen ? 'Hide Equipment Panel' : 'Show Equipment Panel'}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-7 h-14 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] hover:border-[#00FF66] flex items-center justify-center text-[#00FF66] hover:scale-105 transition-all shadow-lg"
+          >
+            {panelOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {/* Hover-preview golden border glow */}
+          {hoverPreview && (
+            <div className="absolute inset-0 pointer-events-none z-10 border-2 border-[#00FF66]/30 rounded-none" />
+          )}
+
+          {/* Hover preview label */}
+          <AnimatePresence>
+            {hoverPreview && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-[#00FF66]/15 border border-[#00FF66]/50 backdrop-blur-sm"
+              >
+                <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">👁 Previewing</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="w-full h-full relative">
+            <AvatarViewer
+              config={displayConfig}
+              className="w-full h-full"
+              showControls={true}
+              animate={true}
+            />
+          </div>
+
+          {/* Floating Sparkles when Auto-Equip is triggered */}
+          <AnimatePresence>
+            {sparkleActive && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1.2 }}
+                exit={{ opacity: 0, scale: 1.6 }}
+                className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+              >
+                <div className="text-[#00FF66] animate-spin"><Sparkles size={64} /></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Flanking equipment slot quick-access pills (right side of avatar) */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
+            {[
+              { cat: 'weapons' as StudioCategory, icon: <Swords size={16} />, label: weaponDetails.name },
+              { cat: 'hair' as StudioCategory, icon: <HardHat size={16} />, label: headDetails.name },
+              { cat: 'tops' as StudioCategory, icon: <Shield size={16} />, label: chestDetails.name },
+              { cat: 'shoes' as StudioCategory, icon: <Footprints size={16} />, label: bootsDetails.name },
+              { cat: 'accessories' as StudioCategory, icon: <Eye size={16} />, label: faceDetails.name },
+              { cat: 'accessories' as StudioCategory, icon: <Backpack size={16} />, label: backDetails.name },
+            ].map((slot, i) => (
+              <button
+                key={i}
+                onClick={() => handleSlotClick(slot.cat)}
+                title={slot.label}
+                className={`w-11 h-11 rpg-slot-box flex items-center justify-center transition-all ${
+                  activeCategory === slot.cat ? 'active' : ''
+                }`}
+              >
+                <div className="text-[#00FF66]/80">{slot.icon}</div>
               </button>
-
-              {/* Auto Equip Button */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleAutoEquip}
-                  className="rpg-auto-equip-btn px-6 py-2 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg"
-                >
-                  <Sparkles size={14} className="text-[#00FF66]" />
-                  <span>Auto Equip</span>
-                </button>
-
-                {/* Equipment Catalog Button */}
-                <button
-                  onClick={() => {
-                    setActiveTab('costume');
-                    setDrawerOpen(true);
-                  }}
-                  title="Open Equipment Catalog"
-                  className="flex flex-col items-center text-[#7E9F90] hover:text-[#00FF66] transition-colors p-1"
-                >
-                  <BookOpen size={18} />
-                  <span className="text-[8px] font-bold mt-0.5">Catalog</span>
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* ── RIGHT FLANKING SLOTS: Boots, Amulet, Relic/Back ── */}
-          <div className="z-20 flex flex-col gap-3.5 sm:gap-4 shrink-0 items-end">
-            {/* Slot 4: BOOTS / SABATONS */}
+          {/* Bottom center: Buff pill */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
             <button
-              onClick={() => handleSlotClick('shoes')}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                activeCategory === 'shoes' && drawerOpen ? 'active' : ''
-              }`}
+              onClick={() => setShowBuffInfo(!showBuffInfo)}
+              className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] text-[#8CA79B] text-[10px] font-bold shadow-md hover:border-[#00FF66] transition-all"
             >
-              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Footprints size={22} /></div>
-              <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
-                {bootsDetails.name}
-              </span>
-            </button>
-
-            {/* Slot 5: AMULET / FACE */}
-            <button
-              onClick={() => handleSlotClick('accessories')}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                activeCategory === 'accessories' && drawerOpen ? 'active' : ''
-              }`}
-            >
-              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Eye size={22} /></div>
-              <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
-                {faceDetails.name}
-              </span>
-            </button>
-
-            {/* Slot 6: RING / RELIC / BACK */}
-            <button
-              onClick={() => handleSlotClick('accessories')}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rpg-slot-box flex flex-col items-center justify-center p-1.5 text-center ${
-                activeCategory === 'accessories' && drawerOpen ? 'active' : ''
-              }`}
-            >
-              <div className="mb-0.5 opacity-80 text-[#E2F5EC]"><Backpack size={22} /></div>
-              <span className="text-[9px] font-bold text-[#E2F5EC] leading-tight truncate w-full px-1">
-                {backDetails.name}
-              </span>
+              <span>No Buff (Ready)</span>
+              <Info size={11} className="text-[#00FF66]" />
             </button>
           </div>
-        </div>
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* 3. COMBAT POWER LAUREL & 10-STAT MATRIX (REF IMAGE 2 LOWER)   */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        <div className="w-full rpg-leather-panel p-3 sm:p-4 mb-2 z-20 shadow-2xl">
-          {/* Golden Laurel Wreath Combat Power Header (Ref: ⚔️ 1,459) */}
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Leaf size={14} className="text-[#00FF66]" />
-            <div className="rpg-laurel-banner px-5 py-1 flex items-center gap-2">
-              <Swords size={16} className="text-[#00FF66]" />
-              <span className="font-mono font-black text-lg text-[#00FF66] tracking-wider">
-                {combatPower.toLocaleString()}
-              </span>
-            </div>
-            <Leaf size={14} className="text-[#00FF66] scale-x-[-1]" />
-          </div>
-
-          {/* 10-Stat Matrix Grid (2 Columns, matching Ref Image 2) */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-mono max-w-xl mx-auto">
-            {/* Left Column Stats */}
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">ATK</span>
-              <span className="font-bold text-[#F0FDF4]">{stats.power}</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">ATK Spd</span>
-              <span className="font-bold text-[#F0FDF4]">{atkSpeed}%</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">DEF</span>
-              <span className="font-bold text-[#F0FDF4]">{stats.defense}</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">HP</span>
-              <span className="font-bold text-[#F0FDF4]">{stats.maxHp.toLocaleString()}</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">HP Regen</span>
-              <span className="font-bold text-[#F0FDF4]">{hpRegen}</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">Skill Dmg</span>
-              <span className="font-bold text-[#F0FDF4]">{skillDmg}%</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">Crit Rate</span>
-              <span className="font-bold text-[#F0FDF4]">{stats.criticalRate}%</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#1E3E2F]/40 pb-0.5">
-              <span className="text-[#8CA79B]">Crit Dmg</span>
-              <span className="font-bold text-[#F0FDF4]">{critDmg}%</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-[#8CA79B]">CD Reduce</span>
-              <span className="font-bold text-[#F0FDF4]">{cooldownReduction}%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#8CA79B]">Move Spd</span>
-              <span className="font-bold text-[#F0FDF4]">{moveSpeed}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* 4. BOTTOM CATEGORY NAVIGATION TABS (REF IMAGE 2 DOCK)         */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        <div className="w-full flex items-center justify-between bg-[#091510]/95 border-t border-[#162E23] py-2 px-2 sm:px-4 rounded-t-2xl z-20">
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
-            {([
-              { id: 'equipment' as const, label: 'Gear', icon: <Swords size={13} /> },
-              { id: 'skills' as const, label: 'Species', icon: <Zap size={13} /> },
-              { id: 'traits' as const, label: 'Body', icon: <Sliders size={13} /> },
-              { id: 'costume' as const, label: 'Wardrobe', icon: <Palette size={13} /> },
-              { id: 'vault' as const, label: 'Vault', icon: <Archive size={13} /> },
-            ] as { id: 'equipment' | 'skills' | 'traits' | 'costume' | 'vault'; label: string; icon: React.ReactNode }[]).map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (tab.id === 'skills') setActiveCategory('species');
-                    else if (tab.id === 'traits') setActiveCategory('body');
-                    else if (tab.id === 'costume') setActiveCategory('hair');
-                    setDrawerOpen(true);
-                    sound.playClick();
-                  }}
-                  className={`rpg-tab-pill px-3 py-1.5 text-xs flex items-center gap-1 shrink-0 ${
-                    isActive ? 'active' : 'hover:bg-white/5'
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Quick Save Avatar Action */}
-          <button
-            onClick={() => {
-              saveAvatar();
-              sound.playEquip();
-              addToast(`"${currentAvatar.name}" saved to vault!`, 'success');
-            }}
-            className="px-3.5 py-1.5 rounded-full bg-[#00FF66] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1 hover:scale-105 transition-all shadow-[0_0_12px_rgba(0,255,102,0.4)] shrink-0 ml-2"
-          >
-            <Check size={12} />
-            <span className="hidden sm:inline">Save</span>
-          </button>
-        </div>
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* 5. BOTTOM DOCK WITH ( X ) EXIT & QUICK ICONS                   */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        <div className="w-full flex items-center justify-between px-4 py-2 z-20 bg-[#050B08] border-t border-[#12241C]">
-          {/* Chest / Vault */}
-          <button
-            onClick={() => {
-              setActiveTab('vault');
-              setDrawerOpen(true);
-            }}
-            title="Open Vault"
-            className="text-[#7E9F90] hover:text-[#00FF66] p-1.5 transition-colors"
-          >
-            <Package size={20} />
-          </button>
-
-          {/* Grimoire / Rules */}
-          <Link
-            href="/style-guide"
-            title="Grimoire & Design Rules"
-            className="text-[#7E9F90] hover:text-[#00FF66] p-1.5 transition-colors"
-          >
-            <BookOpen size={20} />
-          </Link>
-
-          {/* Center ( X ) Exit Button to Return to Home / Arena */}
-          <Link
-            href="/"
-            title="Return to Arena Lobby"
-            className="w-10 h-10 -mt-4 rounded-full bg-gradient-to-b from-[#10241A] to-[#060D09] border-2 border-[#1E3E2F] flex items-center justify-center text-[#00FF66] hover:scale-110 active:scale-95 transition-all shadow-lg"
-          >
-            <X size={20} strokeWidth={3} />
-          </Link>
-
-          {/* Creature Mascot / Companion */}
-          <button
-            onClick={() => {
-              updateAvatar({ accessories: { ...currentAvatar.accessories, back: 'backpack' } });
-              sound.playEquip();
-              addToast('Companion Mascot fitted to your pack!', 'info');
-            }}
-            title="Equip Creature Mascot"
-            className="text-[#7E9F90] hover:text-[#00FF66] p-1.5 transition-colors"
-          >
-            <Package size={20} />
-          </button>
-
-          {/* World Map to Arena / Ludo */}
-          <Link
-            href="/lobby"
-            title="Expedition World Map (Arena)"
-            className="text-[#7E9F90] hover:text-[#00FF66] p-1.5 transition-colors"
-          >
-            <Map size={20} />
-          </Link>
         </div>
       </div>
 
-      {/* ═════════════════════════════════════════════════════════════ */}
-      {/* 6. SLIDE-UP ITEM SELECTOR DRAWER (OPENS ON SLOT TAP)          */}
-      {/* ═════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {drawerOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 150 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 150 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="absolute bottom-14 left-0 right-0 z-40 max-w-2xl mx-auto p-4"
-          >
-            <div className="rpg-leather-panel border-2 border-[#00FF66]/60 shadow-[0_0_40px_rgba(0,255,102,0.2)] overflow-hidden flex flex-col max-h-[55vh]">
-              {/* Drawer Header */}
-              <div className="px-4 py-2.5 bg-[#0B1712] border-b border-[#1E3E2F] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wrench size={14} className="text-[#00FF66]" />
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#00FF66]">
-                    {activeCategory} Equipment Bay
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => randomizeAvatar()}
-                    className="p-1 rounded text-[#00FF66] hover:text-white"
-                    title="Randomize Category"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-                  <button
-                    onClick={() => setDrawerOpen(false)}
-                    className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-[#7E9F90] hover:text-white"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Drawer Content: Full Customization Controls */}
-              <div className="p-4 overflow-y-auto no-scrollbar flex-1 bg-[#070F0B]/95">
-                <CustomizationPanel />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
