@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices, Trees, Compass, Castle } from 'lucide-react';
+import { Layers, ChevronRight, Menu, X, Swords, Heart, LogIn, LogOut, Trophy, Dices, Trees, Compass, Castle, Volume2, VolumeX } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAvatarStore } from '@/store/avatarStore';
 import { useAuthStore } from '@/store/authStore';
+import { sound, music } from '@/lib/audio';
 
 const navLinks = [
   { href: '/studio',    label: 'STUDIO',   sub: 'HANGAR BAY',        icon: Layers },
@@ -23,18 +24,19 @@ export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const currentAvatar = useAvatarStore((s) => s.currentAvatar);
   const { isLoggedIn, team, logout } = useAuthStore();
+
+  useEffect(() => {
+    return music.subscribe((state) => setIsAudioPlaying(state.isPlaying));
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
-
-  if (pathname === '/studio') return null;
 
   const isActive = (href: string) =>
     href.startsWith('/#') ? false : pathname === href;
@@ -74,7 +76,7 @@ export function Navbar() {
             </div>
 
             {/* Desktop nav tabs with mechanical chamfers */}
-            <nav className="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md" aria-label="Main navigation">
+            <nav className="hidden md:flex min-w-0 max-w-[52vw] items-center gap-1.5 overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-1 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Main navigation">
               {navLinks.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -82,7 +84,9 @@ export function Navbar() {
                     key={href}
                     href={href}
                     aria-current={active ? 'page' : undefined}
-                    className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-150 rounded-lg ${
+                    onMouseEnter={() => sound.playHover()}
+                    onClick={() => sound.playClick()}
+                    className={`relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-150 ${
                       active
                         ? 'text-[#00FF66] bg-[#00FF66]/10 border border-[#00FF66]/50 shadow-[0_0_12px_rgba(0,255,102,0.2)]'
                         : 'text-[#9AA8A0] hover:text-[#F0F4F1] hover:bg-white/5 border border-transparent'
@@ -105,8 +109,45 @@ export function Navbar() {
               })}
             </nav>
 
-            {/* Right: auth + profile + CTA */}
-            <div className="hidden md:flex items-center gap-2.5">
+            {/* Right: audio + auth + profile + CTA */}
+            <div className="hidden md:flex items-center gap-2">
+              {/* Quick Audio Toggle */}
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  music.toggle();
+                }}
+                onMouseEnter={() => sound.playHover()}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all active:scale-95"
+                style={{
+                  background: isAudioPlaying ? 'rgba(0, 255, 102, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                  borderColor: isAudioPlaying ? 'rgba(0, 255, 102, 0.45)' : 'rgba(255, 255, 255, 0.12)',
+                  fontFamily: 'var(--font-mono, monospace)',
+                }}
+                title={isAudioPlaying ? 'Pause BGM' : 'Play BGM'}
+                aria-label={isAudioPlaying ? 'Pause BGM' : 'Play BGM'}
+              >
+                {isAudioPlaying ? (
+                  <>
+                    <span className="flex items-end gap-[1.5px] h-3 w-3">
+                      <span className="w-[2px] h-full bg-[#00FF66] animate-pulse" />
+                      <span className="w-[2px] h-2 bg-[#00FF66] animate-pulse" />
+                      <span className="w-[2px] h-3 bg-[#00FF66] animate-pulse" />
+                    </span>
+                    <span className="text-[10px] font-bold text-[#00FF66] tracking-wider hidden xl:inline">
+                      AUDIO ON
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX size={12} className="text-white/40" />
+                    <span className="text-[10px] font-bold text-white/40 tracking-wider hidden xl:inline">
+                      MUTED
+                    </span>
+                  </>
+                )}
+              </button>
+
               {isLoggedIn && team ? (
                 <div
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/5"
@@ -117,7 +158,10 @@ export function Navbar() {
                     [{team.displayName}]
                   </span>
                   <button
-                    onClick={() => logout()}
+                    onClick={() => {
+                      sound.playClick();
+                      logout();
+                    }}
                     className="ml-1 p-1 rounded text-[#9AA8A0] hover:text-[#FF2233] transition-colors"
                     title="Logout"
                     aria-label="Logout"
@@ -128,6 +172,8 @@ export function Navbar() {
               ) : (
                 <Link
                   href="/login"
+                  onMouseEnter={() => sound.playHover()}
+                  onClick={() => sound.playClick()}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/15 bg-white/5 text-[#9AA8A0] hover:text-[#00FF66] hover:border-[#00FF66]/40 text-[10px] font-bold uppercase tracking-wider transition-all"
                   style={{ fontFamily: 'var(--font-mono, monospace)' }}
                 >
@@ -141,6 +187,8 @@ export function Navbar() {
                 href="/profile"
                 aria-label={`Player profile: ${currentAvatar.name}`}
                 aria-current={pathname === '/profile' ? 'page' : undefined}
+                onMouseEnter={() => sound.playHover()}
+                onClick={() => sound.playClick()}
                 className="group relative flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border transition-all"
                 style={{
                   borderColor: pathname === '/profile' ? 'rgba(0, 255, 102, 0.6)' : 'rgba(255, 255, 255, 0.14)',
@@ -169,6 +217,8 @@ export function Navbar() {
               {/* Tactical Studio CTA Button */}
               <Link
                 href="/studio"
+                onMouseEnter={() => sound.playHover()}
+                onClick={() => sound.playClick()}
                 className="relative inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#00FF66] hover:bg-[#39FF14] text-black font-mono font-black text-[11px] uppercase tracking-wider shadow-[0_0_16px_rgba(0,255,102,0.4)] active:scale-95 transition-all"
                 aria-label="Create avatar in Studio"
               >
@@ -217,7 +267,10 @@ export function Navbar() {
                   <Link
                     key={href}
                     href={href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      sound.playClick();
+                      setMobileOpen(false);
+                    }}
                     aria-current={active ? 'page' : undefined}
                     className={`relative flex items-center justify-between px-4 py-2.5 rounded-lg text-[11px] font-bold tracking-[0.14em] uppercase transition-all overflow-hidden ${
                       active
