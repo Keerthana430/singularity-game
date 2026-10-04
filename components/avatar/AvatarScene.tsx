@@ -20,66 +20,161 @@ export type CameraFocusMode = 'full' | 'face' | 'torso' | 'shoes';
 // Dais floor level in world space
 const Y_FLOOR = -0.92;
 
-// ─── Pedestal (Clean Metallic Studio Stage with Cyber Dais) ──────────────────
+// ─── Pedestal (Ancient Overgrown Mossy Ruin Dais) ─────────────────────────────
 function Pedestal() {
+  const mossTufts = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const angle = (i / 12) * Math.PI * 2 + (i % 2) * 0.15;
+      const r = 1.18 + ((i * 7) % 5) * 0.03;
+      return {
+        x: Math.cos(angle) * r,
+        z: Math.sin(angle) * r,
+        scale: 0.10 + ((i * 3) % 4) * 0.025,
+        rot: angle,
+      };
+    });
+  }, []);
+
   return (
     <group position={[0, Y_FLOOR, 0]}>
-      {/* Main stage cylinder base */}
-      <mesh position={[0, -0.07, 0]} receiveShadow>
-        <cylinderGeometry args={[1.25, 1.4, 0.14, 48]} />
-        <meshStandardMaterial color="#0A1017" roughness={0.35} metalness={0.8} />
+      {/* Ancient carved basalt ruin base */}
+      <mesh position={[0, -0.09, 0]} receiveShadow>
+        <cylinderGeometry args={[1.30, 1.48, 0.18, 48]} />
+        <meshStandardMaterial color="#141E19" roughness={0.7} metalness={0.2} />
       </mesh>
-      {/* Outer neon green perimeter ring */}
-      <mesh position={[0, 0.001, 0]}>
-        <cylinderGeometry args={[1.22, 1.22, 0.002, 48]} />
+
+      {/* Weathered bronze rune perimeter ring with carved bevel */}
+      <mesh position={[0, -0.001, 0]}>
+        <cylinderGeometry args={[1.28, 1.30, 0.015, 48]} />
         <meshStandardMaterial
-          color="#00FF66"
-          emissive="#00FF66"
-          emissiveIntensity={0.7}
-          roughness={0.2}
-          metalness={0.4}
+          color="#926C2A"
+          roughness={0.4}
+          metalness={0.75}
         />
       </mesh>
-      {/* Inner dark brushed platform plate */}
+
+      {/* Glowing emerald soul rune channel */}
       <mesh position={[0, 0.002, 0]}>
-        <cylinderGeometry args={[1.05, 1.05, 0.002, 36]} />
-        <meshStandardMaterial
-          color="#050C07"
-          roughness={0.45}
-          metalness={0.65}
-        />
-      </mesh>
-      {/* Center glowing cyber core glyph */}
-      <mesh position={[0, 0.003, 0]}>
-        <cylinderGeometry args={[0.32, 0.32, 0.002, 24]} />
+        <cylinderGeometry args={[1.22, 1.22, 0.003, 48]} />
         <meshStandardMaterial
           color="#00FF66"
           emissive="#00FF66"
           emissiveIntensity={0.85}
+          roughness={0.3}
         />
       </mesh>
+
+      {/* Lush overgrown moss turf top plate */}
+      <mesh position={[0, 0.003, 0]}>
+        <cylinderGeometry args={[1.14, 1.14, 0.004, 36]} />
+        <meshStandardMaterial
+          color="#163326"
+          roughness={0.85}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* Inner carved rune glyph circle */}
+      <mesh position={[0, 0.005, 0]}>
+        <cylinderGeometry args={[0.42, 0.42, 0.003, 24]} />
+        <meshStandardMaterial
+          color="#00FF66"
+          emissive="#00FF66"
+          emissiveIntensity={1.1}
+        />
+      </mesh>
+
+      {/* Inner ancient glyph ring */}
+      <mesh position={[0, 0.006, 0]}>
+        <ringGeometry args={[0.34, 0.38, 32]} />
+        <meshStandardMaterial
+          color="#926C2A"
+          metalness={0.8}
+          roughness={0.3}
+        />
+      </mesh>
+
+      {/* Organic moss clumps and sprouting vine curls around dais edge */}
+      {mossTufts.map((tuft, idx) => (
+        <group key={idx} position={[tuft.x, 0.01, tuft.z]} rotation={[0, tuft.rot, 0]}>
+          <mesh castShadow receiveShadow scale={[tuft.scale * 1.3, tuft.scale * 0.55, tuft.scale]}>
+            <sphereGeometry args={[1, 10, 8]} />
+            <meshStandardMaterial color={idx % 2 === 0 ? '#4D7C0F' : '#3F6212'} roughness={0.9} />
+          </mesh>
+          {/* Sprouting tiny nature leaf */}
+          {idx % 3 === 0 && (
+            <mesh position={[0, tuft.scale * 0.45, 0]} rotation={[0.2, 0, 0.4]}>
+              <coneGeometry args={[0.035, 0.09, 4]} />
+              <meshStandardMaterial color="#84CC16" roughness={0.5} />
+            </mesh>
+          )}
+        </group>
+      ))}
     </group>
   );
 }
 
-// ─── Background ambient particles / starfield ────────────────────────────────
+// ─── Canopy Starlight Spores & Floating Fireflies ────────────────────────────
 function StarField() {
-  const points = React.useMemo(() => {
-    const positions = new Float32Array(600);
-    for (let i = 0; i < 200; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 26;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 16;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 4;
+  const pointsRef = useRef<THREE.Points>(null);
+
+  const { positions, colors } = useMemo(() => {
+    const count = 260;
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+
+    const palette = [
+      new THREE.Color('#84CC16'), // moss lime
+      new THREE.Color('#67E8F9'), // starlight cyan
+      new THREE.Color('#FEF3C7'), // warm amber spore
+      new THREE.Color('#00FF66'), // emerald soul
+      new THREE.Color('#FFFFFF'), // white sparkle
+    ];
+
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 24;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 14;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 18 - 2;
+
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      col[i * 3] = c.r;
+      col[i * 3 + 1] = c.g;
+      col[i * 3 + 2] = c.b;
     }
-    return positions;
+    return { positions: pos, colors: col };
   }, []);
 
+  useFrame(({ clock }) => {
+    if (!pointsRef.current) return;
+    const t = clock.getElapsedTime();
+    // Gentle upward drift & sway of forest motes
+    const geom = pointsRef.current.geometry;
+    const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+
+    for (let i = 0; i < arr.length / 3; i++) {
+      arr[i * 3 + 1] += 0.004;
+      arr[i * 3] += Math.sin(t * 0.8 + i) * 0.002;
+      if (arr[i * 3 + 1] > 7) {
+        arr[i * 3 + 1] = -7;
+      }
+    }
+    posAttr.needsUpdate = true;
+  });
+
   return (
-    <points>
+    <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[points, 3]} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.035} color="#88FFBB" transparent opacity={0.45} sizeAttenuation />
+      <pointsMaterial
+        size={0.045}
+        vertexColors
+        transparent
+        opacity={0.65}
+        sizeAttenuation
+      />
     </points>
   );
 }
@@ -250,27 +345,27 @@ function SceneContent({
         onResetTrigger={onResetTrigger}
       />
 
-      {/* Lighting — Three-point cinematic gaming setup */}
-      {/* Key light */}
+      {/* Lighting — Canopy Twilight & Moss Ambient Setup */}
+      {/* Sunlight beam key light */}
       <directionalLight
-        position={[3, 5, 3]}
-        intensity={2.2}
-        color="#F0E8FF"
+        position={[3, 6, 3]}
+        intensity={2.6}
+        color="#FEF3C7"
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-far={20}
       />
-      {/* Fill light */}
-      <directionalLight position={[-3, 2, 2]} intensity={0.8} color="#22D3EE" />
-      {/* Rim / back light */}
-      <directionalLight position={[0, 1.5, -4]} intensity={1.4} color="#FF5C93" />
-      {/* Ambient & Hemisphere Lighting */}
-      <ambientLight intensity={0.45} color="#140E28" />
-      <hemisphereLight args={['#2A1B4E', '#050C06', 0.85]} />
+      {/* Cool atmospheric sky fill */}
+      <directionalLight position={[-3, 3, 2]} intensity={1.1} color="#67E8F9" />
+      {/* Canopy moss rim light for anime silhouettes */}
+      <directionalLight position={[0, 2, -4]} intensity={2.2} color="#84CC16" />
+      {/* Ambient & Forest Hemisphere Lighting */}
+      <ambientLight intensity={0.55} color="#0D2117" />
+      <hemisphereLight args={['#1F3A2B', '#08120D', 0.9]} />
 
-      {/* Dais glow point light right underneath character */}
-      <pointLight position={[0, Y_FLOOR + 0.15, 0]} intensity={2.2} color="#00FF66" distance={4} decay={2} />
-      <pointLight position={[2, torsoWorldY, 1]} intensity={0.7} color="#22D3EE" distance={5} decay={2} />
+      {/* Ancient ruin soul rune uplight underneath character */}
+      <pointLight position={[0, Y_FLOOR + 0.15, 0]} intensity={2.4} color="#00FF66" distance={4} decay={2} />
+      <pointLight position={[2, torsoWorldY, 1]} intensity={0.9} color="#67E8F9" distance={5} decay={2} />
 
       {/* Scene elements */}
       <StarField />
@@ -350,8 +445,8 @@ export function AvatarScene({
       className={className}
       aria-label="3D Avatar Preview"
     >
-      <color attach="background" args={['#030608']} />
-      <fog attach="fog" args={['#030608', 10, 28]} />
+      <color attach="background" args={['#0A1510']} />
+      <fog attach="fog" args={['#0A1510', 8, 26]} />
 
       <Suspense fallback={<PlaceholderAvatar />}>
         <SceneContent

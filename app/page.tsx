@@ -121,13 +121,13 @@ export default function HomePage() {
 
 
   return (
-    <div className="relative min-h-screen bg-[#020502] text-white selection:bg-[#00FF66] selection:text-black overflow-x-hidden pt-16">
-      {/* Dynamic Background Atmosphere */}
+    <div className="relative min-h-screen rpg-wood-container text-[#FFF5E6] selection:bg-[#F59E0B] selection:text-black overflow-x-hidden pt-16">
+      {/* Dynamic Forest Canopy Atmosphere */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-[#00FF66]/10 rounded-full blur-[170px]" />
-        <div className="absolute top-1/3 -right-48 w-[650px] h-[650px] bg-[#39FF14]/8 rounded-full blur-[190px]" />
-        <div className="absolute -bottom-32 left-1/3 w-[600px] h-[600px] bg-[#00FF66]/8 rounded-full blur-[150px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00ff6608_1px,transparent_1px),linear-gradient(to_bottom,#00ff6608_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] bg-[#4D7C0F]/15 rounded-full blur-[170px]" />
+        <div className="absolute top-1/3 -right-48 w-[650px] h-[650px] bg-[#00FF66]/10 rounded-full blur-[190px]" />
+        <div className="absolute -bottom-32 left-1/3 w-[600px] h-[600px] bg-[#D97706]/10 rounded-full blur-[150px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(#C88A4B12_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
       </div>
 
       {/* HERO SECTION */}
@@ -140,217 +140,216 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-6 flex flex-col gap-6"
           >
-            {/* Tagline Badge matching image 2 monospaced style */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#00FF66]/40 bg-[#00FF66]/10 backdrop-blur-md w-fit text-xs font-mono font-black text-[#00FF66]">
-              <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
-              <span>// D3V_UNKNOWN // SYS_01 // ONLINE</span>
+            {/* Tagline Ribbon Badge (Almost a Hero / Ancient Lore Style) */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C180E] border-2 border-[#8C6239] w-fit text-xs font-bold text-[#FDE68A] shadow-md">
+              <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
+              <span className="tracking-wider uppercase">ANCIENT LORE &bull; INDIE ANIME SURVIVOR</span>
             </div>
 
-            {/* Main Headline with Glitch Effect */}
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.05] uppercase" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              <span className="glitch-text text-white" data-text="BREAK THE GRID.">
-                BREAK THE GRID.
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.08] uppercase">
+              <span className="text-[#FFF8EE]">
+                FORGE YOUR
               </span> <br />
               <span
-                className="bg-clip-text text-transparent neon-green-text"
+                className="bg-clip-text text-transparent"
                 style={{
-                  backgroundImage: 'linear-gradient(135deg, #FFFFFF 0%, #00FF66 60%, #39FF14 100%)',
+                  backgroundImage: 'linear-gradient(135deg, #FEF3C7 0%, #F59E0B 50%, #10B981 100%)',
                 }}
               >
-                FORGE CYBER RIG
+                ANIME HERO
               </span>
             </h1>
 
             {/* Paragraph Description */}
-            <p className="text-base sm:text-lg text-white/80 leading-relaxed max-w-xl font-mono text-xs sm:text-sm">
-              &gt; DESIGN WITHOUT RULES. BUILD WITHOUT LIMITS. <br />
-              Construct blocky Roblox-styled avatars procedurally in real-time. Tune gear, head studs, printed expression decals, armor & radiant neon dyes.
+            <p className="text-base text-[#D4C4B5] leading-relaxed max-w-xl font-medium">
+              Step into an overgrown realm of mossy ancient ruins and indie fantasy survivors. Hand-tailor your cel-shaded adventurer with organic proportions, weathered iron armor, explorer rucksacks, cloth wraps, and signature weapons.
             </p>
 
-            {/* Action Buttons with Chamfered Angled Cyber Style */}
+            {/* Action Buttons (Ref: Almost a Hero / RPG Buttons) */}
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link
                 href="/studio"
-                className="cyber-button flex items-center gap-2 px-8 py-4 text-sm font-black uppercase text-black"
+                className="rpg-auto-equip-btn flex items-center gap-2.5 px-8 py-4 text-sm font-black uppercase text-[#2A1608] shadow-xl hover:scale-105 transition-all"
               >
                 <Layers size={18} />
-                <span>&gt; ENTER STUDIO_</span>
+                <span>OUTFITTING BAY</span>
                 <ChevronRight size={16} />
               </Link>
 
               <Link
                 href="/lobby"
-                className="cyber-button-outline flex items-center gap-2 px-7 py-4 text-sm font-bold uppercase text-[#00FF66]"
+                className="flex items-center gap-2 px-7 py-4 rounded-full border-2 border-[#8C6239] bg-[#2C180E]/90 hover:bg-[#3E2516] text-[#FDE68A] font-bold text-sm uppercase transition-all shadow-md"
               >
-                <Swords size={18} />
-                <span>[ BATTLE ARENA ]</span>
+                <Swords size={18} className="text-[#F59E0B]" />
+                <span>COLOSSEUM ARENA</span>
               </Link>
 
               <Link
-                href="/contest"
-                className="flex items-center gap-2 px-5 py-4 border border-[#FF69B4]/40 bg-[#FF69B4]/10 hover:bg-[#FF69B4]/25 text-[#FF69B4] font-mono text-xs font-bold uppercase transition-all hover:shadow-[0_0_15px_rgba(255,105,180,0.3)]"
+                href="/ludo"
+                className="flex items-center gap-2 px-5 py-4 rounded-full border border-[#38BDF8]/40 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] text-xs font-bold uppercase transition-all"
               >
-                <Heart size={18} />
-                <span className="hidden sm:inline">BEAUTY CONTEST</span>
+                <Dices size={18} />
+                <span className="hidden sm:inline">LUDO LOUNGE</span>
               </Link>
 
               <button
                 onClick={handleRandomize}
-                className="flex items-center gap-2 px-4 py-4 border border-[#00FF66]/30 bg-black/60 hover:bg-[#00FF66]/20 text-[#00FF66] font-mono text-xs transition-all"
-                title="Randomize Hero"
+                className="flex items-center gap-2 px-4 py-4 rounded-full border border-[#D97706]/40 bg-[#24160E]/80 hover:bg-[#382417] text-[#F59E0B] text-xs font-bold transition-all shadow-sm"
+                title="Randomize Adventurer"
               >
                 <Dices size={18} />
-                <span className="hidden sm:inline">[ RANDOMIZE ]</span>
+                <span className="hidden sm:inline">RANDOM HERO</span>
               </button>
             </div>
 
           </motion.div>
 
-          {/* Right Column: Interactive 3D Avatar Hero Preview with HUD brackets */}
+          {/* Right Column: Interactive 3D Avatar Hero Preview with Ancient Ruin Frame */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="lg:col-span-6 relative flex flex-col items-center"
           >
-            {/* Sci-Fi Decorative Frame with L-shaped Corners */}
-            <div className="hud-box scanlines relative w-full aspect-[4/5] max-h-[620px] glass-panel glass-panel-chamfer p-2 overflow-hidden border border-[#00FF66]/40 shadow-[0_0_40px_rgba(0,255,102,0.15)]">
-              {/* Corner status tag matching image 1 "Current 0.52ETH" style */}
-              <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/90 px-3 py-1.5 border border-[#00FF66]/40 font-mono text-[11px] text-[#00FF66]">
-                <span className="w-2 h-2 bg-[#00FF66] animate-ping" />
-                <span>CURRENT RIG &bull; {currentAvatar.name.toUpperCase()}</span>
+            {/* Ancient Ruin Stone & Brass Frame */}
+            <div className="relative w-full aspect-[4/5] max-h-[620px] rounded-3xl p-3 overflow-hidden border-2 border-[#8C6239] bg-[#16211B] shadow-[0_12px_45px_rgba(0,0,0,0.7)]">
+              {/* Corner status tag matching Almost a Hero badge */}
+              <div className="absolute top-5 left-5 z-20 flex items-center gap-2 bg-[#2B1B12]/95 px-3.5 py-1.5 rounded-full border border-[#8C6239] text-xs font-bold text-[#FDE68A] shadow-md">
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse" />
+                <span>EXPEDITION RIG &bull; {currentAvatar.name.toUpperCase()}</span>
               </div>
 
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
+              <div className="absolute top-5 right-5 z-20 flex items-center gap-1.5">
                 <Link
                   href="/studio"
-                  className="cyber-button px-3 py-1.5 text-xs font-black uppercase text-black"
+                  className="px-3.5 py-1.5 rounded-full bg-[#00FF66] text-black text-xs font-black uppercase tracking-wider hover:bg-white transition-all shadow-md"
                 >
                   <span>CUSTOMIZE &gt;</span>
                 </Link>
               </div>
 
               {/* 3D Canvas */}
-              <div className="w-full h-full overflow-hidden bg-gradient-to-b from-[#041006] via-[#020502] to-[#000000]">
+              <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#14231B] via-[#0E1A14] to-[#0A120E]">
                 <AvatarViewer config={currentAvatar} className="w-full h-full" showControls={true} animate={true} />
               </div>
-
-
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* SECTION 1: THE THREE OFFICIAL GAME MODES                    */}
+      {/* SECTION 1: THE THREE OFFICIAL GAME EXPEDITIONS              */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#5C3D27]/40">
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <p className="text-xs font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// ACTIVE_GAMES_MATRIX //</p>
-          <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            SELECT YOUR GAME MODE
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2C180E] border border-[#8C6239] text-xs font-bold text-[#F59E0B] mb-3">
+            <span>⚔️ ACTIVE EXPEDITION QUESTS</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#FFF8EE]">
+            SELECT YOUR ADVENTURE
           </h2>
-          <p className="text-white/70 mt-3 text-xs sm:text-sm font-mono">
-            &gt; Three high-octane competitive modes. Deploy your custom avatar into tactical 3D colosseums, authentic real-time board warfare, and global fashion runways.
+          <p className="text-[#CBB49C] mt-3 text-xs sm:text-sm">
+            Deploy your custom hand-drawn avatar into tactical 3D colosseums, 4-faction real-time board warfare, and global adventurer runways.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Game 1: Battle Royale */}
-          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col justify-between group hover:border-[#00FF66] hover:bg-black/90 transition-all shadow-lg">
+          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#F59E0B] transition-all shadow-xl">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66]">
+                <div className="w-12 h-12 rounded-2xl bg-[#D97706]/15 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B]">
                   <Swords size={24} />
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] font-bold">
-                  8-Fighter Bracket
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#D97706]/20 border border-[#F59E0B]/40 text-[#FDE68A]">
+                  8-Hero Tournament
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-[#00FF66] transition-colors mb-2">
-                // 3D BATTLE ROYALE
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#F59E0B] transition-colors mb-2">
+                COLOSSEUM ARENA
               </h3>
-              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
-                Enter the multi-biome cyber colosseum. Fight through Quarter-Finals, Semi-Finals, and Grand Finals with unique species combat arts, dynamic dodge leaps, and cinematic critical hits.
+              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
+                Step onto the ancient mossy ruin grounds. Battle through Quarter-Finals, Semi-Finals, and Grand Finals with species combat arts, tactical dodges, and cinematic critical hits.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">3D Particle VFX</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Species Shields</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">+650🪙 Grand Prize</span>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">3D Particle VFX</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Species Shields</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650🪙 Bounty</span>
               </div>
             </div>
 
             <Link
               href="/lobby"
-              className="w-full py-3 px-4 rounded-xl bg-[#00FF66] text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-emerald-300 transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)]"
+              className="rpg-auto-equip-btn w-full py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:scale-102 transition-all shadow-md"
             >
               <span>Deploy to Arena</span>
               <ArrowRight size={14} />
             </Link>
           </div>
 
-          {/* Game 2: Cyber Ludo */}
-          <div className="hud-box glass-panel p-6 border border-cyan-500/30 flex flex-col justify-between group hover:border-cyan-400 hover:bg-black/90 transition-all shadow-lg">
+          {/* Game 2: Colosseum Ludo */}
+          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#38BDF8] transition-all shadow-xl">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/15 border border-[#38BDF8]/40 flex items-center justify-center text-[#38BDF8]">
                   <Dices size={24} />
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold">
-                  4-Player Real-Time
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#BAE6FD]">
+                  4-Player Lounge
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-cyan-400 transition-colors mb-2">
-                // CYBER LUDO COLOSSEUM
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#38BDF8] transition-colors mb-2">
+                COLOSSEUM LUDO
               </h3>
-              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
-                Authentic 4-player board battle using your custom avatar builds as living pieces. Roll 6 to deploy from yard, capture rivals for bonus turns, and conquer power-up tiles.
+              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
+                Gather at the grand colosseum table. Choose between 4 distinct factions, roll physical 3D dice, capture opposing tokens, and sprint to the center sanctuary.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Avatar Tokens</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Quantum Star Havens</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">+500🪙 1st Place</span>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Physics Dice</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Token Clash</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#BAE6FD]">Tactical Safe Zones</span>
               </div>
             </div>
 
             <Link
               href="/ludo"
-              className="w-full py-3 px-4 rounded-xl bg-cyan-400 text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyan-300 transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+              className="w-full py-3 px-4 rounded-full bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
             >
-              <span>Enter Ludo Arena</span>
+              <span>Enter Ludo Table</span>
               <ArrowRight size={14} />
             </Link>
           </div>
 
           {/* Game 3: Beauty Contest */}
-          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/30 flex flex-col justify-between group hover:border-[#FF69B4] hover:bg-black/90 transition-all shadow-lg">
+          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#FF5C93] transition-all shadow-xl">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-[#FF69B4]/10 border border-[#FF69B4]/40 flex items-center justify-center text-[#FF69B4]">
-                  <Heart size={24} />
+                <div className="w-12 h-12 rounded-2xl bg-[#FF5C93]/15 border border-[#FF5C93]/40 flex items-center justify-center text-[#FF5C93]">
+                  <Crown size={24} />
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#FF69B4]/20 border border-[#FF69B4]/40 text-[#FF69B4] font-bold">
-                  Community Showcase
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FF5C93]/20 border border-[#FF5C93]/40 text-[#FBCFE8]">
+                  Community Runway
                 </span>
               </div>
-              <h3 className="text-xl font-black uppercase font-mono text-white group-hover:text-[#FF69B4] transition-colors mb-2">
-                // BEAUTY RUNWAY CONTEST
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#FF5C93] transition-colors mb-2">
+                BEAUTY RUNWAY
               </h3>
-              <p className="text-xs font-mono text-white/70 leading-relaxed mb-4">
-                Submit your customized cyber avatar with personalized tagline. The global community casts live decentralized votes to crown the ultimate fashion icon and style champion.
+              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
+                Showcase your customized hero in the Hall of Fashion. Gain likes, climb the global popularity rankings, and win exclusive cosmetics and crowns.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] font-mono text-white/50">
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Decentralized Voting</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Daily Runway</span>
-                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10">Prestige Trophies</span>
+              <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Global Voting</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Seasonal Crowns</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FBCFE8]">Profile Badges</span>
               </div>
             </div>
 
             <Link
               href="/contest"
-              className="w-full py-3 px-4 rounded-xl bg-[#FF69B4] text-black font-black font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-pink-300 transition-all shadow-[0_0_15px_rgba(255,105,180,0.3)]"
+              className="w-full py-3 px-4 rounded-full bg-gradient-to-b from-[#F472B6] to-[#DB2777] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
             >
-              <span>Enter Beauty Contest</span>
+              <span>Enter Runway</span>
               <ArrowRight size={14} />
             </Link>
           </div>

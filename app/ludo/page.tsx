@@ -180,16 +180,16 @@ export default function LudoPage() {
   const [activeClash, setActiveClash] = useState<CombatClash | null>(null);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText3D[]>([]);
 
-  // 4 Player Crews
+  // 4 Player Crews (Space Station Lounge Factions)
   const [players, setPlayers] = useState<LudoPlayer[]>([
     {
       id: 'red',
-      name: currentAvatar.name || 'You',
+      name: currentAvatar.name || 'Astraea Cadet',
       isAi: false,
       avatar: currentAvatar,
-      colorHex: '#EF4444',
-      accentHex: '#F87171',
-      bgHex: 'rgba(239, 68, 68, 0.15)',
+      colorHex: '#0099FF', // Astraea Vanguard (Cerulean Hexagon 🛡️)
+      accentHex: '#38BDF8',
+      bgHex: 'rgba(0, 153, 255, 0.18)',
       pieces: [
         { id: 0, color: 'red', step: -1 },
         { id: 1, color: 'red', step: -1 },
@@ -199,12 +199,12 @@ export default function LudoPage() {
     },
     {
       id: 'green',
-      name: 'Sylph Ranger',
+      name: 'Hyperion Corsair',
       isAi: true,
       avatar: PRESET_AVATARS[1]?.avatar || currentAvatar,
-      colorHex: '#00FF66',
-      accentHex: '#34D399',
-      bgHex: 'rgba(0, 255, 102, 0.15)',
+      colorHex: '#FF6633', // Hyperion Corsair (Tangerine Crosshair 🎯)
+      accentHex: '#FF8A3D',
+      bgHex: 'rgba(255, 102, 51, 0.18)',
       pieces: [
         { id: 0, color: 'green', step: -1 },
         { id: 1, color: 'green', step: -1 },
@@ -214,12 +214,12 @@ export default function LudoPage() {
     },
     {
       id: 'yellow',
-      name: 'Rival AI',
+      name: 'Solar Nova',
       isAi: true,
       avatar: PRESET_AVATARS[3]?.avatar || currentAvatar,
-      colorHex: '#F97316',
-      accentHex: '#FB923C',
-      bgHex: 'rgba(249, 115, 22, 0.15)',
+      colorHex: '#FFC700', // Solar Nova (Solar Crown 👑 - True Yellow-Gold)
+      accentHex: '#FFE580',
+      bgHex: 'rgba(255, 199, 0, 0.18)',
       pieces: [
         { id: 0, color: 'yellow', step: -1 },
         { id: 1, color: 'yellow', step: -1 },
@@ -229,12 +229,12 @@ export default function LudoPage() {
     },
     {
       id: 'blue',
-      name: 'Astral Void',
+      name: 'Void Syndicate',
       isAi: true,
       avatar: PRESET_AVATARS[2]?.avatar || currentAvatar,
-      colorHex: '#A855F7',
+      colorHex: '#9D4EDD', // Void Syndicate (Violet Diamond 💎)
       accentHex: '#C084FC',
-      bgHex: 'rgba(168, 85, 247, 0.15)',
+      bgHex: 'rgba(157, 78, 221, 0.18)',
       pieces: [
         { id: 0, color: 'blue', step: -1 },
         { id: 1, color: 'blue', step: -1 },
@@ -816,31 +816,31 @@ export default function LudoPage() {
 
         <div className="absolute top-3 left-4 right-4 z-20 flex items-start justify-between pointer-events-none">
           {/* Top-Left: Player Tag & Health Bar */}
-          <div className="pointer-events-auto flex flex-col gap-1.5 px-4 py-2.5 rounded-2xl bg-black/75 backdrop-blur-md border border-white/10 shadow-[0_4px_25px_rgba(0,0,0,0.8)]">
+          <div className="pointer-events-auto flex flex-col gap-1.5 px-4 py-2.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
             <div className="flex items-center gap-2">
               <span
                 className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentColor] animate-pulse"
                 style={{ backgroundColor: activePlayer.colorHex, color: activePlayer.colorHex }}
               />
               <span
-                className="text-sm sm:text-base font-black uppercase tracking-wider text-white"
-                style={{ fontFamily: "'Orbitron', sans-serif" }}
+                className="text-sm sm:text-base font-bold tracking-wide text-[#FFF8EE]"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
-                {currentAvatar.name || activePlayer.name || 'KAGE-07'}
+                {currentAvatar.name || activePlayer.name || 'CADET KAI'}
               </span>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 uppercase font-bold">
-                {currentAvatar.classRole || 'MAGE'}
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#00FF66]/15 text-[#00FF66] border border-[#00FF66]/30 uppercase font-bold">
+                [{currentAvatar.classRole || 'OPERATIVE'}]
               </span>
             </div>
 
-            {/* Console HP Bar: HP ██████████ */}
+            {/* Stepped HP Gauge */}
             <div className="flex items-center gap-2 font-mono text-xs">
               <span className="text-[10px] font-bold text-white/50 tracking-wider">HP</span>
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 10 }).map((_, idx) => (
                   <div
                     key={idx}
-                    className="w-2.5 sm:w-3.5 h-3 rounded-[1px] bg-gradient-to-t from-emerald-500 to-[#00FF66] shadow-[0_0_6px_#00FF66]"
+                    className="w-2.5 sm:w-3 h-2.5 rounded-[2px] bg-gradient-to-t from-emerald-500 to-[#00FF66] shadow-[0_0_5px_rgba(0,255,102,0.4)]"
                   />
                 ))}
               </div>
@@ -848,15 +848,22 @@ export default function LudoPage() {
             </div>
           </div>
 
-          {/* Top-Center: TURN 03 */}
+          {/* Top-Center: Lounge Telemetry & Turn Status */}
           <div className="pointer-events-auto flex flex-col items-center">
-            <div className="px-5 py-2 rounded-2xl bg-black/80 backdrop-blur-md border border-[#00FF66]/30 shadow-[0_0_25px_rgba(0,255,102,0.15)] flex items-center gap-2.5 font-mono">
+            <div className="px-5 py-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center gap-2.5 font-mono">
               <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
               <span
-                className="text-sm sm:text-base font-black tracking-[0.2em] text-[#00FF66] uppercase"
-                style={{ fontFamily: "'Orbitron', sans-serif" }}
+                className="text-sm sm:text-base font-bold tracking-widest text-[#FFF8EE] uppercase"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 TURN {String(turnCount).padStart(2, '0')}
+              </span>
+              <span className="w-1 h-3 bg-white/20" />
+              <span
+                className="text-xs font-bold font-mono tracking-wider uppercase"
+                style={{ color: activePlayer.colorHex }}
+              >
+                {activePlayer.id === 'red' ? '🛡️ ASTRAEA' : activePlayer.id === 'green' ? '🎯 HYPERION' : activePlayer.id === 'yellow' ? '👑 SOLAR' : '💎 VOID'}
               </span>
               {activeMovement && (
                 <span className="text-[9px] text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full border border-[#00FF66]/40 animate-pulse font-mono">
@@ -869,21 +876,21 @@ export default function LudoPage() {
                 </span>
               )}
             </div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-white/50 mt-1">
-              {activePlayer.isAi ? `${activePlayer.name.toUpperCase()} THINKING...` : 'PLAYER INITIATIVE // ROLL QUANTUM DIE'}
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#8F97B0] mt-1">
+              {activePlayer.isAi ? `${activePlayer.name.toUpperCase()} PONDERING MOVE...` : 'STATION LOUNGE // ROLL LOUNGE DIE'}
             </span>
           </div>
 
-          {/* Top-Right: 04:21 Match Timer + Controls */}
+          {/* Top-Right: Match Timer & Camera Controls */}
           <div className="pointer-events-auto flex items-center gap-2 font-mono">
             {/* Live Clock Timer */}
-            <div className="px-3.5 py-2 rounded-2xl bg-black/80 backdrop-blur-md border border-cyan-500/30 text-cyan-400 font-bold text-xs sm:text-sm shadow-[0_0_15px_rgba(6,182,212,0.15)] flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <div className="px-3.5 py-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-[#38BDF8] font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] animate-pulse" />
               <span className="tracking-widest">{formattedTimer}</span>
             </div>
 
             {/* Camera Presets */}
-            <div className="flex items-center gap-0.5 bg-black/80 backdrop-blur-md p-1 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-0.5 bg-[#181D33]/90 backdrop-blur-xl p-1 rounded-2xl border border-white/15">
               {([
                 { key: 'isometric' as CameraPreset, label: '3D' },
                 { key: 'topdown' as CameraPreset, label: 'TOP' },
@@ -894,7 +901,7 @@ export default function LudoPage() {
                   onClick={() => setCameraPreset(key)}
                   className={`px-2.5 py-1 rounded-xl text-[9px] font-bold uppercase transition-all ${
                     cameraPreset === key
-                      ? 'bg-[#00FF66] text-black shadow-[0_0_8px_rgba(0,255,102,0.4)]'
+                      ? 'bg-[#00FF66] text-[#101426] shadow-[0_0_10px_rgba(0,255,102,0.4)]'
                       : 'text-white/40 hover:text-white'
                   }`}
                   title={`${label} camera view`}
@@ -907,7 +914,7 @@ export default function LudoPage() {
             {/* Speed toggle */}
             <button
               onClick={() => setGameSpeed(gameSpeed === '1x' ? '2x' : gameSpeed === '2x' ? 'instant' : '1x')}
-              className="px-2.5 py-2 rounded-2xl bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white/60 hover:text-white uppercase transition-all"
+              className="px-2.5 py-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-[9px] font-bold text-white/70 hover:text-white uppercase transition-all"
               title="Speed Multiplier"
             >
               {gameSpeed}
@@ -916,7 +923,7 @@ export default function LudoPage() {
             {/* Reset button */}
             <button
               onClick={handleResetMatch}
-              className="p-2 rounded-2xl bg-black/80 backdrop-blur-md border border-white/10 text-white/40 hover:text-red-400 transition-all"
+              className="p-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-white/50 hover:text-[#FF3B30] transition-all"
               title="Reset Match"
             >
               <RotateCcw size={13} />
@@ -925,14 +932,14 @@ export default function LudoPage() {
         </div>
 
         {/* ─── 4 FACTION BASES (OVERLAYING THE 4 QUADRANTS) ─── */}
-        {/* Top-Left: RED (Player) */}
+        {/* Top-Left: ASTRAEA VANGUARD (🛡️ Cerulean Hexagon #0099FF) */}
         <div className="absolute top-24 left-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'red' ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.35)]' : 'border-white/10'
+          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
+            currentTurn === 'red' ? 'border-[#0099FF] shadow-[0_0_18px_rgba(0,153,255,0.45)]' : 'border-white/10'
           }`}>
-            <span className="text-sm">🔴</span>
+            <span className="text-base" title="Astraea Vanguard">🛡️</span>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono font-black uppercase text-white truncate max-w-[100px]">
+              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[0].name}
               </span>
               <div className="flex items-center gap-1 mt-0.5">
@@ -940,27 +947,27 @@ export default function LudoPage() {
                   <span
                     key={pc.id}
                     className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-amber-400 shadow-[0_0_4px_#F59E0B]' : pc.step >= 0 ? 'bg-[#00FF66]' : 'bg-white/20'
+                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#0099FF]' : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
             {currentTurn === 'red' && (
-              <span className="text-[8px] font-mono font-bold text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded uppercase animate-pulse">
+              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE
               </span>
             )}
           </div>
         </div>
 
-        {/* Top-Right: GREEN */}
+        {/* Top-Right: HYPERION CORSAIR (🎯 Tangerine Crosshair #FF6633) */}
         <div className="absolute top-24 right-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'green' ? 'border-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.35)]' : 'border-white/10'
+          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
+            currentTurn === 'green' ? 'border-[#FF6633] shadow-[0_0_18px_rgba(255,102,51,0.45)]' : 'border-white/10'
           }`}>
             <div className="flex flex-col text-right">
-              <span className="text-[10px] font-mono font-black uppercase text-white truncate max-w-[100px]">
+              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[1].name}
               </span>
               <div className="flex items-center justify-end gap-1 mt-0.5">
@@ -968,29 +975,29 @@ export default function LudoPage() {
                   <span
                     key={pc.id}
                     className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-amber-400 shadow-[0_0_4px_#F59E0B]' : pc.step >= 0 ? 'bg-[#00FF66]' : 'bg-white/20'
+                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#FF6633]' : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            <span className="text-sm">🟢</span>
+            <span className="text-base" title="Hyperion Corsair">🎯</span>
             {currentTurn === 'green' && (
-              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded uppercase animate-pulse">
+              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE
               </span>
             )}
           </div>
         </div>
 
-        {/* Bottom-Left: BLUE */}
+        {/* Bottom-Left: VOID SYNDICATE (💎 Violet Diamond #9D4EDD) */}
         <div className="absolute bottom-28 left-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'blue' ? 'border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.35)]' : 'border-white/10'
+          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
+            currentTurn === 'blue' ? 'border-[#9D4EDD] shadow-[0_0_18px_rgba(157,78,221,0.45)]' : 'border-white/10'
           }`}>
-            <span className="text-sm">🔵</span>
+            <span className="text-base" title="Void Syndicate">💎</span>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono font-black uppercase text-white truncate max-w-[100px]">
+              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[3].name}
               </span>
               <div className="flex items-center gap-1 mt-0.5">
@@ -998,27 +1005,27 @@ export default function LudoPage() {
                   <span
                     key={pc.id}
                     className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-amber-400 shadow-[0_0_4px_#F59E0B]' : pc.step >= 0 ? 'bg-[#00FF66]' : 'bg-white/20'
+                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#9D4EDD]' : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
             {currentTurn === 'blue' && (
-              <span className="text-[8px] font-mono font-bold text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded uppercase animate-pulse">
+              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE
               </span>
             )}
           </div>
         </div>
 
-        {/* Bottom-Right: YELLOW */}
+        {/* Bottom-Right: SOLAR NOVA (👑 Solar Crown #FFC700) */}
         <div className="absolute bottom-28 right-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'yellow' ? 'border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.35)]' : 'border-white/10'
+          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
+            currentTurn === 'yellow' ? 'border-[#FFC700] shadow-[0_0_18px_rgba(255,199,0,0.45)]' : 'border-white/10'
           }`}>
             <div className="flex flex-col text-right">
-              <span className="text-[10px] font-mono font-black uppercase text-white truncate max-w-[100px]">
+              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[2].name}
               </span>
               <div className="flex items-center justify-end gap-1 mt-0.5">
@@ -1026,15 +1033,15 @@ export default function LudoPage() {
                   <span
                     key={pc.id}
                     className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-amber-400 shadow-[0_0_4px_#F59E0B]' : pc.step >= 0 ? 'bg-[#00FF66]' : 'bg-white/20'
+                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#FFC700]' : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            <span className="text-sm">🟡</span>
+            <span className="text-base" title="Solar Nova">👑</span>
             {currentTurn === 'yellow' && (
-              <span className="text-[8px] font-mono font-bold text-orange-400 bg-orange-500/20 px-1.5 py-0.5 rounded uppercase animate-pulse">
+              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE
               </span>
             )}
@@ -1050,10 +1057,10 @@ export default function LudoPage() {
                 initial={{ y: 20, opacity: 0, scale: 0.95 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 15, opacity: 0, scale: 0.95 }}
-                className="pointer-events-auto flex items-center gap-2 p-2 rounded-2xl bg-black/85 backdrop-blur-md border border-[#00FF66]/40 shadow-[0_0_35px_rgba(0,255,102,0.25)]"
+                className="pointer-events-auto flex items-center gap-2 p-2 rounded-2xl bg-[#181D33]/95 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
               >
                 <Zap size={15} className="text-[#00FF66] animate-pulse ml-2" />
-                <span className="text-[10px] font-mono text-white/60 uppercase tracking-wider mr-1">
+                <span className="text-[10px] font-mono text-[#8F97B0] uppercase tracking-wider mr-1">
                   ADVANCE:
                 </span>
                 {selectablePieces.map((pId) => {
@@ -1064,7 +1071,8 @@ export default function LudoPage() {
                       onClick={() => {
                         if (diceRoll !== null) movePiece(activePlayer.id, pId, diceRoll);
                       }}
-                      className="hud-action-btn px-4 py-2 text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,255,102,0.3)] hover:scale-105 active:scale-95 transition-all"
+                      className="px-4 py-2 rounded-xl bg-[#00FF66] hover:bg-[#33FF85] text-[#101426] font-bold text-xs uppercase tracking-wider shadow-[0_2px_12px_rgba(0,255,102,0.4)] hover:scale-105 active:scale-95 transition-all"
+                      style={{ fontFamily: 'var(--font-display)' }}
                     >
                       {pc.step === -1 ? `DEPLOY #${pId + 1}` : `PAWN #${pId + 1} (+${diceRoll})`}
                     </button>
@@ -1080,7 +1088,7 @@ export default function LudoPage() {
             <motion.div
               animate={isRolling ? { rotate: [0, 90, 180, 360], scale: [1, 1.25, 0.9, 1] } : {}}
               transition={{ duration: 0.4, ease: 'easeInOut' }}
-              className="w-14 h-14 rounded-2xl flex items-center justify-center border-2 bg-black/80 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.8)] cursor-pointer"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center border-2 bg-[#181D33]/90 backdrop-blur-xl shadow-2xl cursor-pointer"
               style={{
                 borderColor: activePlayer.colorHex,
                 boxShadow: `0 0 20px ${activePlayer.colorHex}40`,
@@ -1103,24 +1111,25 @@ export default function LudoPage() {
               )}
             </motion.div>
 
-            {/* Big Centered [ ROLL ] Button */}
+            {/* Tactile [ ROLL LOUNGE DIE ] Button */}
             {!activePlayer.isAi ? (
               <button
                 onClick={handleRollDice}
                 disabled={!canRoll || isRolling || !!winner || !!activeMovement}
-                className="hud-action-btn px-12 py-4 text-sm sm:text-base font-black uppercase tracking-[0.25em] flex items-center gap-3 shadow-[0_0_35px_rgba(0,255,102,0.45)] hover:shadow-[0_0_60px_rgba(0,255,102,0.8)] hover:scale-105 active:scale-95 transition-all disabled:opacity-40 disabled:hover:scale-100"
+                className="px-10 sm:px-12 py-3.5 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF8A3D] hover:from-[#FF8A3D] hover:to-[#FFAA00] text-white font-bold text-xs sm:text-sm tracking-[0.20em] uppercase flex items-center gap-2.5 shadow-[0_4px_28px_rgba(255,107,53,0.5)] hover:shadow-[0_6px_36px_rgba(255,107,53,0.7)] transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Sparkles size={16} />
-                <span>{isRolling ? 'ROLLING...' : 'ROLL'}</span>
+                <span>{isRolling ? 'ROLLING...' : 'ROLL DIE'}</span>
               </button>
             ) : (
-              <div className="px-8 py-3.5 rounded-2xl bg-black/80 backdrop-blur-md border border-white/10 text-xs font-mono text-white/60 flex items-center gap-2.5 shadow-lg">
+              <div className="px-8 py-3.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-xs font-mono text-white/70 flex items-center gap-2.5 shadow-lg">
                 <span
                   className="w-2 h-2 rounded-full animate-ping"
                   style={{ backgroundColor: activePlayer.colorHex }}
                 />
                 <span className="uppercase tracking-wider">
-                  {activePlayer.name} COMPUTING MOVE...
+                  {activePlayer.name} PONDERING MOVE...
                 </span>
               </div>
             )}

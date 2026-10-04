@@ -5,11 +5,16 @@
 
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 import { AvatarConfig } from '@/types/avatar';
 import { createToonGradientMap } from '@/components/retro/ToonShading';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function AnimeOutline({ thickness = 1.6, color = '#151928' }: { thickness?: number; color?: string }) {
+  return <Outlines thickness={thickness} color={color} />;
+}
 
 function hexToColor(hex: string): THREE.Color {
   return new THREE.Color(hex);
@@ -61,93 +66,93 @@ export function getBodyProps(config: AvatarConfig) {
     isTiny: boolean;
   }> = {
     human: {
-      overallScale: 1.0,    // Reference: Normal athletic build (~7)
-      torsoHScale: 1.0,
-      bodyScaleX: 1.0,
-      bodyScaleZ: 1.0,
-      armScale: 1.0,
-      armWidthScale: 1.0,
-      legScale: 1.0,
-      legWidthScale: 1.0,
-      headRadius: 0.18,
+      overallScale: 1.0,    // Indie Anime Adventure Hero build (~4 heads tall)
+      torsoHScale: 0.92,
+      bodyScaleX: 1.04,
+      bodyScaleZ: 1.02,
+      armScale: 0.94,
+      armWidthScale: 1.10,
+      legScale: 0.90,
+      legWidthScale: 1.14,
+      headRadius: 0.23,
       hoverOffset: 0,
       isTiny: false,
     },
     elf: {
-      overallScale: 1.28,   // Reference: Tall & Slender (~10 vs human 7)
-      torsoHScale: 1.08,    // Elongated graceful torso
-      bodyScaleX: 0.78,    // Wasp waist, slender ribcage
-      bodyScaleZ: 0.76,    // Sleek flat profile
-      armScale: 1.12,      // Long graceful arms
-      armWidthScale: 0.78, // Slender arms
-      legScale: 1.22,      // Very long graceful supermodel legs
-      legWidthScale: 0.78, // Slender legs
-      headRadius: 0.165,   // Refined, smaller head = tall 8.5 head heroic ratio
+      overallScale: 1.15,   // Graceful slender anime elf
+      torsoHScale: 1.00,
+      bodyScaleX: 0.86,
+      bodyScaleZ: 0.82,
+      armScale: 1.05,
+      armWidthScale: 0.88,
+      legScale: 1.10,
+      legWidthScale: 0.88,
+      headRadius: 0.205,
       hoverOffset: 0,
       isTiny: false,
     },
     dwarf: {
-      overallScale: 0.72,   // Reference: Short & stout (~5 vs human 7)
-      torsoHScale: 0.84,    // Compact torso
-      bodyScaleX: 1.30,    // Stout barrel chest & warrior belly
-      bodyScaleZ: 1.32,    // Sturdy thick depth
-      armScale: 0.84,      // Short sturdy arms
-      armWidthScale: 1.35, // Muscular thick heavy brawny arms
-      legScale: 0.74,      // Short stocky legs
-      legWidthScale: 1.32, // Wide sturdy grounded legs
-      headRadius: 0.20,    // Sturdy square-jawed head with braided beard
+      overallScale: 0.76,   // Stout brave warrior dwarf
+      torsoHScale: 0.82,
+      bodyScaleX: 1.36,
+      bodyScaleZ: 1.34,
+      armScale: 0.85,
+      armWidthScale: 1.38,
+      legScale: 0.72,
+      legWidthScale: 1.35,
+      headRadius: 0.24,
       hoverOffset: 0,
       isTiny: false,
     },
     fairy: {
-      overallScale: 0.44,   // Reference: Small, short and cute! (~3 vs human 7)
-      torsoHScale: 0.80,    // Petite cute chibi torso
-      bodyScaleX: 0.76,    // Delicate tiny waist
-      bodyScaleZ: 0.76,
-      armScale: 0.72,      // Delicate tiny arms
-      armWidthScale: 0.70,
-      legScale: 0.68,      // Petite cute legs
-      legWidthScale: 0.72,
-      headRadius: 0.18,    // Cute chibi anime proportions (~4 heads tall)
-      hoverOffset: 0.36,   // Floats in mid-air above the dais!
-      isTiny: true,        // 4 fluttering translucent wings + sparkle motes
+      overallScale: 0.48,   // Cute petite anime sprite / mascot
+      torsoHScale: 0.75,
+      bodyScaleX: 0.80,
+      bodyScaleZ: 0.80,
+      armScale: 0.72,
+      armWidthScale: 0.75,
+      legScale: 0.68,
+      legWidthScale: 0.78,
+      headRadius: 0.22,
+      hoverOffset: 0.35,
+      isTiny: true,
     },
     robot: {
       overallScale: 1.02,
-      torsoHScale: 1.0,
-      bodyScaleX: 1.0,
-      bodyScaleZ: 0.98,
-      armScale: 1.0,
-      armWidthScale: 1.0,
-      legScale: 1.0,
-      legWidthScale: 1.0,
-      headRadius: 0.18,
+      torsoHScale: 0.95,
+      bodyScaleX: 1.05,
+      bodyScaleZ: 1.0,
+      armScale: 0.96,
+      armWidthScale: 1.08,
+      legScale: 0.94,
+      legWidthScale: 1.08,
+      headRadius: 0.22,
       hoverOffset: 0,
       isTiny: false,
     },
     ogre: {
       overallScale: 1.25,
-      torsoHScale: 1.15,
-      bodyScaleX: 1.35,
-      bodyScaleZ: 1.32,
-      armScale: 1.15,
-      armWidthScale: 1.32,
-      legScale: 1.05,
-      legWidthScale: 1.30,
-      headRadius: 0.21,
+      torsoHScale: 1.10,
+      bodyScaleX: 1.38,
+      bodyScaleZ: 1.34,
+      armScale: 1.10,
+      armWidthScale: 1.35,
+      legScale: 1.00,
+      legWidthScale: 1.32,
+      headRadius: 0.25,
       hoverOffset: 0,
       isTiny: false,
     },
     alien: {
       overallScale: 1.06,
-      torsoHScale: 1.06,
-      bodyScaleX: 0.80,
-      bodyScaleZ: 0.80,
-      armScale: 1.08,
-      armWidthScale: 0.78,
-      legScale: 1.12,
-      legWidthScale: 0.78,
-      headRadius: 0.19,
+      torsoHScale: 0.98,
+      bodyScaleX: 0.86,
+      bodyScaleZ: 0.84,
+      armScale: 1.04,
+      armWidthScale: 0.85,
+      legScale: 1.06,
+      legWidthScale: 0.85,
+      headRadius: 0.22,
       hoverOffset: 0,
       isTiny: false,
     },
@@ -156,11 +161,11 @@ export function getBodyProps(config: AvatarConfig) {
   const sp = speciesProfiles[speciesKey] || speciesProfiles.human;
 
   const base = {
-    slim:    { bodyScaleX: 0.90, bodyScaleZ: 0.88, armScale: 0.98, legScale: 1.02, headRadius: 0.18 },
-    regular: { bodyScaleX: 1.0,  bodyScaleZ: 1.0,  armScale: 1.0,  legScale: 1.0,  headRadius: 0.18 },
-    broad:   { bodyScaleX: 1.10, bodyScaleZ: 1.10, armScale: 1.04, legScale: 0.98, headRadius: 0.19 },
-    chibi:   { bodyScaleX: 1.0,  bodyScaleZ: 1.0,  armScale: 0.92, legScale: 0.85, headRadius: 0.20 },
-  }[type] || { bodyScaleX: 1.0, bodyScaleZ: 1.0, armScale: 1.0, legScale: 1.0, headRadius: 0.18 };
+    slim:    { bodyScaleX: 0.92, bodyScaleZ: 0.90, armScale: 0.98, legScale: 1.02, headRadius: 0.22 },
+    regular: { bodyScaleX: 1.0,  bodyScaleZ: 1.0,  armScale: 1.0,  legScale: 1.0,  headRadius: 0.23 },
+    broad:   { bodyScaleX: 1.12, bodyScaleZ: 1.10, armScale: 1.04, legScale: 0.98, headRadius: 0.24 },
+    chibi:   { bodyScaleX: 1.0,  bodyScaleZ: 1.0,  armScale: 0.88, legScale: 0.80, headRadius: 0.25 },
+  }[type] || { bodyScaleX: 1.0, bodyScaleZ: 1.0, armScale: 1.0, legScale: 1.0, headRadius: 0.23 };
 
   // Safe normalized clamp for user slider values to prevent models blowing out of the window
   const safeHeight = Math.max(0.75, Math.min(1.25, height || 1.0));
@@ -337,15 +342,17 @@ function AvatarHead({ config }: HeadProps) {
 
   return (
     <group ref={headRef}>
-      {/* 3D Stylized Cranium (Proportional anime oval head, no bloated sphere ballooning) */}
+      {/* 3D Stylized Cranium (Proportional anime oval head with cel outline) */}
       <mesh
         castShadow
         geometry={new THREE.SphereGeometry(headRadius, 32, 24)}
         scale={[finalWidthMult, finalHeightMult, 0.98]}
         material={skinMat}
-      />
+      >
+        <AnimeOutline thickness={1.8} />
+      </mesh>
 
-      {/* 3D Sculpted Tapered Jawline & Lower Face (Anime / RPG V-line Contour) */}
+      {/* 3D Sculpted Tapered Jawline & Lower Face (Anime V-line Contour) */}
       <mesh
         castShadow
         position={[0, -headRadius * 0.38 * finalHeightMult, headRadius * 0.16]}
@@ -357,7 +364,9 @@ function AvatarHead({ config }: HeadProps) {
         )}
         scale={[1, 1, 0.76]}
         material={skinMat}
-      />
+      >
+        <AnimeOutline thickness={1.6} />
+      </mesh>
 
       {/* 3D Sculpted Chiseled Chin Node */}
       <mesh
@@ -366,7 +375,9 @@ function AvatarHead({ config }: HeadProps) {
         geometry={new THREE.SphereGeometry(chinTaperRadius * 0.90, 18, 14)}
         scale={[isDwarf || isOgre ? 1.4 : 1.0, 0.72, 1.05]}
         material={skinMat}
-      />
+      >
+        <AnimeOutline thickness={1.4} />
+      </mesh>
 
       {/* Subtle High Cheekbone Contours (Flush to skull wall, no hamster cheeks) */}
       {([-1, 1] as const).map((side) => (
@@ -387,21 +398,21 @@ function AvatarHead({ config }: HeadProps) {
         material={skinMat}
       />
 
-      {/* Rosy Blush Cheeks (Flush to skin surface, soft glow) */}
+      {/* Rosy Blush Cheeks (Flush to skin surface, warm anime glow) */}
       {([-1, 1] as const).map((side) => (
         <group key={`blush-${side}`} position={[side * eyeOffsetX, eyeY - headRadius * 0.20, headRadius * 0.84]}>
-          <mesh scale={[1, 0.45, 0.12]}>
-            <sphereGeometry args={[headRadius * 0.16, 14, 12]} />
+          <mesh scale={[1, 0.55, 0.12]}>
+            <sphereGeometry args={[headRadius * 0.18, 14, 12]} />
             <meshStandardMaterial
               color="#FF5C8A"
               roughness={0.9}
               transparent
-              opacity={config.face.expression === 'blushing' ? 0.85 : 0.40}
+              opacity={config.face.expression === 'blushing' ? 0.85 : 0.50}
             />
           </mesh>
           <mesh position={[side * 0.008, 0.008, 0.004]} scale={[1, 1, 0.2]}>
-            <sphereGeometry args={[headRadius * 0.04, 8, 8]} />
-            <meshStandardMaterial color="#FFFFFF" transparent opacity={0.6} />
+            <sphereGeometry args={[headRadius * 0.045, 8, 8]} />
+            <meshStandardMaterial color="#FFFFFF" transparent opacity={0.65} />
           </mesh>
         </group>
       ))}
@@ -409,7 +420,7 @@ function AvatarHead({ config }: HeadProps) {
       {/* True 3D Expressive Eyes with Spherical Depth */}
       {([-1, 1] as const).map((side) => {
         const isWinkRight = config.face.eyes === 'wink' && side === 1;
-        const eyeR = headRadius * 0.20 * eyeScale;
+        const eyeR = headRadius * 0.22 * eyeScale;
         return (
           <group
             key={side}
@@ -425,18 +436,18 @@ function AvatarHead({ config }: HeadProps) {
             ) : (
               <>
                 {/* 3D Eyeball White */}
-                <mesh geometry={new THREE.SphereGeometry(eyeR, 20, 16)} scale={[1, 1.22, 0.45]} material={eyeWhiteMat} />
+                <mesh geometry={new THREE.SphereGeometry(eyeR, 20, 16)} scale={[1, 1.25, 0.45]} material={eyeWhiteMat} />
                 {/* 3D Iris Sphere */}
-                <mesh position={[0, 0, eyeR * 0.25]} geometry={new THREE.SphereGeometry(eyeR * 0.75, 18, 16)} scale={[1, 1.18, 0.3]} material={eyeMat} />
+                <mesh position={[0, 0, eyeR * 0.25]} geometry={new THREE.SphereGeometry(eyeR * 0.80, 18, 16)} scale={[1, 1.20, 0.3]} material={eyeMat} />
                 {/* 3D Pupil Core */}
-                <mesh position={[0, 0, eyeR * 0.36]} geometry={new THREE.SphereGeometry(eyeR * 0.4, 14, 14)} scale={[1, 1.15, 0.25]}>
+                <mesh position={[0, 0, eyeR * 0.36]} geometry={new THREE.SphereGeometry(eyeR * 0.42, 14, 14)} scale={[1, 1.15, 0.25]}>
                   <meshStandardMaterial color="#0B0B0F" roughness={0.2} />
                 </mesh>
                 {/* Primary catchlight reflection sphere */}
-                <mesh position={[side * eyeR * 0.28, eyeR * 0.42, eyeR * 0.42]} geometry={new THREE.SphereGeometry(eyeR * 0.24, 10, 10)} material={eyeWhiteMat} />
+                <mesh position={[side * eyeR * 0.28, eyeR * 0.42, eyeR * 0.44]} geometry={new THREE.SphereGeometry(eyeR * 0.26, 10, 10)} material={eyeWhiteMat} />
                 {/* Secondary catchlight */}
                 {isAnimeOrSparkle && (
-                  <mesh position={[-side * eyeR * 0.24, -eyeR * 0.30, eyeR * 0.42]} geometry={new THREE.SphereGeometry(eyeR * 0.16, 8, 8)} material={eyeWhiteMat} />
+                  <mesh position={[-side * eyeR * 0.24, -eyeR * 0.30, eyeR * 0.44]} geometry={new THREE.SphereGeometry(eyeR * 0.18, 8, 8)} material={eyeWhiteMat} />
                 )}
                 {/* Heart pupil inner highlight */}
                 {isHeartEye && (
@@ -445,8 +456,8 @@ function AvatarHead({ config }: HeadProps) {
                     <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={1.5} />
                   </mesh>
                 )}
-                {/* Curved 3D upper eyelid / lash rim */}
-                <mesh position={[0, eyeR * 0.85, eyeR * 0.2]} rotation={[0, 0, -side * 0.08]} geometry={new THREE.TorusGeometry(eyeR * 0.9, eyeR * 0.18, 6, 16, Math.PI * 0.85)}>
+                {/* Curved 3D upper eyelid / lash rim with subtle cel ink line */}
+                <mesh position={[0, eyeR * 0.88, eyeR * 0.2]} rotation={[0, 0, -side * 0.08]} geometry={new THREE.TorusGeometry(eyeR * 0.95, eyeR * 0.18, 6, 16, Math.PI * 0.85)}>
                   <meshStandardMaterial color="#111118" roughness={0.4} />
                 </mesh>
               </>
@@ -455,19 +466,57 @@ function AvatarHead({ config }: HeadProps) {
         );
       })}
 
-      {/* 3D Eyebrows */}
+      {/* 3D Soft Curved Eyebrows */}
       {([-1, 1] as const).map((side) => {
         return (
           <mesh
             key={`brow-${side}`}
-            position={[side * eyeOffsetX, eyeY + headRadius * 0.30 * eyeScale, headRadius * 0.88]}
+            position={[side * eyeOffsetX, eyeY + headRadius * 0.32 * eyeScale, headRadius * 0.88]}
             rotation={[0, 0, side * (config.face.eyebrows === 'angry' ? 0.35 : config.face.eyebrows === 'sad' ? -0.3 : 0.06)]}
-            geometry={new THREE.BoxGeometry(headRadius * 0.30 * eyeScale, isDwarf ? headRadius * 0.14 : headRadius * 0.06, headRadius * 0.05)}
           >
+            <capsuleGeometry args={[headRadius * (isDwarf ? 0.05 : 0.032), headRadius * 0.26 * eyeScale, 6, 8]} />
             <meshStandardMaterial color={config.hairColor || '#1E293B'} roughness={0.7} />
           </mesh>
         );
       })}
+
+      {/* Cheek Band-Aid / Adhesive Patch (from indie survivor reference) */}
+      <group position={[eyeOffsetX * 1.05, eyeY - headRadius * 0.24, headRadius * 0.88]} rotation={[0, 0.22, 0.28]}>
+        <mesh castShadow>
+          <boxGeometry args={[headRadius * 0.35, headRadius * 0.16, 0.012]} />
+          <meshToonMaterial color={hexToColor('#FDE68A')} />
+          <AnimeOutline thickness={1.3} />
+        </mesh>
+        {/* Inner gauze pad */}
+        <mesh position={[0, 0, 0.008]}>
+          <boxGeometry args={[headRadius * 0.16, headRadius * 0.12, 0.008]} />
+          <meshToonMaterial color={hexToColor('#FEF3C7')} />
+        </mesh>
+      </group>
+
+      {/* Sprouting Nature Leaf / Moss Sprig (from mossy ancient lore reference) */}
+      <group position={[headRadius * 0.28, headRadius * 0.95, -headRadius * 0.15]} rotation={[0.15, 0, 0.25]}>
+        {/* Plant Stem */}
+        <mesh castShadow>
+          <cylinderGeometry args={[0.012, 0.016, headRadius * 0.52, 6]} />
+          <meshToonMaterial color={hexToColor('#4D7C0F')} />
+          <AnimeOutline thickness={1.4} />
+        </mesh>
+        {/* Moss Cluster at base */}
+        <mesh position={[0, -headRadius * 0.2, 0]} castShadow>
+          <sphereGeometry args={[headRadius * 0.14, 10, 8]} scale={[1.3, 0.6, 1.1]} />
+          <meshToonMaterial color={hexToColor('#65A30D')} />
+          <AnimeOutline thickness={1.3} />
+        </mesh>
+        {/* Sprouting leaves */}
+        {[-0.35, 0.35, 0].map((rotZ, i) => (
+          <mesh key={i} position={[rotZ * 0.14, headRadius * (0.16 + i * 0.12), 0]} rotation={[0.2, 0, rotZ]} castShadow>
+            <sphereGeometry args={[headRadius * 0.11, 8, 8]} scale={[1.3, 0.35, 0.7]} />
+            <meshToonMaterial color={hexToColor('#84CC16')} />
+            <AnimeOutline thickness={1.3} />
+          </mesh>
+        ))}
+      </group>
 
       {/* 3D Expressive Mouth */}
       {config.face.expression === 'uwu' ? (
@@ -488,6 +537,14 @@ function AvatarHead({ config }: HeadProps) {
           <torusGeometry args={[headRadius * 0.08, headRadius * 0.032, 6, 16]} />
           <meshStandardMaterial color={hexToColor('#FF4D80')} />
         </mesh>
+      ) : config.face.expression === 'neutral' ? (
+        // Plucky Survivor Half-Smile / Smirk (from reference image)
+        <group position={[headRadius * 0.04, mouthY + headRadius * 0.02, headRadius * 0.78]} rotation={[0, 0, 0.18]}>
+          <mesh castShadow>
+            <torusGeometry args={[headRadius * 0.12, headRadius * 0.025, 6, 16, Math.PI * 0.9]} />
+            <primitive object={mouthMat} attach="material" />
+          </mesh>
+        </group>
       ) : (
         // Contoured 3D lips / smile
         <mesh
@@ -709,35 +766,73 @@ function AvatarHair({ config, headRadius }: HairProps) {
     });
   }, [config.hair]);
 
+function AnimeFrontBangs({ r, material }: { r: number; material: THREE.Material }) {
+  return (
+    <group position={[0, r * 0.38, r * 0.72]}>
+      {/* Center sweeping lock */}
+      <mesh position={[0, -r * 0.12, 0.04]} rotation={[0.2, 0, 0]} castShadow>
+        <coneGeometry args={[r * 0.15, r * 0.45, 6]} />
+        <primitive object={material} attach="material" />
+        <AnimeOutline thickness={1.6} />
+      </mesh>
+      {/* Left angled fringe lock */}
+      <mesh position={[-r * 0.28, -r * 0.08, 0]} rotation={[0.15, 0, -0.35]} castShadow>
+        <coneGeometry args={[r * 0.14, r * 0.42, 6]} />
+        <primitive object={material} attach="material" />
+        <AnimeOutline thickness={1.5} />
+      </mesh>
+      {/* Right angled fringe lock */}
+      <mesh position={[r * 0.28, -r * 0.08, 0]} rotation={[0.15, 0, 0.35]} castShadow>
+        <coneGeometry args={[r * 0.14, r * 0.42, 6]} />
+        <primitive object={material} attach="material" />
+        <AnimeOutline thickness={1.5} />
+      </mesh>
+      {/* Far Left temple lock */}
+      <mesh position={[-r * 0.55, -r * 0.18, -0.08]} rotation={[0.1, 0, -0.2]} castShadow>
+        <coneGeometry args={[r * 0.12, r * 0.65, 6]} />
+        <primitive object={material} attach="material" />
+        <AnimeOutline thickness={1.5} />
+      </mesh>
+      {/* Far Right temple lock */}
+      <mesh position={[r * 0.55, -r * 0.18, -0.08]} rotation={[0.1, 0, 0.2]} castShadow>
+        <coneGeometry args={[r * 0.12, r * 0.65, 6]} />
+        <primitive object={material} attach="material" />
+        <AnimeOutline thickness={1.5} />
+      </mesh>
+    </group>
+  );
+}
+
   switch (config.hair) {
     case 'twintails':
       return (
         <group>
-          {/* Base rounded hair with soft bangs */}
-          <mesh position={[0, r * 0.58, 0]} geometry={new THREE.SphereGeometry(r * 1.05, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.58)} material={mat} />
-          {/* Cute front bangs */}
-          <mesh position={[0, r * 0.32, r * 0.7]} geometry={new THREE.BoxGeometry(r * 1.25, r * 0.28, 0.14)} material={mat} />
-          {/* Sidelocks */}
-          {([-1, 1] as const).map((side) => (
-            <mesh key={`side-${side}`} position={[side * r * 0.72, 0, r * 0.45]} geometry={new THREE.BoxGeometry(0.12, r * 0.9, 0.14)} material={mat} />
-          ))}
+          {/* Base rounded hair dome with cel outline */}
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
           {/* High Bouncy Pigtails on both sides */}
           {([-1, 1] as const).map((side) => (
             <group key={side} position={[side * r * 0.92, r * 0.6, -r * 0.1]}>
               {/* Cute Ribbon Hair Tie */}
               <mesh position={[0, 0, 0]}>
-                <sphereGeometry args={[r * 0.15, 12, 10]} />
+                <sphereGeometry args={[r * 0.16, 12, 10]} />
                 <meshStandardMaterial color="#FF5C93" roughness={0.3} />
               </mesh>
-              {/* Dynamic swinging pigtail */}
+              {/* Dynamic swinging pigtail with outlines */}
               <group ref={side === -1 ? pigtailLeftRef : pigtailRightRef}>
-                <mesh position={[side * r * 0.18, -r * 0.75, 0]}>
-                  <cylinderGeometry args={[r * 0.2, r * 0.1, r * 1.7, 10]} />
-                  <meshStandardMaterial color={hexToColor(config.hairColor)} roughness={0.6} />
+                <mesh position={[side * r * 0.18, -r * 0.75, 0]} castShadow>
+                  <cylinderGeometry args={[r * 0.22, r * 0.12, r * 1.7, 12]} />
+                  <primitive object={mat} attach="material" />
+                  <AnimeOutline thickness={1.6} />
                 </mesh>
-                <mesh position={[side * r * 0.22, -r * 1.6, 0]}>
-                  <coneGeometry args={[r * 0.12, r * 0.5, 8]} />
-                  <meshStandardMaterial color={hexToColor(config.hairColor)} roughness={0.6} />
+                <mesh position={[side * r * 0.22, -r * 1.6, 0]} castShadow>
+                  <coneGeometry args={[r * 0.14, r * 0.55, 8]} />
+                  <primitive object={mat} attach="material" />
+                  <AnimeOutline thickness={1.5} />
                 </mesh>
               </group>
             </group>
@@ -748,14 +843,19 @@ function AvatarHair({ config, headRadius }: HairProps) {
     case 'twin-buns':
       return (
         <group>
-          <mesh position={[0, r * 0.58, 0]} geometry={new THREE.SphereGeometry(r * 1.04, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.58)} material={mat} />
-          <mesh position={[0, r * 0.32, r * 0.7]} geometry={new THREE.BoxGeometry(r * 1.2, r * 0.25, 0.12)} material={mat} />
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
           {([-1, 1] as const).map((side) => (
             <group key={side} position={[side * r * 0.85, r * 1.05, 0]}>
-              {/* Odango bun */}
-              <mesh>
-                <sphereGeometry args={[r * 0.36, 16, 12]} />
-                <meshStandardMaterial color={hexToColor(config.hairColor)} roughness={0.6} />
+              {/* Odango bun with cel outline */}
+              <mesh castShadow>
+                <sphereGeometry args={[r * 0.38, 18, 14]} />
+                <primitive object={mat} attach="material" />
+                <AnimeOutline thickness={1.6} />
               </mesh>
               {/* Bun ribbon */}
               <mesh position={[0, -r * 0.14, 0]} rotation={[Math.PI / 2, 0, 0]}>
@@ -770,16 +870,27 @@ function AvatarHair({ config, headRadius }: HairProps) {
     case 'hime-cut':
       return (
         <group>
-          <mesh position={[0, r * 0.58, 0]} geometry={new THREE.SphereGeometry(r * 1.04, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.58)} material={mat} />
-          {/* Straight bangs */}
-          <mesh position={[0, r * 0.32, r * 0.72]} geometry={new THREE.BoxGeometry(r * 1.25, r * 0.3, 0.12)} material={mat} />
-          {/* Stepped side locks */}
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
+          {/* Stepped side locks with outlines */}
           {([-1, 1] as const).map((side) => (
-            <mesh key={side} position={[side * r * 0.78, -r * 0.15, r * 0.42]} geometry={new THREE.BoxGeometry(0.12, r * 1.1, 0.18)} material={mat} />
+            <mesh key={side} position={[side * r * 0.78, -r * 0.15, r * 0.42]} castShadow>
+              <capsuleGeometry args={[r * 0.12, r * 0.95, 8, 12]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.5} />
+            </mesh>
           ))}
           {/* Long back sheet */}
           <group ref={hairSwayRef}>
-            <mesh position={[0, -r * 0.8, -r * 0.35]} geometry={new THREE.BoxGeometry(r * 1.6, r * 2.2, 0.18)} material={mat} />
+            <mesh position={[0, -r * 0.8, -r * 0.35]} castShadow>
+              <capsuleGeometry args={[r * 0.45, r * 1.6, 10, 14]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
           </group>
         </group>
       );
@@ -787,11 +898,17 @@ function AvatarHair({ config, headRadius }: HairProps) {
     case 'fluffy-short':
       return (
         <group>
-          <mesh position={[0, r * 0.58, 0]} geometry={new THREE.SphereGeometry(r * 1.1, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.62)} material={mat} />
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.12, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.64]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
           {/* Adorable Ahoge Antenna Cowlick on top */}
           <mesh ref={ahogeRef} position={[0, r * 1.35, 0.08]}>
             <torusGeometry args={[r * 0.28, 0.032, 6, 16, Math.PI * 0.85]} />
-            <meshStandardMaterial color={hexToColor(config.hairColor)} roughness={0.5} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.5} />
           </mesh>
         </group>
       );
@@ -802,17 +919,49 @@ function AvatarHair({ config, headRadius }: HairProps) {
     case 'short':
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.02, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />
+          {/* Main voluminous anime hair dome */}
+          <mesh position={[0, r * 0.55, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.62]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          {/* Swept layered bangs */}
+          <AnimeFrontBangs r={r} material={mat} />
+          {/* Windswept crown tufts (matching hero from poster) */}
+          <mesh position={[0, r * 1.22, -r * 0.05]} rotation={[-0.25, 0, 0.1]} castShadow>
+            <coneGeometry args={[r * 0.18, r * 0.45, 6]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          <mesh position={[-r * 0.35, r * 1.15, -r * 0.15]} rotation={[-0.2, 0, -0.45]} castShadow>
+            <coneGeometry args={[r * 0.16, r * 0.42, 6]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
+          <mesh position={[r * 0.35, r * 1.15, -r * 0.15]} rotation={[-0.2, 0, 0.45]} castShadow>
+            <coneGeometry args={[r * 0.16, r * 0.42, 6]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
         </group>
       );
 
     case 'long':
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.03, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
           {/* Long strands down back */}
           <group ref={hairSwayRef}>
-            <mesh position={[0, -r * 0.6, -r * 0.3]} geometry={new THREE.CylinderGeometry(r * 0.55, r * 0.25, r * 2.2, 10)} material={mat} />
+            <mesh position={[0, -r * 0.7, -r * 0.3]} castShadow>
+              <capsuleGeometry args={[r * 0.45, r * 1.8, 12, 14]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
           </group>
         </group>
       );
@@ -820,27 +969,47 @@ function AvatarHair({ config, headRadius }: HairProps) {
     case 'ponytail':
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.03, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />
-          {/* Ponytail */}
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
+          {/* Ponytail with dynamic swing */}
           <group ref={hairSwayRef}>
-            <mesh position={[0, r * 0.1, -r * 1.0]} rotation={[0.5, 0, 0]} geometry={new THREE.CylinderGeometry(r * 0.18, r * 0.08, r * 1.4, 8)} material={mat} />
+            <mesh position={[0, r * 0.15, -r * 0.95]} rotation={[0.5, 0, 0]} castShadow>
+              <cylinderGeometry args={[r * 0.22, r * 0.09, r * 1.5, 10]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
           </group>
         </group>
       );
 
     case 'spiky': {
-      const spikes = [
-        { pos: [0, r * 1.5, 0] as [number,number,number], rot: [0, 0, 0] as [number,number,number] },
-        { pos: [r * 0.5, r * 1.3, 0] as [number,number,number], rot: [0, 0, 0.5] as [number,number,number] },
-        { pos: [-r * 0.5, r * 1.3, 0] as [number,number,number], rot: [0, 0, -0.5] as [number,number,number] },
-        { pos: [0, r * 1.4, r * 0.3] as [number,number,number], rot: [-0.3, 0, 0] as [number,number,number] },
-        { pos: [r * 0.3, r * 1.45, r * 0.2] as [number,number,number], rot: [-0.2, 0, 0.3] as [number,number,number] },
-      ];
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.02, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />
-          {spikes.map((s, i) => (
-            <mesh key={i} position={s.pos} rotation={s.rot} geometry={new THREE.ConeGeometry(r * 0.18, r * 0.55, 6)} material={mat} />
+          {/* Main voluminous anime hair dome */}
+          <mesh position={[0, r * 0.55, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.62]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
+          {/* Hero's wild layered anime spikes from poster */}
+          {[
+            { pos: [0, r * 1.35, 0] as [number, number, number], rot: [-0.1, 0, 0.05] as [number, number, number], scale: 1.0 },
+            { pos: [r * 0.45, r * 1.25, 0] as [number, number, number], rot: [-0.1, 0, 0.55] as [number, number, number], scale: 0.9 },
+            { pos: [-r * 0.45, r * 1.25, 0] as [number, number, number], rot: [-0.1, 0, -0.55] as [number, number, number], scale: 0.9 },
+            { pos: [0, r * 1.25, -r * 0.35] as [number, number, number], rot: [-0.55, 0, 0] as [number, number, number], scale: 0.95 },
+            { pos: [r * 0.35, r * 1.20, -r * 0.28] as [number, number, number], rot: [-0.45, 0, 0.45] as [number, number, number], scale: 0.85 },
+            { pos: [-r * 0.35, r * 1.20, -r * 0.28] as [number, number, number], rot: [-0.45, 0, -0.45] as [number, number, number], scale: 0.85 },
+          ].map((s, i) => (
+            <mesh key={i} position={s.pos} rotation={s.rot} castShadow>
+              <coneGeometry args={[r * 0.20 * s.scale, r * 0.60 * s.scale, 6]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
           ))}
         </group>
       );
@@ -857,9 +1026,17 @@ function AvatarHair({ config, headRadius }: HairProps) {
       });
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.04, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.6)} material={mat} />
+          <mesh position={[0, r * 0.6, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
           {curls.map((c, i) => (
-            <mesh key={i} position={[c.x, c.y, c.z]} geometry={new THREE.TorusGeometry(r * 0.14, r * 0.09, 8, 12)} material={mat} />
+            <mesh key={i} position={[c.x, c.y, c.z]}>
+              <torusGeometry args={[r * 0.16, r * 0.09, 8, 14]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.4} />
+            </mesh>
           ))}
         </group>
       );
@@ -867,48 +1044,54 @@ function AvatarHair({ config, headRadius }: HairProps) {
 
     case 'anime': {
       const spikes = [
-        [0, r * 1.6, r * 0.1],
-        [r * 0.4, r * 1.45, r * 0.05],
-        [-r * 0.4, r * 1.45, r * 0.05],
-        [r * 0.7, r * 1.2, 0],
-        [-r * 0.7, r * 1.2, 0],
+        [0, r * 1.45, r * 0.1],
+        [r * 0.4, r * 1.35, r * 0.05],
+        [-r * 0.4, r * 1.35, r * 0.05],
+        [r * 0.65, r * 1.15, 0],
+        [-r * 0.65, r * 1.15, 0],
       ] as [number, number, number][];
       return (
         <group>
-          <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.03, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
           {spikes.map((pos, i) => (
-            <mesh key={i} position={pos} rotation={[-0.2, (i - 2) * 0.3, 0]} geometry={new THREE.ConeGeometry(r * 0.14, r * 0.65, 4)} material={mat} />
+            <mesh key={i} position={pos} rotation={[-0.2, (i - 2) * 0.3, 0]} castShadow>
+              <coneGeometry args={[r * 0.18, r * 0.68, 6]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
           ))}
         </group>
       );
     }
 
-    case 'futuristic':
-      return (
-        <group>
-          <mesh position={[0, r * 0.55, 0]} geometry={new THREE.SphereGeometry(r * 1.02, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.5)} material={mat} />
-          <group ref={futuristStrandsRef}>
-            {(strands ?? []).map((strand, i) => (
-              <mesh
-                key={i}
-                position={[
-                  Math.cos(strand.angle) * r * 0.5,
-                  r * 0.8 + Math.sin(i) * 0.04,
-                  Math.sin(strand.angle) * r * 0.5,
-                ]}
-                rotation={[0, strand.angle, 0]}
-                geometry={new THREE.CylinderGeometry(0.015, 0.005, strand.length, 4)}
-                material={emissiveMat}
-              />
-            ))}
-          </group>
-        </group>
-      );
-
     case 'bob':
       return (
         <group>
-          <mesh position={[0, r * 0.5, 0]} geometry={new THREE.SphereGeometry(r * 1.06, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.65)} material={mat} />
+          {/* Rounded anime bob (Witch from poster) */}
+          <mesh position={[0, r * 0.55, 0]} castShadow>
+            <sphereGeometry args={[r * 1.10, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.65]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
+          {/* Curved bob side volumes */}
+          {([-1, 1] as const).map((side) => (
+            <mesh key={side} position={[side * r * 0.78, -r * 0.15, 0]} rotation={[0, 0, side * 0.15]} castShadow>
+              <capsuleGeometry args={[r * 0.24, r * 0.65, 10, 14]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
+          ))}
+          <mesh position={[0, -r * 0.2, -r * 0.35]} castShadow>
+            <capsuleGeometry args={[r * 0.28, r * 0.6, 10, 14]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
         </group>
       );
 
@@ -920,17 +1103,38 @@ function AvatarHair({ config, headRadius }: HairProps) {
       }));
       return (
         <group>
-          <mesh position={[0, r * 0.3, 0]} geometry={new THREE.SphereGeometry(r * 1.0, 20, 16, Math.PI * 0.7, Math.PI * 0.6, 0, Math.PI * 0.55)} material={mat} />
-          <mesh position={[0, r * 0.3, 0]} geometry={new THREE.SphereGeometry(r * 1.0, 20, 16, Math.PI * 1.7, Math.PI * 0.6, 0, Math.PI * 0.55)} material={mat} />
+          <mesh position={[0, r * 0.3, 0]} castShadow>
+            <sphereGeometry args={[r * 1.0, 20, 16, Math.PI * 0.7, Math.PI * 0.6, 0, Math.PI * 0.55]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          <mesh position={[0, r * 0.3, 0]} castShadow>
+            <sphereGeometry args={[r * 1.0, 20, 16, Math.PI * 1.7, Math.PI * 0.6, 0, Math.PI * 0.55]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
           {mSpikes.map((s, i) => (
-            <mesh key={i} position={[s.x, s.y, s.z]} rotation={[s.z * 0.3, 0, 0]} geometry={new THREE.ConeGeometry(r * 0.12, r * 0.45, 5)} material={mat} />
+            <mesh key={i} position={[s.x, s.y, s.z]} rotation={[s.z * 0.3, 0, 0]} castShadow>
+              <coneGeometry args={[r * 0.14, r * 0.50, 6]} />
+              <primitive object={mat} attach="material" />
+              <AnimeOutline thickness={1.5} />
+            </mesh>
           ))}
         </group>
       );
     }
 
     default:
-      return <mesh position={[0, r * 0.6, 0]} geometry={new THREE.SphereGeometry(r * 1.02, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55)} material={mat} />;
+      return (
+        <group>
+          <mesh position={[0, r * 0.58, 0]} castShadow>
+            <sphereGeometry args={[r * 1.08, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.60]} />
+            <primitive object={mat} attach="material" />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          <AnimeFrontBangs r={r} material={mat} />
+        </group>
+      );
   }
 }
 
@@ -967,13 +1171,49 @@ function AvatarTorso({ config }: { config: AvatarConfig }) {
       {/* Smooth 3D Neck Joint */}
       <mesh position={[0, h * 0.5 + 0.04, 0]} geometry={new THREE.CylinderGeometry(0.055, 0.065, 0.08, 16)} material={skinMat} />
 
-      {/* Main Stylized Contoured 3D Torso */}
+      {/* Main Stylized Contoured 3D Torso (Rounded Anime Capsule) */}
       <mesh
         castShadow
-        geometry={new THREE.CylinderGeometry(topR, botR, h, 24)}
-        scale={[1, 1, d / w]}
-        material={topMat}
-      />
+        position={[0, 0, 0]}
+      >
+        <capsuleGeometry args={[topR, h * 0.65, 14, 18]} />
+        <primitive object={topMat} attach="material" />
+        <AnimeOutline thickness={2.0} />
+      </mesh>
+
+      {/* Signature Adventurer Cowl / Scarf (from Indie Adventure reference) */}
+      <group position={[0, h * 0.38, 0]}>
+        {/* Puffy rolled cowl around neck */}
+        <mesh rotation={[Math.PI * 0.5, 0, 0]} castShadow>
+          <torusGeometry args={[topR * 0.88, 0.08, 12, 24]} />
+          <meshToonMaterial color={hexToColor(config.top === 'jacket' || config.top === 'armor' ? '#DC2626' : config.topColor)} />
+          <AnimeOutline thickness={1.6} />
+        </mesh>
+        {/* Scarf knot */}
+        <mesh position={[0, -0.04, topR * 0.82]} rotation={[0.2, 0, 0]} castShadow>
+          <sphereGeometry args={[0.075, 12, 10]} scale={[1.2, 0.8, 0.6]} />
+          <meshToonMaterial color={hexToColor(config.top === 'jacket' || config.top === 'armor' ? '#DC2626' : config.topColor)} />
+          <AnimeOutline thickness={1.5} />
+        </mesh>
+        {/* Trailing scarf end draped over left chest */}
+        <mesh position={[-topR * 0.45, -h * 0.25, topR * 0.68]} rotation={[0.15, 0, 0.35]} castShadow>
+          <capsuleGeometry args={[0.05, h * 0.38, 8, 10]} />
+          <meshToonMaterial color={hexToColor(config.top === 'jacket' || config.top === 'armor' ? '#DC2626' : config.topColor)} />
+          <AnimeOutline thickness={1.5} />
+        </mesh>
+      </group>
+
+      {/* Adventurer Leather Utility Belt & Brass Buckle */}
+      <mesh position={[0, -h * 0.24, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <torusGeometry args={[topR * 0.98, 0.038, 8, 24]} />
+        <meshToonMaterial color={hexToColor('#2A1F18')} />
+        <AnimeOutline thickness={1.4} />
+      </mesh>
+      <mesh position={[0, -h * 0.24, topR * 0.95]} castShadow>
+        <boxGeometry args={[0.08, 0.06, 0.025]} />
+        <meshToonMaterial color={hexToColor('#F59E0B')} />
+        <AnimeOutline thickness={1.3} />
+      </mesh>
 
       {/* Dwarf: Burly Stout Belly Contour */}
       {isDwarf && (
@@ -1370,19 +1610,20 @@ function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT
             position={[side * shoulderPivotX, 0.06 * props.torsoHScale, 0]}
           >
             {/* Smooth Shoulder Deltoid Joint */}
-            <mesh
-              position={[0, 0, 0]}
-              geometry={new THREE.SphereGeometry(armR * 1.15, 18, 16)}
-              material={topMat}
-            />
+            <mesh position={[0, 0, 0]}>
+              <sphereGeometry args={[armR * 1.15, 18, 16]} />
+              <primitive object={topMat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
 
-            {/* Shoulder Pauldron / Guard mounted directly on arm deltoid — sits proudly ON TOP of dress sleeves */}
+            {/* Shoulder Pauldron / Guard mounted directly on arm deltoid */}
             {config.accessories.shoulder && (
               <group position={[side * armR * 0.22, armR * 0.40, 0]} rotation={[0, 0, -side * 0.16]}>
                 {config.accessories.shoulder === 'pauldrons' ? (
                   <>
                     <mesh geometry={new THREE.BoxGeometry(armR * 2.8, armR * 1.15, armR * 2.4)}>
                       <meshStandardMaterial color={hexToColor(config.accessoryColor || '#EAB308')} metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.5} />
                     </mesh>
                     <mesh position={[0, armR * 0.22, 0]} geometry={new THREE.BoxGeometry(armR * 3.0, armR * 0.32, armR * 2.6)}>
                       <meshStandardMaterial color="#FFD700" metalness={0.95} roughness={0.15} />
@@ -1391,123 +1632,162 @@ function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT
                 ) : (
                   <mesh geometry={new THREE.BoxGeometry(armR * 2.4, armR * 0.85, armR * 2.1)}>
                     <meshStandardMaterial color={hexToColor(config.accessoryColor || '#64748B')} metalness={0.7} roughness={0.3} />
+                    <AnimeOutline thickness={1.5} />
                   </mesh>
                 )}
               </group>
             )}
 
             {/* Stylized 3D Tapered Upper Arm / Sleeve */}
-            <mesh
-              castShadow
-              position={[0, -armL * 0.32, 0]}
-              geometry={new THREE.CylinderGeometry(armR * 0.98, armR * 0.92, armL * 0.52, 18)}
-              material={topMat}
-            />
+            <mesh castShadow position={[0, -armL * 0.32, 0]}>
+              <capsuleGeometry args={[armR * 1.05, armL * 0.45, 12, 14]} />
+              <primitive object={topMat} attach="material" />
+              <AnimeOutline thickness={1.6} />
+            </mesh>
 
             {/* Sleeve Cuff Ring */}
-            <mesh
-              position={[0, -armL * 0.58, 0]}
-              geometry={new THREE.TorusGeometry(armR * 0.95, armR * 0.10, 6, 18)}
-              rotation={[Math.PI * 0.5, 0, 0]}
-              material={topMat}
-            />
+            <mesh position={[0, -armL * 0.58, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
+              <torusGeometry args={[armR * 1.05, armR * 0.14, 8, 18]} />
+              <primitive object={topMat} attach="material" />
+              <AnimeOutline thickness={1.4} />
+            </mesh>
 
-            {/* Stylized 3D Forearm */}
-            <mesh
-              castShadow
-              position={[0, -armL * 0.72, 0]}
-              geometry={new THREE.CylinderGeometry(armR * 0.90, armR * 0.78, armL * 0.28, 16)}
-              material={skinMat}
-            />
+            {/* Forearm Cloth Wraps / Adventurer Bandages (from survivor reference) */}
+            <mesh castShadow position={[0, -armL * 0.72, 0]}>
+              <capsuleGeometry args={[armR * 0.94, armL * 0.30, 12, 14]} />
+              <meshToonMaterial color={hexToColor('#93C5FD')} />
+              <AnimeOutline thickness={1.5} />
+            </mesh>
+            {[-0.05, 0.0, 0.05].map((yOff, i) => (
+              <mesh key={i} position={[0, -armL * 0.72 + yOff, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
+                <torusGeometry args={[armR * 0.96, 0.012, 6, 16]} />
+                <meshToonMaterial color={hexToColor('#60A5FA')} />
+              </mesh>
+            ))}
 
-            {/* Stylized 3D Hand with Palm & Thumb */}
+            {/* Stylized 3D Anime Hand / Glove with Thumb */}
             <group position={[0, -armL * 0.88, 0]}>
-              <mesh
-                castShadow
-                geometry={new THREE.SphereGeometry(armR * 0.82, 16, 14)}
-                scale={[1, 1.15, 0.82]}
-                material={skinMat}
-              />
-              <mesh
-                position={[side * armR * 0.55, 0.01, armR * 0.25]}
-                rotation={[0, 0, side * 0.32]}
-                geometry={new THREE.CylinderGeometry(armR * 0.25, armR * 0.20, armR * 0.55, 8)}
-                material={skinMat}
-              />
+              <mesh castShadow>
+                <sphereGeometry args={[armR * 0.88, 14, 14]} />
+                <primitive object={skinMat} attach="material" />
+                <AnimeOutline thickness={1.5} />
+              </mesh>
+              <mesh position={[side * armR * 0.45, 0.01, armR * 0.2]} rotation={[0, 0, side * 0.35]}>
+                <capsuleGeometry args={[armR * 0.24, armR * 0.38, 8, 10]} />
+                <primitive object={skinMat} attach="material" />
+                <AnimeOutline thickness={1.3} />
+              </mesh>
             </group>
 
             {/* Weapon held in right hand (side === 1) */}
             {side === 1 && config.weapon && config.weapon !== 'unarmed' && (
               <group position={[0, -armL * 0.88, armR * 0.7]} rotation={[Math.PI * 0.45, 0, 0]}>
-                {/* Fairy Weapon Adaptation: Fairies are tiny & cannot carry heavy hammer/scythe artifacts */}
-                {props.isTiny && (config.weapon === 'energy-hammer' || config.weapon === 'void-scythe') ? (
-                  <group scale={[0.55, 0.55, 0.55]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.012, 0.014, 0.5, 8)}>
-                      <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.2} />
+                {/* Classic Broad Iron Adventurer Sword (Hero from reference poster) */}
+                {config.weapon === 'photon-blade' ? (
+                  <group scale={props.isTiny ? [0.6, 0.6, 0.6] : [0.9, 0.9, 0.9]}>
+                    {/* Steel double-edged blade with fuller */}
+                    <mesh position={[0, 0.52, 0]} castShadow>
+                      <cylinderGeometry args={[0.045, 0.02, 0.95, 4]} />
+                      <meshStandardMaterial color="#E2E8F0" metalness={0.7} roughness={0.3} />
+                      <AnimeOutline thickness={1.6} />
                     </mesh>
-                    <mesh position={[0, 0.3, 0]}>
-                      <octahedronGeometry args={[0.07, 0]} />
-                      <meshStandardMaterial color="#FF69B4" emissive="#FF69B4" emissiveIntensity={3.5} />
+                    {/* Golden brass crossguard */}
+                    <mesh position={[0, 0.08, 0]} castShadow>
+                      <boxGeometry args={[0.28, 0.045, 0.07]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.5} />
                     </mesh>
-                    <pointLight color="#FF69B4" intensity={2.5} distance={1.2} position={[0, 0.3, 0]} />
-                  </group>
-                ) : config.weapon === 'photon-blade' ? (
-                  <group scale={props.isTiny ? [0.55, 0.55, 0.55] : [0.75, 0.75, 0.75]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.025, 0.03, 0.18, 10)}>
-                      <meshStandardMaterial color="#0F172A" metalness={0.9} roughness={0.2} />
+                    {/* Leather-wrapped grip */}
+                    <mesh position={[0, -0.05, 0]}>
+                      <cylinderGeometry args={[0.024, 0.026, 0.20, 8]} />
+                      <meshStandardMaterial color="#3E2723" roughness={0.7} />
                     </mesh>
-                    <mesh position={[0, 0.5, 0]} geometry={new THREE.CylinderGeometry(0.018, 0.024, 0.85, 10)}>
-                      <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={3.0} />
+                    {/* Brass round pommel */}
+                    <mesh position={[0, -0.16, 0]}>
+                      <sphereGeometry args={[0.045, 10, 10]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.4} />
                     </mesh>
                   </group>
                 ) : config.weapon === 'cyber-staff' ? (
-                  <group scale={props.isTiny ? [0.55, 0.55, 0.55] : [0.75, 0.75, 0.75]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.02, 0.02, 1.1, 8)}>
-                      <meshStandardMaterial color="#7C5CFF" metalness={0.8} />
+                  /* Mechanic's Heavy Gear Wrench (from reference poster) */
+                  <group scale={props.isTiny ? [0.6, 0.6, 0.6] : [0.85, 0.85, 0.85]}>
+                    <mesh position={[0, 0.4, 0]} castShadow>
+                      <cylinderGeometry args={[0.032, 0.035, 0.85, 10]} />
+                      <meshStandardMaterial color="#475569" metalness={0.85} roughness={0.25} />
+                      <AnimeOutline thickness={1.6} />
                     </mesh>
-                    <mesh position={[0, 0.6, 0]}>
-                      <sphereGeometry args={[0.08, 16, 12]} />
-                      <meshStandardMaterial color="#22D3EE" emissive="#22D3EE" emissiveIntensity={2.5} />
-                    </mesh>
-                  </group>
-                ) : config.weapon === 'plasma-blaster' ? (
-                  <group scale={props.isTiny ? [0.55, 0.55, 0.55] : [0.75, 0.75, 0.75]}>
-                    <mesh geometry={new THREE.BoxGeometry(0.09, 0.16, 0.32)}>
-                      <meshStandardMaterial color="#1E293B" metalness={0.8} />
-                    </mesh>
-                    <mesh position={[0, 0.03, 0.2]} geometry={new THREE.CylinderGeometry(0.028, 0.028, 0.15, 8)} rotation={[Math.PI / 2, 0, 0]}>
-                      <meshStandardMaterial color="#EC4899" emissive="#EC4899" emissiveIntensity={2.0} />
-                    </mesh>
-                  </group>
-                ) : config.weapon === 'void-scythe' ? (
-                  <group scale={props.isTiny ? [0.55, 0.55, 0.55] : [0.75, 0.75, 0.75]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.02, 0.02, 1.2, 8)}>
-                      <meshStandardMaterial color="#0F172A" />
-                    </mesh>
-                    <mesh position={[0.22, 0.55, 0]} rotation={[0, 0, -0.6]} geometry={new THREE.BoxGeometry(0.5, 0.06, 0.03)}>
-                      <meshStandardMaterial color="#A855F7" emissive="#A855F7" emissiveIntensity={2.5} />
+                    <mesh position={[0, 0.82, 0]} rotation={[0, 0, 0]}>
+                      <torusGeometry args={[0.11, 0.038, 8, 18, Math.PI * 1.4]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.6} />
                     </mesh>
                   </group>
                 ) : config.weapon === 'star-wand' ? (
+                  /* Mage's Spell Wand with glowing drop crystal */
                   <group scale={props.isTiny ? [0.65, 0.65, 0.65] : [0.8, 0.8, 0.8]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.018, 0.022, 0.65, 8)}>
-                      <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.2} />
+                    <mesh position={[0, 0.35, 0]} castShadow>
+                      <cylinderGeometry args={[0.02, 0.025, 0.75, 8]} />
+                      <meshStandardMaterial color="#7C2D12" roughness={0.6} />
+                      <AnimeOutline thickness={1.5} />
                     </mesh>
-                    <mesh position={[0, 0.38, 0]}>
-                      <coneGeometry args={[0.10, 0.20, 5]} />
-                      <meshStandardMaterial color="#FFDF00" emissive="#FF69B4" emissiveIntensity={2.5} />
+                    <mesh position={[0, 0.75, 0]}>
+                      <octahedronGeometry args={[0.10, 0]} />
+                      <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3.5} />
+                      <AnimeOutline thickness={1.5} />
+                    </mesh>
+                  </group>
+                ) : config.weapon === 'void-scythe' ? (
+                  /* Rogue's Dual Hunting Daggers */
+                  <group scale={props.isTiny ? [0.6, 0.6, 0.6] : [0.85, 0.85, 0.85]}>
+                    <mesh position={[0, 0.28, 0]} castShadow>
+                      <coneGeometry args={[0.05, 0.55, 4]} />
+                      <meshStandardMaterial color="#E2E8F0" metalness={0.8} />
+                      <AnimeOutline thickness={1.6} />
+                    </mesh>
+                    <mesh position={[0, 0.02, 0]}>
+                      <boxGeometry args={[0.16, 0.03, 0.04]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} />
+                      <AnimeOutline thickness={1.4} />
                     </mesh>
                   </group>
                 ) : config.weapon === 'energy-hammer' ? (
+                  /* Dwarf War Hammer */
                   <group scale={props.speciesKey === 'dwarf' ? [1.0, 1.0, 1.0] : [0.85, 0.85, 0.85]}>
-                    <mesh geometry={new THREE.CylinderGeometry(0.03, 0.03, 0.95, 8)}>
+                    <mesh position={[0, 0.45, 0]} castShadow>
+                      <cylinderGeometry args={[0.032, 0.032, 0.95, 8]} />
                       <meshStandardMaterial color="#334155" metalness={0.8} />
+                      <AnimeOutline thickness={1.5} />
                     </mesh>
-                    <mesh position={[0, 0.48, 0]} geometry={new THREE.BoxGeometry(0.32, 0.26, 0.40)}>
+                    <mesh position={[0, 0.88, 0]} geometry={new THREE.BoxGeometry(0.34, 0.26, 0.42)} castShadow>
                       <meshStandardMaterial color="#F97316" emissive="#F97316" emissiveIntensity={2.2} />
+                      <AnimeOutline thickness={1.6} />
                     </mesh>
                   </group>
-                ) : null}
+                ) : (
+                  /* Default Adventurer Sword for any other weapon */
+                  <group scale={props.isTiny ? [0.6, 0.6, 0.6] : [0.9, 0.9, 0.9]}>
+                    <mesh position={[0, 0.52, 0]} castShadow>
+                      <cylinderGeometry args={[0.045, 0.02, 0.95, 4]} />
+                      <meshStandardMaterial color="#E2E8F0" metalness={0.7} roughness={0.3} />
+                      <AnimeOutline thickness={1.6} />
+                    </mesh>
+                    <mesh position={[0, 0.08, 0]} castShadow>
+                      <boxGeometry args={[0.28, 0.045, 0.07]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.5} />
+                    </mesh>
+                    <mesh position={[0, -0.05, 0]}>
+                      <cylinderGeometry args={[0.024, 0.026, 0.20, 8]} />
+                      <meshStandardMaterial color="#3E2723" roughness={0.7} />
+                    </mesh>
+                    <mesh position={[0, -0.16, 0]}>
+                      <sphereGeometry args={[0.045, 10, 10]} />
+                      <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                      <AnimeOutline thickness={1.4} />
+                    </mesh>
+                  </group>
+                )}
               </group>
             )}
           </group>
@@ -1537,29 +1817,55 @@ function LegShoe({ config, legR, side }: { config: AvatarConfig; legR: number; s
       return (
         <group>
           {/* Thick Rubber Outsole */}
-          <mesh castShadow position={[0, shoeH * 0.4, shoeD * 0.10]} geometry={new THREE.BoxGeometry(shoeW, shoeH * 0.8, shoeD)} material={whiteMat} />
+          <mesh castShadow position={[0, shoeH * 0.4, shoeD * 0.12]}>
+            <boxGeometry args={[shoeW * 1.10, shoeH * 0.9, shoeD * 1.05]} />
+            <primitive object={whiteMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
           {/* Upper Body */}
-          <mesh castShadow position={[0, shoeH + 0.02, 0.02]} geometry={new THREE.CylinderGeometry(legR * 0.90, legR * 0.95, 0.065, 16)} material={shoeMat} />
+          <mesh castShadow position={[0, shoeH + 0.02, 0.02]}>
+            <capsuleGeometry args={[legR * 0.92, 0.08, 12, 14]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
           {/* Rounded White Toe Bumper */}
-          <mesh castShadow position={[0, shoeH * 0.65, shoeD * 0.44]} geometry={new THREE.SphereGeometry(legR * 0.85, 14, 12)} scale={[1, 0.7, 1.1]} material={whiteMat} />
+          <mesh castShadow position={[0, shoeH * 0.65, shoeD * 0.44]}>
+            <sphereGeometry args={[legR * 0.92, 16, 14]} scale={[1, 0.75, 1.15]} />
+            <primitive object={whiteMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
           {/* Tongue & Laces */}
-          <mesh position={[0, shoeH + 0.045, shoeD * 0.18]} rotation={[0.4, 0, 0]} geometry={new THREE.BoxGeometry(shoeW * 0.6, 0.05, 0.08)} material={shoeMat} />
+          <mesh position={[0, shoeH + 0.045, shoeD * 0.18]} rotation={[0.4, 0, 0]}>
+            <boxGeometry args={[shoeW * 0.6, 0.04, 0.08]} />
+            <primitive object={shoeMat} attach="material" />
+          </mesh>
         </group>
       );
     case 'boots':
       return (
         <group>
-          {/* Beveled Leather Sole */}
-          <mesh castShadow position={[0, shoeH * 0.4, shoeD * 0.12]} geometry={new THREE.BoxGeometry(shoeW, shoeH * 0.8, shoeD)} material={shoeMat} />
-          {/* Low block heel at rear */}
-          <mesh castShadow position={[0, -shoeH * 0.2, -shoeD * 0.32]} geometry={new THREE.BoxGeometry(shoeW * 0.95, shoeH * 0.6, shoeD * 0.35)} material={darkMat} />
+          {/* Heavy Lugged Leather Sole */}
+          <mesh castShadow position={[0, shoeH * 0.4, shoeD * 0.12]}>
+            <boxGeometry args={[shoeW * 1.12, shoeH * 0.9, shoeD * 1.1]} />
+            <primitive object={darkMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
           {/* Mid-Calf Leather Boot Shaft */}
-          <mesh castShadow position={[0, shoeH + 0.08, 0]} geometry={new THREE.CylinderGeometry(legR * 1.05, legR * 0.95, 0.16, 16)} material={shoeMat} />
-          {/* Toe Cap */}
-          <mesh castShadow position={[0, shoeH * 0.8, shoeD * 0.42]} geometry={new THREE.SphereGeometry(legR * 0.85, 14, 12)} scale={[1, 0.72, 1.2]} material={shoeMat} />
+          <mesh castShadow position={[0, shoeH + 0.08, 0]}>
+            <cylinderGeometry args={[legR * 1.12, legR * 1.0, 0.18, 16]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          {/* Rounded Protective Toe Cap */}
+          <mesh castShadow position={[0, shoeH * 0.75, shoeD * 0.42]}>
+            <sphereGeometry args={[legR * 0.92, 16, 14]} scale={[1, 0.78, 1.2]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
           {/* Golden Buckle Straps on outer shaft */}
-          <mesh position={[side * (shoeW * 0.52), shoeH + 0.10, 0]} geometry={new THREE.BoxGeometry(0.015, 0.025, 0.04)}>
-            <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.2} />
+          <mesh position={[side * (shoeW * 0.52), shoeH + 0.10, 0]}>
+            <boxGeometry args={[0.02, 0.03, 0.05]} />
+            <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
           </mesh>
         </group>
       );
@@ -1567,18 +1873,26 @@ function LegShoe({ config, legR, side }: { config: AvatarConfig; legR: number; s
       return (
         <group>
           {/* Split Anti-Grav Dual Pod Soles */}
-          <mesh castShadow position={[0, shoeH * 0.35, shoeD * 0.30]} geometry={new THREE.BoxGeometry(shoeW, shoeH * 0.7, shoeD * 0.50)} material={darkMat} />
-          <mesh castShadow position={[0, shoeH * 0.35, -shoeD * 0.25]} geometry={new THREE.BoxGeometry(shoeW, shoeH * 0.7, shoeD * 0.45)} material={darkMat} />
-          {/* Cyber Armor Boot Shell */}
-          <mesh castShadow position={[0, shoeH + 0.04, 0.02]} geometry={new THREE.CylinderGeometry(legR * 0.95, legR * 1.0, 0.08, 16)} material={shoeMat} />
-          {/* Glowing Neon Light Rails */}
-          <mesh position={[0, shoeH * 0.75, 0]} geometry={new THREE.BoxGeometry(shoeW * 1.08, 0.018, shoeD * 0.95)}>
-            <meshStandardMaterial color={hexToColor(config.shoeColor || '#00FF66')} emissive={hexToColor(config.shoeColor || '#00FF66')} emissiveIntensity={3.0} />
+          <mesh castShadow position={[0, shoeH * 0.35, shoeD * 0.30]}>
+            <boxGeometry args={[shoeW, shoeH * 0.7, shoeD * 0.50]} />
+            <primitive object={darkMat} attach="material" />
+            <AnimeOutline thickness={1.4} />
           </mesh>
-          {/* Power Core Ankle Ring */}
-          <mesh position={[0, shoeH + 0.08, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
-            <torusGeometry args={[legR * 0.95, 0.016, 6, 18]} />
-            <meshStandardMaterial color={hexToColor(config.shoeColor || '#00FF66')} emissive={hexToColor(config.shoeColor || '#00FF66')} emissiveIntensity={2.5} />
+          <mesh castShadow position={[0, shoeH * 0.35, -shoeD * 0.25]}>
+            <boxGeometry args={[shoeW, shoeH * 0.7, shoeD * 0.45]} />
+            <primitive object={darkMat} attach="material" />
+            <AnimeOutline thickness={1.4} />
+          </mesh>
+          {/* Cyber Armor Boot Shell */}
+          <mesh castShadow position={[0, shoeH + 0.04, 0.02]}>
+            <cylinderGeometry args={[legR * 0.95, legR * 1.0, 0.08, 16]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
+          {/* Glowing Neon Light Rails */}
+          <mesh position={[0, shoeH * 0.75, 0]}>
+            <boxGeometry args={[shoeW * 1.08, 0.018, shoeD * 0.95]} />
+            <meshStandardMaterial color={hexToColor(config.shoeColor || '#00FF66')} emissive={hexToColor(config.shoeColor || '#00FF66')} emissiveIntensity={3.0} />
           </mesh>
         </group>
       );
@@ -1586,13 +1900,15 @@ function LegShoe({ config, legR, side }: { config: AvatarConfig; legR: number; s
       return (
         <group>
           {/* Slim Leather Footbed */}
-          <mesh castShadow position={[0, 0.012, shoeD * 0.10]} geometry={new THREE.BoxGeometry(shoeW * 0.92, 0.025, shoeD)} material={shoeMat} />
+          <mesh castShadow position={[0, 0.012, shoeD * 0.10]}>
+            <boxGeometry args={[shoeW * 0.92, 0.025, shoeD]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.4} />
+          </mesh>
           {/* Front Cross-Strap Band */}
-          <mesh position={[0, 0.035, shoeD * 0.30]} geometry={new THREE.BoxGeometry(shoeW * 0.96, 0.015, 0.06)} material={shoeMat} />
-          {/* Ankle Wrap Ribbon Straps */}
-          <mesh position={[0, 0.06, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
-            <torusGeometry args={[legR * 0.92, 0.012, 6, 16]} />
-            <meshStandardMaterial color={shoeMat.color} />
+          <mesh position={[0, 0.035, shoeD * 0.30]}>
+            <boxGeometry args={[shoeW * 0.96, 0.015, 0.06]} />
+            <primitive object={shoeMat} attach="material" />
           </mesh>
         </group>
       );
@@ -1600,15 +1916,21 @@ function LegShoe({ config, legR, side }: { config: AvatarConfig; legR: number; s
       return (
         <group>
           {/* Arched Incline Footbed */}
-          <mesh castShadow position={[0, 0.04, shoeD * 0.12]} rotation={[-0.15, 0, 0]} geometry={new THREE.BoxGeometry(shoeW * 0.85, 0.025, shoeD * 0.95)} material={shoeMat} />
+          <mesh castShadow position={[0, 0.04, shoeD * 0.12]} rotation={[-0.15, 0, 0]}>
+            <boxGeometry args={[shoeW * 0.85, 0.025, shoeD * 0.95]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.4} />
+          </mesh>
           {/* Pointed Pump Toe Cap */}
-          <mesh castShadow position={[0, 0.035, shoeD * 0.44]} geometry={new THREE.ConeGeometry(legR * 0.75, 0.14, 12)} rotation={[Math.PI * 0.5, 0, 0]} scale={[1, 1, 0.65]} material={shoeMat} />
+          <mesh castShadow position={[0, 0.035, shoeD * 0.44]} rotation={[Math.PI * 0.5, 0, 0]} scale={[1, 1, 0.65]}>
+            <coneGeometry args={[legR * 0.75, 0.14, 12]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.4} />
+          </mesh>
           {/* Slender Stiletto Heel Spike at rear */}
-          <mesh castShadow position={[0, 0.01, -shoeD * 0.32]} geometry={new THREE.CylinderGeometry(0.012, 0.008, 0.065, 8)} material={darkMat} />
-          {/* Ankle D'Orsay Strap */}
-          <mesh position={[0, 0.075, -0.01]} rotation={[Math.PI * 0.5, 0, 0]}>
-            <torusGeometry args={[legR * 0.88, 0.012, 6, 16]} />
-            <meshStandardMaterial color={shoeMat.color} />
+          <mesh castShadow position={[0, 0.01, -shoeD * 0.32]}>
+            <cylinderGeometry args={[0.012, 0.008, 0.065, 8]} />
+            <primitive object={darkMat} attach="material" />
           </mesh>
         </group>
       );
@@ -1617,36 +1939,23 @@ function LegShoe({ config, legR, side }: { config: AvatarConfig; legR: number; s
       return (
         <group>
           {/* Heavy Cleated Combat Sole */}
-          <mesh castShadow position={[0, shoeH * 0.5, shoeD * 0.12]} geometry={new THREE.BoxGeometry(shoeW * 1.05, shoeH, shoeD * 1.05)} material={darkMat} />
-          {/* Tall Combat Shaft with Lacing */}
-          <mesh castShadow position={[0, shoeH + 0.10, 0]} geometry={new THREE.CylinderGeometry(legR * 1.08, legR * 1.02, 0.20, 16)} material={shoeMat} />
+          <mesh castShadow position={[0, shoeH * 0.5, shoeD * 0.12]}>
+            <boxGeometry args={[shoeW * 1.15, shoeH, shoeD * 1.1]} />
+            <primitive object={darkMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
+          {/* Tall Combat Shaft */}
+          <mesh castShadow position={[0, shoeH + 0.10, 0]}>
+            <cylinderGeometry args={[legR * 1.12, legR * 1.05, 0.22, 16]} />
+            <primitive object={shoeMat} attach="material" />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
           {/* Reinforced Toe Bumper */}
-          <mesh castShadow position={[0, shoeH * 0.9, shoeD * 0.46]} geometry={new THREE.SphereGeometry(legR * 0.92, 14, 12)} scale={[1, 0.8, 1.15]} material={darkMat} />
-          {/* Metallic Lace Eyelets */}
-          {[-0.04, 0.0, 0.04, 0.08].map((yOff, i) => (
-            <mesh key={i} position={[0, shoeH + 0.06 + yOff, shoeD * 0.20]} geometry={new THREE.BoxGeometry(shoeW * 0.45, 0.012, 0.012)}>
-              <meshStandardMaterial color="#94A3B8" metalness={0.9} roughness={0.2} />
-            </mesh>
-          ))}
-          {/* Species Flair */}
-          {isDwarf && (
-            <mesh position={[0, shoeH * 1.1, shoeD * 0.48]}>
-              <boxGeometry args={[shoeW * 0.85, shoeH * 0.8, shoeD * 0.18]} />
-              <meshStandardMaterial color="#94A3B8" metalness={0.95} roughness={0.2} />
-            </mesh>
-          )}
-          {isElf && (
-            <mesh position={[0, shoeH * 1.1, -shoeD * 0.4]}>
-              <boxGeometry args={[shoeW * 0.45, shoeH * 1.2, 0.02]} />
-              <meshStandardMaterial color="#FFD700" metalness={0.95} roughness={0.2} />
-            </mesh>
-          )}
-          {isFairy && (
-            <mesh position={[0, shoeH * 1.0, shoeD * 0.42]}>
-              <sphereGeometry args={[0.018, 8, 8]} />
-              <meshStandardMaterial color="#F472B6" emissive="#F472B6" emissiveIntensity={2.5} />
-            </mesh>
-          )}
+          <mesh castShadow position={[0, shoeH * 0.9, shoeD * 0.46]} scale={[1, 0.8, 1.15]}>
+            <sphereGeometry args={[legR * 0.95, 14, 12]} />
+            <primitive object={darkMat} attach="material" />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
         </group>
       );
   }
@@ -1751,10 +2060,12 @@ function AvatarLegs({ config, action = 'idle' }: { config: AvatarConfig; shiftT?
       {/* Solid Pelvis / Hip Block connecting seamlessly with Torso */}
       <mesh
         castShadow
-        position={[0, -pelvisH * 0.5 + 0.005, 0]}
-        geometry={new THREE.BoxGeometry(pelvisW, pelvisH, pelvisD)}
-        material={bottomMat}
-      />
+        position={[0, -pelvisH * 0.45, 0]}
+      >
+        <capsuleGeometry args={[pelvisW * 0.46, pelvisW * 0.38, 12, 16]} />
+        <primitive object={bottomMat} attach="material" />
+        <AnimeOutline thickness={1.8} />
+      </mesh>
 
       {/* Decorative Waistband / Cyber Belt detail */}
       <mesh
@@ -1767,7 +2078,9 @@ function AvatarLegs({ config, action = 'idle' }: { config: AvatarConfig; shiftT?
       {/* 3D Skirt Overlay (only if top is not already a dress) */}
       {hasSkirt && (
         <group position={[0, -pelvisH * 0.2, 0]}>
-          <mesh castShadow geometry={new THREE.CylinderGeometry(pelvisW * 0.52, pelvisW * 0.92, legH * 0.62, 20)} material={bottomMat} />
+          <mesh castShadow geometry={new THREE.CylinderGeometry(pelvisW * 0.52, pelvisW * 0.92, legH * 0.62, 20)} material={bottomMat}>
+            <AnimeOutline thickness={1.6} />
+          </mesh>
           {config.bottom === 'frill-skirt' && (
             <mesh position={[0, -legH * 0.3, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
               <torusGeometry args={[pelvisW * 0.90, 0.025, 6, 22]} />
@@ -1805,32 +2118,50 @@ function AvatarLegs({ config, action = 'idle' }: { config: AvatarConfig; shiftT?
                 <mesh
                   castShadow
                   position={[0, -legH * 0.16, 0]}
-                  geometry={new THREE.CylinderGeometry(legR * 1.04, legR * 0.98, legH * 0.32, 18)}
-                  material={bottomMat}
-                />
-                {/* Folded Denim Cuff Ring */}
-                <mesh position={[0, -legH * 0.31, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
-                  <torusGeometry args={[legR * 1.02, 0.015, 6, 18]} />
-                  <meshStandardMaterial color={hexToColor(config.bottomColor)} roughness={0.7} />
+                >
+                  <capsuleGeometry args={[legR * 1.05, legH * 0.32, 12, 14]} />
+                  <primitive object={bottomMat} attach="material" />
+                  <AnimeOutline thickness={1.6} />
                 </mesh>
                 {/* Bare Leg below shorts */}
                 <mesh
                   castShadow
                   position={[0, -legH * 0.65, 0]}
-                  geometry={new THREE.CylinderGeometry(legR * 0.94, legR * 0.82, legH * 0.70, 18)}
-                  scale={[1, 1, legD / (legR * 2)]}
-                  material={skinMat}
-                />
+                >
+                  <capsuleGeometry args={[legR * 0.90, legH * 0.65, 12, 14]} />
+                  <primitive object={skinMat} attach="material" />
+                  <AnimeOutline thickness={1.5} />
+                </mesh>
               </>
             ) : (
-              /* Full Leg Cylinder */
-              <mesh
-                castShadow
-                position={[0, -legH * 0.5, 0]}
-                geometry={new THREE.CylinderGeometry(legR, legR * 0.85, legH, 18)}
-                scale={[1, 1, legD / (legR * 2)]}
-                material={mainLegMat}
-              />
+              <>
+                {/* Baggy Balloon Adventurer Pants Thigh */}
+                <mesh
+                  castShadow
+                  position={[0, -legH * 0.34, 0]}
+                >
+                  <capsuleGeometry args={[legR * 1.25, legH * 0.44, 12, 16]} />
+                  <primitive object={mainLegMat} attach="material" />
+                  <AnimeOutline thickness={1.8} />
+                </mesh>
+
+                {/* Baggy Lower Leg / Calf */}
+                <mesh
+                  castShadow
+                  position={[0, -legH * 0.70, 0]}
+                >
+                  <capsuleGeometry args={[legR * 1.08, legH * 0.36, 12, 14]} />
+                  <primitive object={mainLegMat} attach="material" />
+                  <AnimeOutline thickness={1.6} />
+                </mesh>
+
+                {/* Ankle Rolled Cuff Ring tucked into boot */}
+                <mesh position={[0, -legH * 0.90, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
+                  <torusGeometry args={[legR * 1.08, 0.024, 8, 16]} />
+                  <primitive object={mainLegMat} attach="material" />
+                  <AnimeOutline thickness={1.4} />
+                </mesh>
+              </>
             )}
 
             {/* Smooth 3D Knee Contour */}
@@ -1950,9 +2281,31 @@ function AvatarAccessoryHead({ id, config, headRadius }: { id: string; config: A
       );
     case 'hat':
       return (
-        <group position={[0, headRadius * 1.05, 0]}>
-          <mesh geometry={new THREE.CylinderGeometry(headRadius * 0.62, headRadius * 0.58, headRadius * 0.9, 16)} material={mat} />
-          <mesh position={[0, -headRadius * 0.46, 0]} geometry={new THREE.CylinderGeometry(headRadius * 1.1, headRadius * 1.1, 0.06, 20)} material={mat} />
+        /* Floppy Pointed Witch / Mage Hat (from reference poster) */
+        <group position={[0, headRadius * 0.95, -headRadius * 0.1]} rotation={[-0.15, 0, 0.08]}>
+          {/* Wide Curved Flared Brim */}
+          <mesh castShadow rotation={[Math.PI * 0.5, 0, 0]}>
+            <cylinderGeometry args={[headRadius * 1.85, headRadius * 1.85, 0.04, 28]} />
+            <meshToonMaterial color={hexToColor(config.accessoryColor || '#1E3A5F')} />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          {/* Conical Crown Base */}
+          <mesh position={[0, headRadius * 0.55, 0]} castShadow>
+            <coneGeometry args={[headRadius * 0.82, headRadius * 1.15, 18]} />
+            <meshToonMaterial color={hexToColor(config.accessoryColor || '#1E3A5F')} />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          {/* Bent Floppy Cone Tip */}
+          <mesh position={[headRadius * 0.22, headRadius * 1.25, -headRadius * 0.15]} rotation={[-0.45, 0, 0.4]} castShadow>
+            <coneGeometry args={[headRadius * 0.42, headRadius * 0.75, 14]} />
+            <meshToonMaterial color={hexToColor(config.accessoryColor || '#1E3A5F')} />
+            <AnimeOutline thickness={1.5} />
+          </mesh>
+          {/* Golden Ribbon Band & Brass Buckle */}
+          <mesh position={[0, headRadius * 0.12, 0]} rotation={[Math.PI * 0.5, 0, 0]}>
+            <torusGeometry args={[headRadius * 0.84, 0.035, 8, 24]} />
+            <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+          </mesh>
         </group>
       );
     case 'cap':
@@ -1988,27 +2341,34 @@ function AvatarAccessoryHead({ id, config, headRadius }: { id: string; config: A
       );
     case 'glasses':
       return (
-        <group position={[0, headRadius * 0.08, headRadius * 0.94]}>
+        /* Engineer's Aviator / Brass Goggles on Forehead (from reference poster) */
+        <group position={[0, headRadius * 0.65, headRadius * 0.72]} rotation={[-0.25, 0, 0]}>
+          {/* Leather Headband */}
+          <mesh rotation={[Math.PI * 0.5, 0, 0]}>
+            <torusGeometry args={[headRadius * 0.98, 0.032, 6, 24, Math.PI * 1.5]} />
+            <meshStandardMaterial color="#2B1810" roughness={0.8} />
+          </mesh>
+          {/* Twin Brass Eyepieces with Cyan Lenses */}
           {([-1, 1] as const).map((side) => (
-            <group key={side} position={[side * headRadius * 0.38, 0, 0]}>
-              <mesh geometry={new THREE.TorusGeometry(headRadius * 0.22, 0.022, 6, 20)} material={mat} />
-              <mesh position={[0, 0, 0.005]}>
-                <circleGeometry args={[headRadius * 0.20, 16]} />
-                <meshStandardMaterial color="#67E8F9" transparent opacity={0.35} roughness={0.1} />
+            <group key={side} position={[side * headRadius * 0.36, 0, 0]}>
+              {/* Brass Outer Bezel */}
+              <mesh rotation={[Math.PI * 0.5, 0, 0]} castShadow>
+                <cylinderGeometry args={[headRadius * 0.26, headRadius * 0.28, 0.10, 16]} />
+                <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+                <AnimeOutline thickness={1.5} />
+              </mesh>
+              {/* Cyan Glowing Glass Lens */}
+              <mesh position={[0, 0, 0.055]}>
+                <circleGeometry args={[headRadius * 0.22, 18]} />
+                <meshStandardMaterial color="#22D3EE" emissive="#06B6D4" emissiveIntensity={2.5} roughness={0.1} />
               </mesh>
             </group>
           ))}
-          {/* Bridge */}
-          <mesh position={[0, 0, 0]} geometry={new THREE.BoxGeometry(headRadius * 0.32, 0.02, 0.02)} material={mat} />
-          {/* Temples reaching back to ears */}
-          {([-1, 1] as const).map((side) => (
-            <mesh
-              key={`temple-${side}`}
-              position={[side * headRadius * 0.60, 0, -headRadius * 0.45]}
-              geometry={new THREE.BoxGeometry(0.018, 0.018, headRadius * 0.90)}
-              material={mat}
-            />
-          ))}
+          {/* Brass Center Bridge */}
+          <mesh position={[0, 0, 0.02]} castShadow>
+            <boxGeometry args={[headRadius * 0.24, 0.04, 0.03]} />
+            <meshStandardMaterial color="#F59E0B" metalness={0.9} roughness={0.2} />
+          </mesh>
         </group>
       );
     default:
@@ -2159,7 +2519,63 @@ function AvatarAccessoryBack({ id, config }: { id: string; config: AvatarConfig;
       );
     case 'backpack':
       return (
-        <mesh position={[0, 0.0, backZ - 0.04]} geometry={new THREE.BoxGeometry(0.20, 0.28, 0.12)} material={mat} />
+        /* Giant Explorer Rucksack & Mascot (from Survivor reference poster) */
+        <group position={[0, 0.04, backZ - 0.08]}>
+          {/* Bulky Canvas Pack Body */}
+          <mesh castShadow position={[0, 0, 0]}>
+            <capsuleGeometry args={[0.16, 0.26, 12, 14]} />
+            <meshToonMaterial color={hexToColor(config.accessoryColor || '#854D0E')} />
+            <AnimeOutline thickness={1.8} />
+          </mesh>
+          {/* Rolled Explorer Bedroll on Top */}
+          <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI * 0.5]} castShadow>
+            <cylinderGeometry args={[0.07, 0.07, 0.38, 12]} />
+            <meshToonMaterial color={hexToColor('#D97706')} />
+            <AnimeOutline thickness={1.6} />
+          </mesh>
+          {/* Bedroll tie straps */}
+          {[-0.10, 0.10].map((bx, bi) => (
+            <mesh key={bi} position={[bx, 0.22, 0]} rotation={[0, Math.PI * 0.5, 0]}>
+              <torusGeometry args={[0.075, 0.008, 6, 16]} />
+              <meshStandardMaterial color="#451A03" />
+            </mesh>
+          ))}
+          {/* Leather Pack Straps */}
+          {[-0.08, 0.08].map((sx, si) => (
+            <mesh key={si} position={[sx, -0.02, 0.10]}>
+              <boxGeometry args={[0.025, 0.28, 0.015]} />
+              <meshStandardMaterial color="#451A03" />
+            </mesh>
+          ))}
+          {/* Cute Peek-a-boo Purple Creature Mascot Perched on Top */}
+          <group position={[0.08, 0.24, -0.02]} rotation={[0.1, 0, 0.15]}>
+            <mesh castShadow>
+              <sphereGeometry args={[0.065, 12, 10]} />
+              <meshToonMaterial color={hexToColor('#A855F7')} />
+              <AnimeOutline thickness={1.4} />
+            </mesh>
+            {/* Cute big black eyes */}
+            {[-0.022, 0.022].map((ex, ei) => (
+              <mesh key={ei} position={[ex, 0.015, 0.055]}>
+                <sphereGeometry args={[0.012, 8, 8]} />
+                <meshBasicMaterial color="#0F172A" />
+              </mesh>
+            ))}
+            {/* Creature antenna ears */}
+            {[-0.03, 0.03].map((ex, ei) => (
+              <mesh key={ei} position={[ex, 0.06, 0]} rotation={[0, 0, ex * 8]}>
+                <cylinderGeometry args={[0.008, 0.012, 0.045, 6]} />
+                <meshToonMaterial color={hexToColor('#A855F7')} />
+              </mesh>
+            ))}
+          </group>
+          {/* Green "SURVIVOR" Badge Tag */}
+          <mesh position={[0.10, -0.12, -0.08]} rotation={[0, 0, 0.22]}>
+            <boxGeometry args={[0.14, 0.045, 0.012]} />
+            <meshToonMaterial color={hexToColor('#00FF66')} />
+            <AnimeOutline thickness={1.3} />
+          </mesh>
+        </group>
       );
     case 'wings':
       return (
@@ -2254,12 +2670,13 @@ export function AvatarModel({ config, animate = true, action = 'idle' }: AvatarM
       targetZ = 0;
       targetRotX = -0.04;
     } else {
-      // Idle: smooth floating for Fairy, gentle breathing heave for other species
-      const hover = props.hoverOffset > 0 ? props.hoverOffset + Math.sin(t * 2.4) * 0.05 : 0;
-      targetY = hover || Math.sin(t * 1.5) * 0.012;
+      // Stepped 12fps quantization for authentic anime timing
+      const steppedTime = Math.floor(t * 12) / 12;
+      const hover = props.hoverOffset > 0 ? props.hoverOffset + Math.sin(steppedTime * 2.4) * 0.05 : 0;
+      targetY = hover || Math.sin(steppedTime * 2.8) * 0.015;
       targetZ = 0;
       targetRotX = 0;
-      targetRotY = Math.sin(t * 0.7) * 0.035;
+      targetRotY = Math.sin(steppedTime * 1.2) * 0.035;
     }
 
     if (groupRef.current) {
@@ -2272,6 +2689,15 @@ export function AvatarModel({ config, animate = true, action = 'idle' }: AvatarM
 
       groupRef.current.position.copy(curPos.current);
       groupRef.current.rotation.copy(curRot.current);
+
+      // Stepped anime squash & stretch breathing
+      const steppedTime = Math.floor(t * 12) / 12;
+      const breath = Math.sin(steppedTime * 2.8) * 0.022;
+      groupRef.current.scale.set(
+        props.totalScale * (1 + breath * 0.35),
+        props.totalScale * (1 - breath * 0.35),
+        props.totalScale * (1 + breath * 0.35)
+      );
     }
   });
 

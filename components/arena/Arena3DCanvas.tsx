@@ -86,7 +86,7 @@ function SlashArcEffect({ position, color, facing }: { position: [number, number
 }
 
 function HitSparks({ position, color = '#EF4444' }: { position: [number, number, number]; color?: string }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const meshGroupRef = useRef<THREE.Group>(null);
   const sparkCount = 8;
   const sparks = useMemo(() => {
     return Array.from({ length: sparkCount }).map(() => ({
@@ -100,24 +100,28 @@ function HitSparks({ position, color = '#EF4444' }: { position: [number, number,
   }, []);
 
   useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.children.forEach((child, i) => {
+    if (meshGroupRef.current) {
+      meshGroupRef.current.children.forEach((child, i) => {
         const s = sparks[i];
-        child.position.addScaledVector(s.dir, s.speed * delta);
-        (child as THREE.Mesh).scale.multiplyScalar(0.92);
+        if (s) {
+          child.position.addScaledVector(s.dir, s.speed * delta);
+          (child as THREE.Mesh).scale.multiplyScalar(0.92);
+        }
       });
     }
   });
 
   return (
-    <group ref={groupRef} position={position}>
+    <group position={position}>
       <pointLight color={color} intensity={6} distance={4} />
-      {sparks.map((_, i) => (
-        <mesh key={i}>
-          <sphereGeometry args={[0.07, 8, 8]} />
-          <meshBasicMaterial color={color} />
-        </mesh>
-      ))}
+      <group ref={meshGroupRef}>
+        {sparks.map((_, i) => (
+          <mesh key={i}>
+            <sphereGeometry args={[0.07, 8, 8]} />
+            <meshBasicMaterial color={color} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }

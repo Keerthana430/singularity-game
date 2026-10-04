@@ -589,3 +589,99 @@ body::after {
   75%  { clip: rect(25px, 9999px, 65px, 0);  transform: skew(0.5deg); }
   100% { clip: rect(65px, 9999px, 95px, 0);  transform: skew(-0.8deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RPG ADVENTURER & OUTDOORS STORYBOOK DESIGN SYSTEM (DEEP FOREST OBSIDIAN)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.rpg-wood-container {
+  background-color: #060D09;
+  background-image: 
+    radial-gradient(ellipse at 50% 30%, rgba(16, 50, 36, 0.40) 0%, transparent 75%),
+    radial-gradient(ellipse at 50% 85%, rgba(6, 32, 22, 0.35) 0%, transparent 60%),
+    repeating-linear-gradient(45deg, rgba(10, 22, 17, 0.4) 0px, rgba(10, 22, 17, 0.4) 20px, rgba(14, 30, 23, 0.4) 20px, rgba(14, 30, 23, 0.4) 40px);
+}
+
+.rpg-parchment-sheet {
+  background: linear-gradient(180deg, #10221A 0%, #0A1712 100%);
+  color: #E2F5EC;
+  border: 2px solid #1E3D2F;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+}
+
+.rpg-leather-panel {
+  background: linear-gradient(180deg, #0D1A14 0%, #07100D 100%);
+  border: 1.5px solid #1C382B;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 6px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+}
+
+.rpg-slot-box {
+  background: linear-gradient(135deg, #0F2219 0%, #08140F 100%);
+  border: 2px solid #1A382A;
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rpg-slot-box:hover {
+  border-color: #00FF66;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+.rpg-slot-box.active {
+  border-color: #00FF66;
+  background: linear-gradient(135deg, #163828 0%, #0A1C13 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.5), inset 0 0 8px rgba(0, 255, 102, 0.25);
+}
+
+.rpg-auto-equip-btn {
+  background: linear-gradient(180deg, #153426 0%, #0E241B 50%, #081711 100%);
+  color: #00FF66;
+  border: 2px solid #00FF66;
+  border-radius: 9999px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 0 4px 14px rgba(0, 255, 102, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+  transition: all 0.15s ease-out;
+}
+
+.rpg-auto-equip-btn:hover {
+  background: linear-gradient(180deg, #00FF66 0%, #00CC52 100%);
+  color: #05120B;
+  text-shadow: none;
+  box-shadow: 0 6px 20px rgba(0, 255, 102, 0.5);
+  transform: translateY(-1px);
+}
+
+.rpg-auto-equip-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.rpg-laurel-banner {
+  background: linear-gradient(180deg, #122B1E 0%, #091911 100%);
+  border: 1.5px solid #1E4633;
+  color: #00FF66;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.rpg-tab-pill {
+  color: #8CA79B;
+  font-weight: 700;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.rpg-tab-pill.active {
+  background: linear-gradient(180deg, #00FF66 0%, #00CC52 100%);
+  color: #05120B;
+  font-weight: 900;
+  box-shadow: 0 3px 12px rgba(0, 255, 102, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1.5px solid #33FF88;
+}
