@@ -413,3 +413,18 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - AI doesn't automatically move in Friends mode - PASS.
 - **Known issues**: None.
 - **Deferred**: None.
+
+---
+
+## Phase 8 (Update): Duel System Removal (2026-10-04)
+- **Built**: 
+  - Completely removed all duel logic, UI, and functionality.
+  - Players now coexist cleanly on the same tile when collisions occur.
+- **Files created/changed**: 
+  - public/snake-and-ladder.html
+  - Deleted public/duel-system.js
+  - Deleted docs/DUEL.md
+- **Exit criteria**: 
+  - Duel completely removed - PASS.
+- **Known issues**: None.
+- **Deferred**: None.

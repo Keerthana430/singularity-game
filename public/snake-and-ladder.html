@@ -66,22 +66,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .dice-badge.landed{transform:scale(1.22);box-shadow:0 0 14px var(--player-accent,#22d3ee)}
 @keyframes badgePulse{from{opacity:.35;transform:scale(.92)}to{opacity:1;transform:scale(1.06)}}
 /* Duel UI */
-#duel-ui{position:fixed;inset:0;display:flex;flex-direction:column;pointer-events:none;z-index:10;padding:20px;font-family:var(--font-d);opacity:0;transition:opacity 0.3s;background:radial-gradient(circle at center, transparent 30%, rgba(5,7,20,0.85) 100%);}
-#duel-ui.active{opacity:1;pointer-events:auto;}
-.duel-top{display:flex;justify-content:space-between;align-items:flex-start;width:100%;max-width:800px;margin:0 auto;}
-.duel-player{display:flex;flex-direction:column;gap:8px;width:40%;}
-.duel-player.right{text-align:right;align-items:flex-end;}
-.duel-name{font-size:24px;font-weight:700;text-transform:uppercase;color:var(--fg);text-shadow:0 0 10px rgba(255,255,255,0.5);}
-.duel-hp-bar{width:100%;height:20px;background:rgba(0,0,0,0.6);border:2px solid var(--line);border-radius:10px;overflow:hidden;position:relative;}
-.duel-hp-fill{height:100%;background:var(--cy);width:100%;transition:width 0.2s ease;box-shadow:0 0 10px var(--cy);}
-.duel-player.right .duel-hp-fill{background:var(--pk);box-shadow:0 0 10px var(--pk);transform-origin:right;margin-left:auto;}
-.duel-hp-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;}
-.duel-vs{font-size:36px;font-weight:700;color:#ff8a1f;text-shadow:0 0 15px #ff8a1f;margin-top:15px;}
-.duel-controls{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;gap:20px;background:var(--panel);padding:15px 30px;border-radius:12px;border:1px solid var(--line);backdrop-filter:blur(8px);}
-.duel-key{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--mute);}
-.duel-key b{font-size:16px;color:var(--cy);background:#171d3d;padding:5px 12px;border-radius:6px;border:1px solid var(--cy);box-shadow:0 0 8px rgba(34,211,238,0.3);}
-.dmg-popup{position:absolute;color:#ff4fa3;font-family:var(--font-d);font-size:28px;font-weight:700;text-shadow:0 0 10px #ff4fa3, 2px 2px 0 #000;pointer-events:none;animation:dmgFloat 1s forwards;}
-@keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1);}70%{opacity:1;transform:translateY(-30px) scale(1.2);}100%{opacity:0;transform:translateY(-50px) scale(1);}}
+
 .mode-row{display:flex;gap:10px;margin-bottom:10px;}
 .mode-row button{flex:1;background:#1b2142;font-size:14px;padding:8px;border:1px solid var(--line);color:var(--mute);}
 .mode-row button.sel{background:var(--cy);color:#06101f;border-color:var(--cy);}
@@ -146,25 +131,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   <button id="replay-start-btn" style="display:none;background:#1b2142;color:var(--cy);border:1px solid var(--line);font-size:14px;padding:10px 16px;">REPLAY LAST MATCH ↺</button>
 </div></div>
 
-<div id="duel-ui">
-  <div class="duel-top">
-    <div class="duel-player left">
-      <div class="duel-name" id="duel-p1-name">PLAYER 1</div>
-      <div class="duel-hp-bar"><div class="duel-hp-fill" id="duel-p1-hp"></div><div class="duel-hp-text" id="duel-p1-val">100 / 100</div></div>
-    </div>
-    <div class="duel-vs">VS</div>
-    <div class="duel-player right">
-      <div class="duel-name" id="duel-p2-name">PLAYER 2</div>
-      <div class="duel-hp-bar"><div class="duel-hp-fill" id="duel-p2-hp"></div><div class="duel-hp-text" id="duel-p2-val">100 / 100</div></div>
-    </div>
-  </div>
-  <div class="duel-controls" id="duel-controls">
-    <div class="duel-key"><b>LMB</b> ATTACK</div>
-    <div class="duel-key"><b>RMB</b> HEAVY</div>
-    <div class="duel-key"><b>A / D</b> DODGE</div>
-    <div class="duel-key"><b>SPACE</b> BLOCK</div>
-  </div>
-</div>
+
 <div id="end" class="ov" hidden><div class="card">
   <h1 id="wt">Winner</h1>
   <p id="wp"></p>
@@ -886,24 +853,7 @@ async function turn(){
     }
   }
 
-  // DUEL RESOLUTION LOOP
-  let maxCollisions = 5;
-  while(maxCollisions-- > 0) {
-    let target = P.find(other => other !== p && other.i === p.i);
-    if(!target) break; // no collision
-    
-    // Duel!
-    let winner = await runDuel(p, target);
-    let loser = (winner === p) ? target : p;
-    
-    await retreatPlayer(loser);
-    if(loser === p) {
-       // if p lost, p retreated. Next iteration checks if p collided at new tile
-    } else {
-       // p won, target retreated. 
-       // Need to check if p is colliding with ANY OTHER player still on p.i
-    }
-  }
+
 
   recordMove(cur,p.name,v,startTile,tgt>N?N:tgt,eventType,finalTile);
   hideDice();
@@ -930,189 +880,7 @@ async function turn(){
 
 function setActive(){P.forEach((p,k)=>p.c.ring.visible=(k===cur))}
 
-// ---------- duel system ----------
-const DUEL_MAX_HP = 100;
 let gameMode = 'ai'; // 'ai' or 'friends'
-let aiDifficulty = 'normal';
-let isDuel = false;
-let duelState = null;
-const duelArenaCenter = V(-40, 20, -40);
-
-const MATCHUP = {
-  'attack': {
-    'attack': { p1: -10, p2: -10, msg: 'CLASH!' },
-    'heavy': { p1: 0, p2: -25, msg: 'INTERRUPT!' },
-    'dodge': { p1: -15, p2: 0, msg: 'DODGE & COUNTER!' },
-    'block': { p1: -5, p2: 0, msg: 'BLOCKED!' }
-  },
-  'heavy': {
-    'attack': { p1: -25, p2: 0, msg: 'INTERRUPTED!' },
-    'heavy': { p1: -20, p2: -20, msg: 'HEAVY CLASH!' },
-    'dodge': { p1: 0, p2: -35, msg: 'CAUGHT DODGE!' },
-    'block': { p1: 0, p2: -30, msg: 'GUARD BREAK!' }
-  },
-  'dodge': {
-    'attack': { p1: 0, p2: -15, msg: 'DODGE & COUNTER!' },
-    'heavy': { p1: -35, p2: 0, msg: 'CAUGHT DODGE!' },
-    'dodge': { p1: 0, p2: 0, msg: 'REPOSITION' },
-    'block': { p1: 0, p2: 0, msg: 'STAREDOWN' }
-  },
-  'block': {
-    'attack': { p1: 0, p2: -5, msg: 'BLOCKED!' },
-    'heavy': { p1: -30, p2: 0, msg: 'GUARD BREAK!' },
-    'dodge': { p1: 0, p2: 0, msg: 'STAREDOWN' },
-    'block': { p1: 0, p2: 0, msg: 'STAREDOWN' }
-  }
-};
-
-function resolveDuelMove(m1, m2) {
-  if(!m1) m1 = 'block';
-  if(!m2) m2 = 'block';
-  return MATCHUP[m1][m2];
-}
-
-function getAiMove() {
-  const r = Math.random();
-  if(r < 0.4) return 'attack';
-  if(r < 0.6) return 'heavy';
-  if(r < 0.8) return 'dodge';
-  return 'block';
-}
-
-function showDmg(pos, amt) {
-  if(amt >= 0) return;
-  const d = document.createElement('div');
-  d.className = 'dmg-popup';
-  d.textContent = amt;
-  document.body.appendChild(d);
-  
-  const p = pos.clone();
-  p.project(cam);
-  const x = (p.x * .5 + .5) * window.innerWidth;
-  const y = (p.y * -.5 + .5) * window.innerHeight;
-  d.style.left = (x - 20) + 'px';
-  d.style.top = (y - 40) + 'px';
-  
-  setTimeout(()=>d.remove(), 1000);
-}
-
-async function playDuelAnim(p, action, isLeft) {
-  const cg = p.c.g;
-  const dir = isLeft ? 1 : -1;
-  if(action === 'attack') {
-    await tween(0.15, k => { cg.position.x += dir * Math.sin(k*Math.PI)*0.5; cg.rotation.z = -dir * Math.sin(k*Math.PI)*0.3; });
-  } else if(action === 'heavy') {
-    await tween(0.3, k => { cg.position.y += Math.sin(k*Math.PI)*1.0; cg.position.x += dir * Math.sin(k*Math.PI)*0.8; cg.rotation.x = Math.sin(k*Math.PI)*0.5; });
-  } else if(action === 'dodge') {
-    await tween(0.2, k => { cg.position.z += Math.sin(k*Math.PI)*1.5; cg.rotation.y += Math.sin(k*Math.PI)*1.0; });
-  } else if(action === 'block') {
-    await tween(0.2, k => { cg.scale.setScalar(1 - Math.sin(k*Math.PI)*0.1); });
-  }
-}
-
-async function runDuel(p1, p2) {
-  isDuel = true;
-  duelState = { p1, p2, p1Hp: DUEL_MAX_HP, p2Hp: DUEL_MAX_HP, phase: 'init', p1Action: null, p2Action: null };
-  
-  const p1Base = p1.c.g.position.clone();
-  const p2Base = p2.c.g.position.clone();
-  const p1Rot = p1.c.g.rotation.clone();
-  const p2Rot = p2.c.g.rotation.clone();
-  
-  p1.c.g.position.copy(duelArenaCenter).add(V(-3, 0, 0));
-  p2.c.g.position.copy(duelArenaCenter).add(V(3, 0, 0));
-  p1.c.g.rotation.set(0, Math.PI/2, 0);
-  p2.c.g.rotation.set(0, -Math.PI/2, 0);
-  
-  $('duel-ui').classList.add('active');
-  $('duel-p1-name').textContent = p1.name;
-  $('duel-p2-name').textContent = p2.name;
-  
-  const updateHp = () => {
-    $('duel-p1-hp').style.width = Math.max(0, (duelState.p1Hp / DUEL_MAX_HP)*100) + '%';
-    $('duel-p2-hp').style.width = Math.max(0, (duelState.p2Hp / DUEL_MAX_HP)*100) + '%';
-    $('duel-p1-val').textContent = Math.max(0, duelState.p1Hp) + ' / ' + DUEL_MAX_HP;
-    $('duel-p2-val').textContent = Math.max(0, duelState.p2Hp) + ' / ' + DUEL_MAX_HP;
-  };
-  updateHp();
-  
-  const oldCamPos = cam.position.clone();
-  const oldTarget = ctl.target.clone();
-  
-  ctl.target.copy(duelArenaCenter).add(V(0, 2, 0));
-  cam.position.copy(duelArenaCenter).add(V(0, 4, 12));
-  
-  cap("DUEL! " + p1.name + " vs " + p2.name);
-  await sleep(1500);
-  
-  while(duelState.p1Hp > 0 && duelState.p2Hp > 0) {
-    duelState.p1Action = null;
-    duelState.p2Action = null;
-    duelState.phase = 'input';
-    
-    cap("SELECT YOUR MOVE!");
-    
-    for(let t=0; t<30; t++) {
-      if(gameMode === 'ai') {
-        if(p1.isAi && !duelState.p1Action) duelState.p1Action = getAiMove();
-        if(p2.isAi && !duelState.p2Action) duelState.p2Action = getAiMove();
-      }
-      if(duelState.p1Action && duelState.p2Action) break;
-      await sleep(100);
-    }
-    
-    duelState.phase = 'resolve';
-    const m1 = duelState.p1Action;
-    const m2 = duelState.p2Action;
-    
-    const res = resolveDuelMove(m1, m2);
-    cap(res.msg);
-    
-    const p1Anim = playDuelAnim(p1, m1, true);
-    const p2Anim = playDuelAnim(p2, m2, false);
-    await Promise.all([p1Anim, p2Anim]);
-    
-    duelState.p1Hp += res.p1;
-    duelState.p2Hp += res.p2;
-    updateHp();
-    
-    if(res.p1 < 0) { showDmg(p1.c.g.position.clone().add(V(0,2,0)), res.p1); burst(p1.c.g.position); }
-    if(res.p2 < 0) { showDmg(p2.c.g.position.clone().add(V(0,2,0)), res.p2); burst(p2.c.g.position); }
-    
-    p1.c.g.position.copy(duelArenaCenter).add(V(-3, 0, 0));
-    p2.c.g.position.copy(duelArenaCenter).add(V(3, 0, 0));
-    p1.c.g.rotation.set(0, Math.PI/2, 0);
-    p2.c.g.rotation.set(0, -Math.PI/2, 0);
-    
-    await sleep(1000);
-  }
-  
-  const winner = duelState.p1Hp > 0 ? p1 : (duelState.p2Hp > 0 ? p2 : p1);
-  cap(winner.name + " WINS THE DUEL!");
-  Snd.playWin();
-  await sleep(2000);
-  
-  $('duel-ui').classList.remove('active');
-  isDuel = false;
-  duelState = null;
-  
-  p1.c.g.position.copy(p1Base);
-  p2.c.g.position.copy(p2Base);
-  p1.c.g.rotation.copy(p1Rot);
-  p2.c.g.rotation.copy(p2Rot);
-  
-  ctl.target.copy(oldTarget);
-  cam.position.copy(oldCamPos);
-  
-  return winner;
-}
-
-async function retreatPlayer(p) {
-  const safeTile = Math.max(1, p.i - 1);
-  cap(p.name + " retreats to tile " + safeTile);
-  p.i = safeTile;
-  await hopTo(p, stand(p, safeTile), 0.2);
-}
 
 function newGame(n,seedVal){
   initSeed(seedVal);
@@ -1254,21 +1022,6 @@ $('replay-step').onclick=stepReplay;
 $('replay-exit').onclick=exitReplay;
 
 addEventListener('keydown',e=>{
-  if(isDuel && duelState && duelState.phase === 'input') {
-     let p1Key = null, p2Key = null;
-     if(e.code==='KeyA' || e.code==='KeyD') p1Key = 'dodge';
-     if(e.code==='Space') p1Key = 'block';
-     
-     if(gameMode === 'friends') {
-       if(e.code==='ArrowLeft' || e.code==='ArrowRight') p2Key = 'dodge';
-       if(e.code==='Enter') p2Key = 'block';
-       if(e.code==='Numpad1') p2Key = 'attack';
-       if(e.code==='Numpad2') p2Key = 'heavy';
-     }
-     if(p1Key && !duelState.p1Action && !duelState.p1.isAi) duelState.p1Action = p1Key;
-     if(p2Key && !duelState.p2Action && !duelState.p2.isAi) duelState.p2Action = p2Key;
-     return;
-  }
   if(e.code==='Space'&&$('start').hidden&&$('end').hidden&&e.target.tagName!=='BUTTON'&&e.target.tagName!=='INPUT'){
     e.preventDefault();
     if(busy){
@@ -1279,17 +1032,6 @@ addEventListener('keydown',e=>{
       turn();
     }
   }
-});
-addEventListener('mousedown',e=>{
-  if(isDuel && duelState && duelState.phase === 'input') {
-     let p1Key = null;
-     if(e.button === 0) p1Key = 'attack';
-     if(e.button === 2) p1Key = 'heavy';
-     if(p1Key && !duelState.p1Action && !duelState.p1.isAi) duelState.p1Action = p1Key;
-  }
-});
-addEventListener('contextmenu', e=>{
-  if(isDuel) e.preventDefault();
 });
 
 // ---------- loop (optimized, zero GC allocations) ----------

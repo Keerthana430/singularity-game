@@ -97,3 +97,7 @@
 - **Options**: (a) Create a separate HTML page/scene for duels, (b) Create an entirely new separate module `duel-system.js` and inject it dynamically, (c) Integrate duel logic inline with the main IIFE in `snake-and-ladder.html`.
 - **Decision**: **Integrate duel logic inline with the main IIFE in `snake-and-ladder.html`**. 
 - **Consequences**: Allows the duel logic direct access to the existing Three.js globals (`cam`, `tween`, `Snd`, etc.) without complex bridging architectures. Instead of unloading the board, players are teleported to a fixed Duel Arena at an offset position `(-40, 20, -40)` and the camera snaps there for the duration of the duel. This is efficient, avoids reload flickering, and preserves board state perfectly. The main game loop `turn()` is paused via an `await` promise barrier until the duel resolves.
+## ADR-015: Removal of Duel System
+**Context:** The duel system (ADR-014) added complexity that was not desired by the user. They requested its complete removal.
+**Decision:** Remove all duel-related UI, game state, keyboard listeners, combat variables, and logic loop from the game. 
+**Consequences:** Players now overlap/coexist peacefully when landing on the same tile, returning to the standard Snakes & Ladders behavior. ADR-014 is revoked.
