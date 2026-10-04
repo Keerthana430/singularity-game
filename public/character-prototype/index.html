@@ -578,8 +578,8 @@
     // ── MOVEMENT PHYSICS ──
     // Build input direction from WASD (camera-relative)
     let inputX = 0, inputZ = 0;
-    if (keys.w) inputZ -= 1;
-    if (keys.s) inputZ += 1;
+    if (keys.w) inputZ += 1;
+    if (keys.s) inputZ -= 1;
     if (keys.a) inputX -= 1;
     if (keys.d) inputX += 1;
     const hasInput = inputX !== 0 || inputZ !== 0;
