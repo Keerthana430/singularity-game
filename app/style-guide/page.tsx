@@ -401,7 +401,7 @@ export default function StyleGuidePage() {
               <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
                 Cerulean Sky
               </h4>
-              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Hexagon Aegis 🛡️</p>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Hexagon Aegis</p>
             </div>
           </div>
 
@@ -418,7 +418,7 @@ export default function StyleGuidePage() {
               <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
                 Solar Gold
               </h4>
-              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Crown Star 👑</p>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Crown Star</p>
             </div>
           </div>
 
@@ -435,7 +435,7 @@ export default function StyleGuidePage() {
               <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
                 Cosmic Violet
               </h4>
-              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Diamond Prism 💎</p>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Diamond Prism</p>
             </div>
           </div>
 
@@ -452,7 +452,7 @@ export default function StyleGuidePage() {
               <h4 className="font-bold text-sm text-[#FFF8EE]" style={{ fontFamily: 'var(--font-display)' }}>
                 Tangerine Coral
               </h4>
-              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Comet Crosshair 🎯</p>
+              <p className="text-[11px] text-[#8F97B0] font-mono mt-0.5">Shape: Comet Crosshair</p>
             </div>
           </div>
         </div>
@@ -538,13 +538,13 @@ export default function StyleGuidePage() {
               </span>
             </div>
             <h3 className="text-2xl font-bold text-[#FFF8EE]" style={{ fontFamily: 'var(--font-body)' }}>
-              Zen Maru Gothic (丸ゴシック)
+              Zen Maru Gothic (rounded display font)
             </h3>
             <p className="text-xs text-[#8F97B0] leading-relaxed">
               Authentic rounded Japanese anime font with full coverage of Hiragana, Katakana, and Kanji characters.
             </p>
             <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-sm font-bold text-[#38BDF8] tracking-wide" style={{ fontFamily: 'var(--font-body)' }}>
-              軌道コロシアム // 準備完了 // 推進力全開 // 標的捕捉
+              ORBITAL COLOSSEUM // SYSTEM READY // THRUST MAX // TARGET LOCKED
             </div>
           </div>
         </div>
@@ -570,10 +570,10 @@ export default function StyleGuidePage() {
 
         <div className="flex items-center gap-4 flex-wrap p-6 rounded-2xl bg-[#181D33] border border-white/10">
           <button className="px-6 py-3 rounded-2xl bg-[#FF6B35] hover:bg-[#FF8A3D] active:scale-95 transition-all text-white font-bold text-sm tracking-wide shadow-[0_4px_16px_rgba(255,107,53,0.4)]" style={{ fontFamily: 'var(--font-display)' }}>
-            PLAY MATCH 🚀
+            PLAY MATCH
           </button>
           <button className="px-6 py-3 rounded-2xl bg-[#38BDF8] hover:bg-[#60A5FA] active:scale-95 transition-all text-black font-extrabold text-sm tracking-wide shadow-[0_4px_16px_rgba(56,189,248,0.4)]" style={{ fontFamily: 'var(--font-display)' }}>
-            ROLL QUANTUM DICE 🎲
+            ROLL QUANTUM DICE
           </button>
           <button className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-[#FFF8EE] border border-white/15 font-bold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
             STATION LOUNGE ☕

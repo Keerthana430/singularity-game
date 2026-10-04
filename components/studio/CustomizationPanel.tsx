@@ -479,7 +479,7 @@ function WeaponsPanel() {
                         title={`Upgrade for ${upgradeCost} Coins`}
                       >
                         <Hammer size={12} />
-                        <span>Forge (+12 ATK) {upgradeCost}🪙</span>
+                        <span>Forge (+12 ATK) {upgradeCost} COINS</span>
                       </button>
                     </>
                   ) : (
@@ -487,8 +487,8 @@ function WeaponsPanel() {
                       onClick={() => handleUnlockWeapon(w)}
                       className="w-full py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-black uppercase font-mono tracking-wider transition-all flex items-center justify-center gap-1.5"
                     >
-                      <span>🔒 Unlock Weapon</span>
-                      <span className="font-extrabold">({cost} 🪙 Coins)</span>
+                      <span>Unlock Weapon</span>
+                      <span className="font-extrabold">({cost} Coins)</span>
                     </button>
                   )}
                 </div>

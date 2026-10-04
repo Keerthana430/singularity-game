@@ -401,7 +401,7 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xs rounded-xl p-1 text-center z-20">
             <Lock size={13} className="text-amber-400 mb-0.5" />
             <span className="text-[9px] font-black font-mono text-amber-300">
-              {cost} 🪙
+              {cost} COINS
             </span>
           </div>
         )}
@@ -428,7 +428,7 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
           {rarityLabel[item.rarity]}
         </span>
         {!isUnlocked && (
-          <span className="text-amber-400 font-bold ml-0.5">{cost}🪙</span>
+          <span className="text-amber-400 font-bold ml-0.5">{cost} COINS</span>
         )}
       </div>
     </motion.button>

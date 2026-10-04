@@ -32,12 +32,12 @@ export interface VictoryEmote {
 }
 
 export const VICTORY_EMOTES: VictoryEmote[] = [
-  { id: 'dance', label: 'Victory Rave', icon: '🕺', desc: 'Futuristic rave bounce', fxColor: '#00FF66' },
-  { id: 'flex', label: 'Titan Flex', icon: '💪', desc: 'Overdrive power surge', fxColor: '#F59E0B' },
-  { id: 'salute', label: 'Cyber Salute', icon: '🫡', desc: 'Vanguard tactical respect', fxColor: '#38BDF8' },
-  { id: 'crown', label: 'Crown Ascend', icon: '👑', desc: 'Summon golden holo-crown', fxColor: '#FBBF24' },
-  { id: 'starlight', label: 'Astral Spin', icon: '💫', desc: 'Glittering cosmic pirouette', fxColor: '#EC4899' },
-  { id: 'gg', label: 'Holo GG', icon: '⚡', desc: 'Project neon GG badge', fxColor: '#A855F7' },
+  { id: 'dance', label: 'Victory Rave', icon: 'RAVE', desc: 'Futuristic rave bounce', fxColor: '#00FF66' },
+  { id: 'flex', label: 'Titan Flex', icon: 'POWER', desc: 'Overdrive power surge', fxColor: '#F59E0B' },
+  { id: 'salute', label: 'Cyber Salute', icon: 'SALUTE', desc: 'Vanguard tactical respect', fxColor: '#38BDF8' },
+  { id: 'crown', label: 'Crown Ascend', icon: 'CROWN', desc: 'Summon golden holo-crown', fxColor: '#FBBF24' },
+  { id: 'starlight', label: 'Astral Spin', icon: 'STARLIGHT', desc: 'Glittering cosmic pirouette', fxColor: '#EC4899' },
+  { id: 'gg', label: 'Holo GG', icon: 'SURGE', desc: 'Project neon GG badge', fxColor: '#A855F7' },
 ];
 
 interface BattleResultModalProps {
@@ -265,7 +265,7 @@ export function BattleResultModal({
                   onClick={onInstantHeal}
                   className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold transition-all shrink-0"
                 >
-                  ⚡ Heal (50🪙)
+                  Heal (50 Coins)
                 </button>
               )}
             </div>

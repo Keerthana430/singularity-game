@@ -150,9 +150,9 @@ export default function ContestPage() {
 
       // 4. Feedback toast confirming single vote transfer rule
       if (wasSwitching) {
-        addToast(`🔄 Vote transferred to ${entry.name}! (Previous vote removed)`, 'success');
+        addToast(`Vote transferred to ${entry.name}! (Previous vote removed)`, 'success');
       } else {
-        addToast(`💖 Voted for ${entry.name}! (+1 Vote)`, 'success');
+        addToast(`Voted for ${entry.name}! (+1 Vote)`, 'success');
       }
     }
   };
@@ -168,7 +168,7 @@ export default function ContestPage() {
     }
     setTeamName(team.displayName);
     submitEntry(currentAvatar, taglineInput.trim());
-    addToast(`🌟 ${currentAvatar.name} entered Cyberpunk Fashion Week!`, 'success');
+    addToast(`${currentAvatar.name} entered Cyberpunk Fashion Week!`, 'success');
     setActiveTab('runway');
   };
 

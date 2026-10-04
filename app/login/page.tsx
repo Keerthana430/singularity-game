@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     const success = await login(username.trim(), password.trim());
     if (success) {
-      addToast(`🔓 Welcome back, team! You're logged in.`, 'success');
+      addToast(`Welcome back, team! You're logged in.`, 'success');
       router.push('/contest');
     }
   };
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <p className="text-[10px] font-mono text-white/30 text-center leading-relaxed">
               Credentials are distributed by the event organizer.
               <br />
-              Each team gets a unique username + password. You can change your team's display name after logging in.
+              Each team gets a unique username + password. You can change your team&apos;s display name after logging in.
             </p>
           </div>
         </div>

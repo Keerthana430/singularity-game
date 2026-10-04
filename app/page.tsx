@@ -245,7 +245,8 @@ export default function HomePage() {
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#5C3D27]/40">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2C180E] border border-[#8C6239] text-xs font-bold text-[#F59E0B] mb-3">
-            <span>⚔️ ACTIVE EXPEDITION QUESTS</span>
+            <Swords size={13} aria-hidden="true" />
+            <span>ACTIVE EXPEDITION QUESTS</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#FFF8EE]">
             SELECT YOUR ADVENTURE
@@ -276,7 +277,7 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-1.5 mb-6 text-[10px] text-[#A8927E]">
                 <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">3D Particle VFX</span>
                 <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817]">Species Shields</span>
-                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650🪙 Bounty</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650 COINS Bounty</span>
               </div>
             </div>
 
@@ -399,12 +400,12 @@ export default function HomePage() {
 
               <div className="flex items-start gap-2.5">
                 <span className="text-[#00FF66] font-bold">04.</span>
-                <p><strong className="text-white">Nanite Medbay Cooldown:</strong> Damage sustained requires 30s–5m recovery before re-entering arena (or instant stimpack for 50🪙). Fairies heal 40% faster.</p>
+                <p><strong className="text-white">Nanite Medbay Cooldown:</strong> Damage sustained requires 30s–5m recovery before re-entering arena (or instant stimpack for 50 COINS). Fairies heal 40% faster.</p>
               </div>
 
               <div className="flex items-start gap-2.5">
                 <span className="text-[#00FF66] font-bold">05.</span>
-                <p><strong className="text-white">Coin Rewards:</strong> +150🪙 Quarter, +300🪙 Semi, +650🪙 Grand Champion prize.</p>
+                <p><strong className="text-white">Coin Rewards:</strong> +150 COINS Quarter, +300 COINS Semi, +650 COINS Grand Champion prize.</p>
               </div>
             </div>
           </div>
@@ -436,12 +437,12 @@ export default function HomePage() {
 
               <div className="flex items-start gap-2.5">
                 <span className="text-cyan-400 font-bold">04.</span>
-                <p><strong className="text-white">Cyber Power-Up Tiles:</strong> Special squares grant ⚡ Overdrive (+2 steps), 🛡️ Quantum Shield (safe from 1 capture), or 🌀 Warp Portal (+4 leap).</p>
+                <p><strong className="text-white">Cyber Power-Up Tiles:</strong> Special squares grant Overdrive (+2 steps), Quantum Shield (safe from 1 capture), or Warp Portal (+4 leap).</p>
               </div>
 
               <div className="flex items-start gap-2.5">
                 <span className="text-cyan-400 font-bold">05.</span>
-                <p><strong className="text-white">Singularity Nexus (Win):</strong> Exact roll required to reach the center Home. First player to guide all 4 avatars home wins 1st Place (+500🪙).</p>
+                <p><strong className="text-white">Singularity Nexus (Win):</strong> Exact roll required to reach the center Home. First player to guide all 4 avatars home wins 1st Place (+500 COINS).</p>
               </div>
             </div>
           </div>
@@ -473,7 +474,7 @@ export default function HomePage() {
 
               <div className="flex items-start gap-2.5">
                 <span className="text-[#FF69B4] font-bold">04.</span>
-                <p><strong className="text-white">Podium Rankings:</strong> Live leaderboard tracks votes with top creators earning prestige badges and the coveted Beauty Crown 👑.</p>
+                <p><strong className="text-white">Podium Rankings:</strong> Live leaderboard tracks votes with top creators earning prestige badges and the coveted Beauty Crown.</p>
               </div>
 
               <div className="flex items-start gap-2.5">
@@ -560,7 +561,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <span className="text-[9px] text-white/40 uppercase block">Streak</span>
-                  <span className="font-bold text-amber-400">🔥 8W</span>
+                  <span className="font-bold text-amber-400">8W STREAK</span>
                 </div>
               </div>
             </motion.div>
@@ -598,7 +599,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <span className="text-[9px] text-white/40 uppercase block">Streak</span>
-                  <span className="font-extrabold text-amber-400 text-sm">🔥 12W</span>
+                  <span className="font-extrabold text-amber-400 text-sm">12W STREAK</span>
                 </div>
               </div>
             </motion.div>
@@ -635,7 +636,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <span className="text-[9px] text-white/40 uppercase block">Streak</span>
-                  <span className="font-bold text-amber-400">🔥 5W</span>
+                  <span className="font-bold text-amber-400">5W STREAK</span>
                 </div>
               </div>
             </motion.div>
@@ -726,7 +727,7 @@ export default function HomePage() {
                   <div className="col-span-3 sm:col-span-2 flex items-center justify-end gap-3">
                     <div className="text-right">
                       <span className="text-sm font-black text-[#00FF66]">{rating}</span>
-                      <span className="text-[9px] text-amber-400 block">🔥 {streak}</span>
+                      <span className="text-[9px] text-amber-400 block">{streak} STREAK</span>
                     </div>
                     <Link
                       href="/lobby"

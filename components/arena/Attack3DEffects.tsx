@@ -6,6 +6,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
+import { Wind } from 'lucide-react';
 import * as THREE from 'three';
 
 // ─── 1. Phantom Dodge Evasion Effect ────────────────────────────────────────
@@ -64,7 +65,7 @@ export function PhantomDodgeEffect({
       <group position={[0, 1.4, 0]}>
         <Html center distanceFactor={8}>
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.6)] backdrop-blur-md select-none pointer-events-none animate-in fade-in zoom-in-75 duration-200">
-            <span className="text-xs">💨</span>
+            <Wind size={13} className="text-cyan-300" aria-hidden="true" />
             <span className="text-xs font-black font-mono tracking-wider text-cyan-300 drop-shadow">
               PERFECT EVASION!
             </span>

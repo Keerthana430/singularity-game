@@ -262,14 +262,14 @@ function StageEntranceBanner({ biome, roundKey }: { biome: BiomeType; roundKey?:
 
   const info = {
     grassland: {
-      badge: '⚔️ BATTLEGROUND DEPLOYED ⚔️',
+      badge: 'BATTLEGROUND DEPLOYED',
       name: 'SUNLIT ANCIENT HIGHLANDS',
       hazard: 'TERRAIN: VERDANT PLAINS • STABILITY: 100%',
       border: 'border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.4)]',
       text: 'text-emerald-400',
     },
     volcano: {
-      badge: '🌋 HAZARD CRITICAL 🌋',
+      badge: 'HAZARD CRITICAL',
       name: 'SCORCHED VOLCANIC CALDERA',
       hazard: 'TERRAIN: MOLTEN BASALT • HAZARD: INFERNAL HEAT',
       border: 'border-orange-500/70 shadow-[0_0_25px_rgba(249,115,22,0.45)]',
