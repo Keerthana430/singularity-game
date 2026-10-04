@@ -17,7 +17,6 @@ export interface RoomNode {
   description: string;
   visited: boolean;
   cleared: boolean;
-  discovered: boolean;
   x: number;
   y: number;
 }
@@ -77,7 +76,6 @@ export function makeRoomMap(floor: number, seed = Date.now()): RoomNode[] {
     description: ROOM_DATA[type].description,
     visited: index === 0,
     cleared: false,
-    discovered: index < 2,
     x: index % 3,
     y: Math.floor(index / 3),
   }));
@@ -109,9 +107,9 @@ export function getEnemyDefinition(name: string, floor: number, elite = false): 
   const multiplier = elite ? 1.45 : 1;
   return {
     ...preset,
-    maxHp: Math.round((220 + floor * 85) * base * multiplier),
-    attack: Math.round((28 + floor * 10) * base * (elite ? 1.18 : 1)),
-    defense: Math.round((14 + floor * 4) * base * (elite ? 1.3 : 1)),
+    maxHp: Math.round((125 + floor * 56) * base * multiplier),
+    attack: Math.round((18 + floor * 7) * base * multiplier),
+    defense: Math.round((8 + floor * 3) * base * (elite ? 1.3 : 1)),
   };
 }
 

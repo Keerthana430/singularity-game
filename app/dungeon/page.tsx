@@ -161,7 +161,7 @@ export default function DungeonPage() {
     if (mode !== 'combat' || isPaused || enemies.length === 0 || cooldowns[type] > 0) return;
     const data = { basic: { cost: 0, damage: 1, radius: 14, cd: 3, label: 'Basic attack' }, heavy: { cost: 20, damage: 1.7, radius: 16, cd: 8, label: 'Heavy attack' }, special: { cost: 30, damage: 1.45, radius: 24, cd: 12, label: 'Arc pulse' }, ultimate: { cost: 70, damage: 3.1, radius: 28, cd: 22, label: 'Overdrive' } }[type];
     if (player.stamina < data.cost) { addLog('Not enough stamina.'); return; }
-    const target = enemies.filter((enemy) => enemy.hp > 0).sort((a, b) => Math.hypot(a.position.x - position.x, a.position.y - position.y) - Math.hypot(b.position.x - position.x, b.position.y - position.y))[0];
+    const target = enemies.find((enemy) => enemy.id === selectedEnemy && enemy.hp > 0) || enemies.filter((enemy) => enemy.hp > 0).sort((a, b) => Math.hypot(a.position.x - position.x, a.position.y - position.y) - Math.hypot(b.position.x - position.x, b.position.y - position.y))[0];
     if (!target) return;
     const distance = Math.hypot(target.position.x - position.x, target.position.y - position.y);
     if (distance > data.radius) { addLog('Move closer to bring the target into range.'); return; }
@@ -175,7 +175,7 @@ export default function DungeonPage() {
     setEnemies(hitEnemies); setCooldowns((state) => ({ ...state, [type]: data.cd })); setPlayer((state) => ({ ...state, stamina: state.stamina - data.cost }));
     addFloat(`${crit ? 'CRIT ' : ''}-${damage}`, target.position.x, target.position.y, crit ? '#fbbf24' : 'var(--brand)'); addLog(`${data.label} hit ${target.name} for ${damage}.`); sound.playImpact();
     if (hitEnemies.every((enemy) => enemy.hp <= 0)) { setTimeout(completeRoom, 260); }
-  }, [addFloat, addLog, completeRoom, cooldowns, enemies, isPaused, mode, player, position]);
+  }, [addFloat, addLog, completeRoom, cooldowns, enemies, isPaused, mode, player, position, selectedEnemy]);
 
   const dodge = useCallback(() => {
     if (mode !== 'combat' || cooldowns.dodge > 0 || player.stamina < 18) return;

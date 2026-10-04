@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows, PerspectiveCamera } from '@react-three/drei';
+import { ContactShadows, Html, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import type { AvatarConfig } from '@/types/avatar';
 import type { EnemyDefinition, RoomNode } from '@/lib/dungeonGame';
@@ -47,7 +47,7 @@ function CameraFollow({ player, boss }: { player: [number, number, number]; boss
   const focus = useRef(new THREE.Vector3());
   const lastPlayer = useRef(new THREE.Vector3(player[0], 0, player[2]));
   const travel = useRef(new THREE.Vector3());
-  const heading = useRef(new THREE.Vector3(0, 0, 1));
+  const heading = useRef(new THREE.Vector3(0, 0, -1));
   useFrame((_, delta) => {
     const next = new THREE.Vector3(player[0], 1.45, player[2]);
     travel.current.set(player[0] - lastPlayer.current.x, 0, player[2] - lastPlayer.current.z);
@@ -98,12 +98,31 @@ function PlayerCharacter({ config, position, attackPulse, hitPulse }: { config: 
   return <group ref={ref} position={position} scale={0.88} visible={false}><AvatarModel config={config} action={attackPulse > 0 ? 'attack' : 'idle'} animate /></group>;
 }
 
+function MonsterVisual({ enemy, size, palette }: { enemy: DungeonWorldEnemy; size: number; palette: typeof FLOOR_PALETTES[number] }) {
+  const dark = enemy.archetype === 'boss' || enemy.archetype === 'tank' ? '#263247' : '#20283A';
+  const isWinged = enemy.archetype === 'ranged' || enemy.archetype === 'swarm';
+  const isCaster = enemy.archetype === 'mage' || enemy.archetype === 'support';
+  const isHorned = enemy.archetype === 'tank' || enemy.archetype === 'boss';
+  return <group>
+    <mesh castShadow position={[0, size * 0.25, 0]}><capsuleGeometry args={[size * 0.48, size * 0.9, 5, 10]} /><meshStandardMaterial color={dark} roughness={0.7} metalness={0.35} /></mesh>
+    <mesh castShadow position={[0, size * 1.02, 0]}><sphereGeometry args={[size * 0.48, 12, 10]} /><meshStandardMaterial color={enemy.color} emissive={enemy.color} emissiveIntensity={0.16} roughness={0.5} metalness={0.2} /></mesh>
+    <mesh position={[-size * 0.17, size * 1.06, size * 0.41]}><sphereGeometry args={[size * 0.075, 8, 8]} /><meshBasicMaterial color={palette.trim} /></mesh>
+    <mesh position={[size * 0.17, size * 1.06, size * 0.41]}><sphereGeometry args={[size * 0.075, 8, 8]} /><meshBasicMaterial color={palette.trim} /></mesh>
+    <mesh castShadow position={[-size * 0.62, size * 0.26, 0]} rotation={[0, 0, -0.45]}><capsuleGeometry args={[size * 0.12, size * 0.65, 4, 8]} /><meshStandardMaterial color={dark} roughness={0.72} /></mesh>
+    <mesh castShadow position={[size * 0.62, size * 0.26, 0]} rotation={[0, 0, 0.45]}><capsuleGeometry args={[size * 0.12, size * 0.65, 4, 8]} /><meshStandardMaterial color={dark} roughness={0.72} /></mesh>
+    {isHorned && <><mesh castShadow position={[-size * 0.3, size * 1.48, 0]} rotation={[0, 0, -0.28]}><coneGeometry args={[size * 0.15, size * 0.55, 7]} /><meshStandardMaterial color="#0B1020" metalness={0.55} roughness={0.3} /></mesh><mesh castShadow position={[size * 0.3, size * 1.48, 0]} rotation={[0, 0, 0.28]}><coneGeometry args={[size * 0.15, size * 0.55, 7]} /><meshStandardMaterial color="#0B1020" metalness={0.55} roughness={0.3} /></mesh><mesh position={[0, size * 0.35, size * 0.5]}><boxGeometry args={[size * 0.9, size * 0.12, size * 0.08]} /><meshBasicMaterial color={palette.trim} /></mesh></>}
+    {isWinged && <><mesh position={[-size * 0.72, size * 0.5, 0]} rotation={[0, 0.3, -0.35]}><planeGeometry args={[size * 0.85, size * 0.65]} /><meshBasicMaterial color={enemy.color} transparent opacity={0.68} side={THREE.DoubleSide} /></mesh><mesh position={[size * 0.72, size * 0.5, 0]} rotation={[0, -0.3, 0.35]}><planeGeometry args={[size * 0.85, size * 0.65]} /><meshBasicMaterial color={enemy.color} transparent opacity={0.68} side={THREE.DoubleSide} /></mesh></>}
+    {isCaster && <><mesh position={[size * 0.78, size * 0.65, 0]} rotation={[0, 0, -0.12]}><cylinderGeometry args={[size * 0.045, size * 0.045, size * 1.5, 8]} /><meshStandardMaterial color="#8B6A42" /></mesh><mesh position={[size * 0.78, size * 1.45, 0]}><sphereGeometry args={[size * 0.2, 10, 10]} /><meshBasicMaterial color={palette.trim} /></mesh><mesh position={[0, size * 1.55, 0]}><torusGeometry args={[size * 0.34, size * 0.035, 6, 14]} /><meshBasicMaterial color={palette.trim} transparent opacity={0.72} /></mesh></>}
+    {enemy.archetype === 'assassin' && <><mesh position={[0, size * 0.75, -size * 0.38]} rotation={[0.6, 0, 0]}><coneGeometry args={[size * 0.34, size * 0.95, 5]} /><meshStandardMaterial color="#101526" roughness={0.8} /></mesh><mesh position={[-size * 0.88, size * 0.25, size * 0.2]} rotation={[0, 0, -0.6]}><boxGeometry args={[size * 0.08, size * 0.8, size * 0.08]} /><meshStandardMaterial color="#B8C7D9" metalness={0.8} roughness={0.22} /></mesh><mesh position={[size * 0.88, size * 0.25, size * 0.2]} rotation={[0, 0, 0.6]}><boxGeometry args={[size * 0.08, size * 0.8, size * 0.08]} /><meshStandardMaterial color="#B8C7D9" metalness={0.8} roughness={0.22} /></mesh></>}
+  </group>;
+}
+
 function EnemyCharacter({ enemy, selected, onSelect, palette }: { enemy: DungeonWorldEnemy; selected: boolean; onSelect: () => void; palette: typeof FLOOR_PALETTES[number] }) {
   const ref = useRef<THREE.Group>(null);
   const world = toWorld(enemy.position);
-  const size = enemy.archetype === 'boss' ? 0.9 : enemy.archetype === 'tank' ? 0.58 : enemy.archetype === 'swarm' ? 0.32 : 0.46;
-  useFrame(({ clock }, delta) => { if (!ref.current) return; ref.current.position.y = size + Math.sin(clock.getElapsedTime() * (enemy.archetype === 'swarm' ? 5 : 2) + enemy.position.x) * 0.06; ref.current.rotation.y += delta * (enemy.archetype === 'assassin' ? 2.2 : 0.45); });
-  return <group ref={ref} position={[world[0], size, world[2]]} onClick={(event) => { event.stopPropagation(); onSelect(); }}><mesh castShadow>{enemy.archetype === 'tank' || enemy.archetype === 'boss' ? <dodecahedronGeometry args={[size, 1]} /> : enemy.archetype === 'mage' || enemy.archetype === 'support' ? <coneGeometry args={[size * 0.8, size * 1.9, 6]} /> : <icosahedronGeometry args={[size, 1]} />}<meshStandardMaterial color={enemy.color} emissive={enemy.color} emissiveIntensity={enemy.archetype === 'boss' ? 0.9 : 0.25} roughness={enemy.archetype === 'tank' ? 0.72 : 0.38} metalness={enemy.archetype === 'boss' ? 0.58 : 0.18} /></mesh><mesh position={[0, size * 0.45, size * 0.82]}><sphereGeometry args={[size * 0.15, 8, 8]} /><meshBasicMaterial color={palette.trim} /></mesh>{enemy.archetype === 'ranged' || enemy.archetype === 'mage' ? <mesh position={[0, size * 0.55, 0]}><torusGeometry args={[size * 0.95, 0.025, 6, 16]} /><meshBasicMaterial color={palette.trim} transparent opacity={0.68} /></mesh> : null}{selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -size + 0.03, 0]}><ringGeometry args={[size * 1.1, size * 1.24, 24]} /><meshBasicMaterial color="#FBBF24" transparent opacity={0.95} /></mesh>}<pointLight color={enemy.color} intensity={enemy.archetype === 'boss' ? 2.8 : 0.7} distance={enemy.archetype === 'boss' ? 4 : 2} /></group>;
+  const size = enemy.archetype === 'boss' ? 0.9 : enemy.archetype === 'tank' ? 0.68 : enemy.archetype === 'swarm' ? 0.42 : 0.54;
+  useFrame(({ clock }, delta) => { if (!ref.current) return; ref.current.position.y = Math.sin(clock.getElapsedTime() * (enemy.archetype === 'swarm' ? 5 : 2) + enemy.position.x) * 0.05; ref.current.rotation.y += delta * (enemy.archetype === 'assassin' ? 2.2 : 0.45); });
+  return <group ref={ref} position={[world[0], 0.05, world[2]]} onClick={(event) => { event.stopPropagation(); onSelect(); }}><MonsterVisual enemy={enemy} size={size} palette={palette} />{selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}><ringGeometry args={[size * 1.25, size * 1.4, 24]} /><meshBasicMaterial color="#FBBF24" transparent opacity={0.95} /></mesh>}<pointLight color={enemy.color} intensity={enemy.archetype === 'boss' ? 2.8 : 0.7} distance={enemy.archetype === 'boss' ? 4 : 2} /><Html center distanceFactor={8}><div className="rounded bg-black/75 px-1.5 py-0.5 text-[8px] font-mono uppercase text-white/70 whitespace-nowrap">{enemy.name}</div></Html></group>;
 }
 
 function CombatBurst({ pulse, palette }: { pulse: number; palette: typeof FLOOR_PALETTES[number] }) {
