@@ -64,13 +64,18 @@ interface Arena3DCanvasProps {
 
 // ─── 3D Visual Combat Effects ──────────────────────────────────────────────
 
+function growEffect(object: THREE.Object3D, factor: number, maxScale = 2.8) {
+  const next = Math.min(object.scale.x * factor, maxScale);
+  object.scale.setScalar(next);
+}
+
 function SlashArcEffect({ position, color, facing }: { position: [number, number, number]; color: string; facing: 'right' | 'left' }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((_, delta) => {
     if (meshRef.current) {
       meshRef.current.rotation.z += delta * (facing === 'right' ? -14 : 14);
-      meshRef.current.scale.multiplyScalar(1.04);
+      growEffect(meshRef.current, 1 + Math.min(delta * 2.4, 0.04));
     }
   });
 
@@ -843,6 +848,7 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
+    const frameDelta = Math.min(delta, 0.05);
 
     // Determine dynamic target X and Y positions based on combat action
     if (action === 'attack') {
@@ -871,12 +877,12 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
     groupRef.current.position.x = THREE.MathUtils.lerp(
       groupRef.current.position.x,
       targetXRef.current,
-      delta * 14
+      1 - Math.exp(-frameDelta * 14)
     );
     groupRef.current.position.y = THREE.MathUtils.lerp(
       groupRef.current.position.y,
       targetYRef.current,
-      delta * 12
+      1 - Math.exp(-frameDelta * 12)
     );
 
     // Dynamic rotation recoil, dodge lean, and attack surge
@@ -885,24 +891,24 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.55 : 0.55,
-        delta * 18
+        1 - Math.exp(-frameDelta * 18)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, delta * 14);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, 1 - Math.exp(-frameDelta * 14));
     } else if (action === 'hit') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.35 : 0.35,
-        delta * 16
+        1 - Math.exp(-frameDelta * 16)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 1 - Math.exp(-frameDelta * 10));
     } else if (action === 'dodge') {
       // Agile backward evasion arch
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.42 : 0.42,
-        delta * 18
+        1 - Math.exp(-frameDelta * 18)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, delta * 14);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, 1 - Math.exp(-frameDelta * 14));
     } else if (action === 'attack') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
@@ -911,18 +917,18 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
           : isRangedAttack
           ? (isPlayer ? -0.08 : 0.08)
           : isPlayer ? 0.2 : -0.2,
-        delta * (isUltimateAttack ? 16 : 12)
+        1 - Math.exp(-frameDelta * (isUltimateAttack ? 16 : 12))
       );
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
         isUltimateAttack ? -0.22 : isHeavyAttack ? 0.30 : isRangedAttack ? 0.04 : 0.15,
-        delta * 10
+        1 - Math.exp(-frameDelta * 10)
       );
     } else {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         0,
-        delta * 10
+        1 - Math.exp(-frameDelta * 10)
       );
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
     }
