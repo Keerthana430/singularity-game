@@ -823,9 +823,10 @@ interface DynamicFighterProps {
   action: CombatAction;
   side: 'player' | 'opponent';
   homeX: number;
+  attackId?: string;
 }
 
-function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
+function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighterProps) {
   const groupRef = useRef<THREE.Group>(null);
   const isPlayer = side === 'player';
   const bodyProps = useMemo(() => getBodyProps(config), [config]);
@@ -835,6 +836,10 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
   const standingY = -0.62 + (0.36 * bodyProps.torsoHScale + 0.58 * bodyProps.legScale) * bodyProps.totalScale;
   const targetXRef = useRef(homeX);
   const targetYRef = useRef(standingY);
+
+  const isRangedAttack = Boolean(attackId && /plasma|arrow|bolt|burst|surge/i.test(attackId));
+  const isHeavyAttack = Boolean(attackId && /hammer|smash|tremor|eruption|cataclysm/i.test(attackId));
+  const isUltimateAttack = Boolean(attackId && /overdrive|tempest|ascension|bloom|cataclysm/i.test(attackId));
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
@@ -901,10 +906,18 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
     } else if (action === 'attack') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? 0.2 : -0.2,
-        delta * 12
+        isHeavyAttack
+          ? (isPlayer ? 0.32 : -0.32)
+          : isRangedAttack
+          ? (isPlayer ? -0.08 : 0.08)
+          : isPlayer ? 0.2 : -0.2,
+        delta * (isUltimateAttack ? 16 : 12)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.15, delta * 10);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        isUltimateAttack ? -0.22 : isHeavyAttack ? 0.30 : isRangedAttack ? 0.04 : 0.15,
+        delta * 10
+      );
     } else {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
@@ -1153,6 +1166,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           action={playerAction}
           side="player"
           homeX={playerHomeX}
+          attackId={fxSource === 'player' ? attackId : undefined}
         />
 
         <DynamicFighter
@@ -1160,6 +1174,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           action={opponentAction}
           side="opponent"
           homeX={opponentHomeX}
+          attackId={fxSource === 'opponent' ? attackId : undefined}
         />
 
         {/* ─── 1. PHANTOM DODGE EVASION EFFECTS ─── */}
