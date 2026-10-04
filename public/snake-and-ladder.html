@@ -188,18 +188,23 @@ if(THREE.EffectComposer&&THREE.UnrealBloomPass){comp=new THREE.EffectComposer(re
 function resize(){const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h);if(comp)comp.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
 
-// Ambient & Environmental Illumination: natural nocturnal tones with zero specular glare
-scene.add(new THREE.HemisphereLight(0x7c92d0,0x141b38,.68));
-scene.add(new THREE.AmbientLight(0x26305a,.32));
-const baseMoonInt=.30;
+// Ambient & Environmental Illumination: faithful to reference aesthetic
+scene.add(new THREE.HemisphereLight(0x768ad0,0x121735,.72));
+scene.add(new THREE.AmbientLight(0x222a55,.32));
+const baseMoonInt=.38;
 const moonDir=new THREE.Vector3(-35,55,-25).normalize();
-const moon=new THREE.DirectionalLight(0x9db4ff,baseMoonInt);moon.position.set(-35,55,-25);scene.add(moon);
+const moon=new THREE.DirectionalLight(0xa5bcff,baseMoonInt);moon.position.set(-35,55,-25);scene.add(moon);
 
-// Balanced Tower Perimeter Accent Lights (positioned outside staircase for crisp, warm step illumination)
-const tL1=new THREE.PointLight(0x38bdf8,.55,38);tL1.position.set(15.5*Math.cos(.5),7,15.5*Math.sin(.5));scene.add(tL1);
+// Balanced Tower Perimeter Accent Lights
+const tL1=new THREE.PointLight(0x38bdf8,.52,38);tL1.position.set(15.5*Math.cos(.5),7,15.5*Math.sin(.5));scene.add(tL1);
 const tL2=new THREE.PointLight(0xfbbf24,.48,38);tL2.position.set(15.5*Math.cos(2.6),17,15.5*Math.sin(2.6));scene.add(tL2);
 const tL3=new THREE.PointLight(0xc084fc,.48,38);tL3.position.set(15.5*Math.cos(4.7),27,15.5*Math.sin(4.7));scene.add(tL3);
 const lFountain=new THREE.PointLight(0x38bdf8,.36,22);lFountain.position.set(-16,2.5,14);scene.add(lFountain);
+
+// Entrance Base Light Pool (radiant sky-blue glow at steps 1-4 as in reference)
+const entranceLight=new THREE.PointLight(0x38bdf8,1.1,16);entranceLight.position.set(0,.5,8.2);scene.add(entranceLight);
+const baseGlow=new THREE.Mesh(new THREE.CircleGeometry(4.5,32),new THREE.MeshBasicMaterial({color:0x38bdf8,transparent:true,opacity:.55,blending:THREE.AdditiveBlending}));
+baseGlow.rotation.x=-Math.PI/2;baseGlow.position.set(0,-.25,8.2);scene.add(baseGlow);
 
 // std: pure Lambertian diffuse material — mathematically zero view-dependent specular reflection, eliminating eye strain
 const std=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
@@ -210,47 +215,15 @@ function winTex(){return cv(128,256,(g,w,h)=>{g.fillStyle='#05070f';g.fillRect(0
 function bld(x,z,w,h,d,ry,acc){const t=winTex();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(Math.max(1,w/8|0),Math.max(1,h/8|0));const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),std(0x121734,{emissive:0xffffff,emissiveMap:t,emissiveIntensity:.72}));m.position.set(x,h/2-.3,z);m.rotation.y=ry;scene.add(m);const r=new THREE.Mesh(new THREE.BoxGeometry(w+.4,.35,d+.4),new THREE.MeshBasicMaterial({color:acc}));r.position.set(x,h-.1,z);r.rotation.y=ry;scene.add(r)}
 const ground=new THREE.Mesh(new THREE.CircleGeometry(170,64),std(0x0c112e));ground.rotation.x=-Math.PI/2;ground.position.y=-.32;scene.add(ground);
 
-// Procedural Collegiate Plaza Paving Texture
-const plazaTex=cv(512,512,(g,w,h)=>{
-  g.fillStyle='#141b42';g.fillRect(0,0,w,h);
-  const cx=w/2,cy=h/2;
-  [230,192,154,116,78,38].forEach((r,idx)=>{
-    g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);
-    g.strokeStyle=idx%2===0?'rgba(34,211,238,0.22)':'rgba(255,79,163,0.16)';
-    g.lineWidth=idx===0?4:2.5;g.stroke();
-  });
-  for(let a=0;a<Math.PI*2;a+=Math.PI/12){
-    g.beginPath();g.moveTo(cx+Math.cos(a)*40,cy+Math.sin(a)*40);g.lineTo(cx+Math.cos(a)*230,cy+Math.sin(a)*230);
-    g.strokeStyle='rgba(56,189,248,0.12)';g.lineWidth=1.5;g.stroke();
-  }
-  g.save();g.translate(cx,cy);
-  for(let k=0;k<8;k++){
-    g.rotate(Math.PI/4);
-    g.fillStyle=k%2===0?'rgba(34,211,238,0.26)':'rgba(255,79,163,0.18)';
-    g.beginPath();g.moveTo(0,0);g.lineTo(6,28);g.lineTo(0,54);g.lineTo(-6,28);g.closePath();g.fill();
-  }
-  g.restore();
-  const vig=g.createRadialGradient(cx,cy,180,cx,cy,254);
-  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(6,9,25,0.88)');
-  g.fillStyle=vig;g.fillRect(0,0,w,h);
-});
-const plaza=new THREE.Mesh(new THREE.CircleGeometry(21,64),new THREE.MeshLambertMaterial({map:plazaTex}));plaza.rotation.x=-Math.PI/2;plaza.position.y=-.3;scene.add(plaza);
+const plaza=new THREE.Mesh(new THREE.CircleGeometry(21,64),std(0x101535));plaza.rotation.x=-Math.PI/2;plaza.position.y=-.3;scene.add(plaza);
 [21,13.4].forEach((r,i)=>{const t=new THREE.Mesh(new THREE.TorusGeometry(r,.07,6,96),new THREE.MeshBasicMaterial({color:i?0xff4fa3:0x22d3ee}));t.rotation.x=Math.PI/2;t.position.y=-.2;scene.add(t)});
 
-// Central Spire Column (dark matte finish so the pink lines and steps pop with high contrast)
-const coreTex=cv(128,256,(g,w,h)=>{
-  g.fillStyle='#070a1a';g.fillRect(0,0,w,h);
-  for(let x=32;x<w;x+=32){
-    g.strokeStyle='rgba(255,255,255,0.035)';g.lineWidth=1;
-    g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();
-  }
-});
-coreTex.wrapS=coreTex.wrapT=THREE.RepeatWrapping;coreTex.repeat.set(4,3);
-const core=new THREE.Mesh(new THREE.CylinderGeometry(3,3.4,36,24),new THREE.MeshLambertMaterial({map:coreTex,color:0x080c20,emissive:0x030510,emissiveIntensity:.12}));core.position.y=15;scene.add(core);
+// Central Spire Column (smooth solid dark indigo cylinder with natural diffuse shading)
+const core=new THREE.Mesh(new THREE.CylinderGeometry(3,3.4,36,32),std(0x181c42,{emissive:0x070918,emissiveIntensity:.25}));core.position.y=15;scene.add(core);
 
-// Vibrant pink rings wrapping around the dark central pillar
-const ringMat=new THREE.MeshBasicMaterial({color:0xf472b6});
-for(let y=1;y<34;y+=2.6){const t=new THREE.Mesh(new THREE.TorusGeometry(3.15,.08,6,48),ringMat);t.rotation.x=Math.PI/2;t.position.y=y;scene.add(t)}
+// Vibrant neon pink rings wrapping around the central pillar
+const ringMat=new THREE.MeshBasicMaterial({color:0xff388e});
+for(let y=1;y<34;y+=2.6){const t=new THREE.Mesh(new THREE.TorusGeometry(3.15,.075,6,64),ringMat);t.rotation.x=Math.PI/2;t.position.y=y;scene.add(t)}
 
 // Towering Skyward Summit Beam (Shooting straight up into the heavens from Tile 100)
 const beamGroup=new THREE.Group();
@@ -440,15 +413,10 @@ if(i%2===1){
   const sp=new THREE.Mesh(new THREE.BoxGeometry(len,.22,.5),sideMat);
   sp.position.set((3+R-1.3)/2*Math.cos(a),p.y-.3,(3+R-1.3)/2*Math.sin(a));
   sp.rotation.y=-a;
-  const spokeTrim=new THREE.Mesh(new THREE.BoxGeometry(len+.08,.035,.08),new THREE.MeshBasicMaterial({
-    color:0xf472b6
-  }));
-  spokeTrim.position.set(0,.12,0);
-  sp.add(spokeTrim);
   scene.add(sp);
 }}
 // ---------- ladders (illuminated golden rails with warm local accent light) ----------
-const amber=new THREE.MeshLambertMaterial({color:0xffe480,emissive:0xf59e0b,emissiveIntensity:.88});
+const amber=new THREE.MeshLambertMaterial({color:0xffd54f,emissive:0xf59e0b,emissiveIntensity:.75});
 const ladderRailMat=new THREE.MeshBasicMaterial({color:0xfef08a,transparent:true,opacity:.85});
 const ladders=LD.map(([b,t])=>{
   const A=tp(b,1.9,.25),B=tp(t,1.9,.6);
