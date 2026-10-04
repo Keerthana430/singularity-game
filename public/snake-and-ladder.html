@@ -184,16 +184,16 @@ const scene=new THREE.Scene();scene.background=new THREE.Color(0x060919);scene.f
 const cam=new THREE.PerspectiveCamera(48,1,.1,700);cam.position.set(27,10,21);
 const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.minDistance=7;ctl.maxDistance=75;ctl.maxPolarAngle=1.52;ctl.target.set(0,6,0);
 let comp=null;
-if(THREE.EffectComposer&&THREE.UnrealBloomPass){comp=new THREE.EffectComposer(renderer);comp.addPass(new THREE.RenderPass(scene,cam));comp.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(512,512),.26,.45,.82))}
+if(THREE.EffectComposer&&THREE.UnrealBloomPass){comp=new THREE.EffectComposer(renderer);comp.addPass(new THREE.RenderPass(scene,cam));comp.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(512,512),.36,.48,.74))}
 function resize(){const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h);if(comp)comp.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
 
-// Ambient & Environmental Illumination: faithful to reference aesthetic
-scene.add(new THREE.HemisphereLight(0x768ad0,0x121735,.72));
-scene.add(new THREE.AmbientLight(0x222a55,.32));
-const baseMoonInt=.38;
+// Ambient & Environmental Illumination: faithful to reference aesthetic (Image 2)
+scene.add(new THREE.HemisphereLight(0x8298dc,0x141b3c,.76));
+scene.add(new THREE.AmbientLight(0x283262,.34));
+const baseMoonInt=.44;
 const moonDir=new THREE.Vector3(-35,55,-25).normalize();
-const moon=new THREE.DirectionalLight(0xa5bcff,baseMoonInt);moon.position.set(-35,55,-25);scene.add(moon);
+const moon=new THREE.DirectionalLight(0xb2c6ff,baseMoonInt);moon.position.set(-35,55,-25);scene.add(moon);
 
 // Balanced Tower Perimeter Accent Lights
 const tL1=new THREE.PointLight(0x38bdf8,.52,38);tL1.position.set(15.5*Math.cos(.5),7,15.5*Math.sin(.5));scene.add(tL1);
@@ -201,10 +201,10 @@ const tL2=new THREE.PointLight(0xfbbf24,.48,38);tL2.position.set(15.5*Math.cos(2
 const tL3=new THREE.PointLight(0xc084fc,.48,38);tL3.position.set(15.5*Math.cos(4.7),27,15.5*Math.sin(4.7));scene.add(tL3);
 const lFountain=new THREE.PointLight(0x38bdf8,.36,22);lFountain.position.set(-16,2.5,14);scene.add(lFountain);
 
-// Entrance Base Light Pool (radiant sky-blue glow at steps 1-4 as in reference)
-const entranceLight=new THREE.PointLight(0x38bdf8,1.1,16);entranceLight.position.set(0,.5,8.2);scene.add(entranceLight);
-const baseGlow=new THREE.Mesh(new THREE.CircleGeometry(4.5,32),new THREE.MeshBasicMaterial({color:0x38bdf8,transparent:true,opacity:.55,blending:THREE.AdditiveBlending}));
-baseGlow.rotation.x=-Math.PI/2;baseGlow.position.set(0,-.25,8.2);scene.add(baseGlow);
+// Entrance Base Light Pool (radiant sky-blue glow at steps 1-4 matching Image 2)
+const entranceLight=new THREE.PointLight(0x38bdf8,1.25,18);entranceLight.position.set(0,.8,8.5);scene.add(entranceLight);
+const baseGlow=new THREE.Mesh(new THREE.CircleGeometry(4.8,32),new THREE.MeshBasicMaterial({color:0x38bdf8,transparent:true,opacity:.60,blending:THREE.AdditiveBlending}));
+baseGlow.rotation.x=-Math.PI/2;baseGlow.position.set(0,-.25,8.5);scene.add(baseGlow);
 
 // std: pure Lambertian diffuse material — mathematically zero view-dependent specular reflection, eliminating eye strain
 const std=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
@@ -218,11 +218,11 @@ const ground=new THREE.Mesh(new THREE.CircleGeometry(170,64),std(0x0c112e));grou
 const plaza=new THREE.Mesh(new THREE.CircleGeometry(21,64),std(0x101535));plaza.rotation.x=-Math.PI/2;plaza.position.y=-.3;scene.add(plaza);
 [21,13.4].forEach((r,i)=>{const t=new THREE.Mesh(new THREE.TorusGeometry(r,.07,6,96),new THREE.MeshBasicMaterial({color:i?0xff4fa3:0x22d3ee}));t.rotation.x=Math.PI/2;t.position.y=-.2;scene.add(t)});
 
-// Central Spire Column (smooth solid dark indigo cylinder with natural diffuse shading)
-const core=new THREE.Mesh(new THREE.CylinderGeometry(3,3.4,36,32),std(0x181c42,{emissive:0x070918,emissiveIntensity:.25}));core.position.y=15;scene.add(core);
+// Central Spire Column (smooth solid dark royal indigo cylinder with natural diffuse shading from Image 2)
+const core=new THREE.Mesh(new THREE.CylinderGeometry(3,3.4,36,32),std(0x1e2456,{emissive:0x090d26,emissiveIntensity:.28}));core.position.y=15;scene.add(core);
 
 // Vibrant neon pink rings wrapping around the central pillar
-const ringMat=new THREE.MeshBasicMaterial({color:0xff388e});
+const ringMat=new THREE.MeshBasicMaterial({color:0xff3b94});
 for(let y=1;y<34;y+=2.6){const t=new THREE.Mesh(new THREE.TorusGeometry(3.15,.075,6,64),ringMat);t.rotation.x=Math.PI/2;t.position.y=y;scene.add(t)}
 
 // Towering Skyward Summit Beam (Shooting straight up into the heavens from Tile 100)
@@ -357,9 +357,9 @@ const start=()=>{
 const heads=new Set(SN.map(s=>s[0])),bases=new Set(LD.map(l=>l[0]));
 const tails=new Set(SN.map(s=>s[1])),tops=new Set(LD.map(l=>l[1]));
 const summitCrowns=[];
-const sideMat=std(0x0e1430);
+const sideMat=std(0x13193c);
 function faceTex(i){return cv(128,128,(g,w,h)=>{
-  let bg=(i%2)?'#1c2456':'#161e48',bd=(i%2)?'#384688':'#2e3a74';
+  let bg=(i%2)?'#222a5e':'#1a2050',bd=(i%2)?'#3e4e94':'#323e7a';
   if(heads.has(i)){bd='#c084fc';bg='#281c48'}
   else if(bases.has(i)){bd='#f59e0b';bg='#362416'}
   else if(tops.has(i)){bd='#fde68a';bg='#22283e'}
@@ -367,7 +367,7 @@ function faceTex(i){return cv(128,128,(g,w,h)=>{
   if(i===N){bg='#b45309';bd='#fef08a'}
   g.fillStyle=bg;g.fillRect(0,0,w,h);
   g.lineWidth=8;g.strokeStyle=bd;g.strokeRect(5,5,w-10,h-10);
-  g.fillStyle=(i===N)?'#0b0d1a':'#f8fafc';
+  g.fillStyle=(i===N)?'#0b0d1a':'#ffffff';
   g.font='700 '+(i>99?46:58)+'px "Chakra Petch",sans-serif';
   g.textAlign='center';g.textBaseline='middle';
   g.fillText(i,w/2,h/2+3);
@@ -379,7 +379,7 @@ const top=new THREE.Mesh(new THREE.PlaneGeometry(2.3,2.45),new THREE.MeshLambert
 let edgeCol=new THREE.Color().setHSL(.5+i/N*.37,.95,.6);
 if(bases.has(i)){
   edgeCol=new THREE.Color(0xf59e0b);
-  const lPad=new THREE.Mesh(new THREE.BoxGeometry(2.5,.06,2.65),new THREE.MeshBasicMaterial({color:0xf59e0b,transparent:true,opacity:.55,blending:THREE.AdditiveBlending}));
+  const lPad=new THREE.Mesh(new THREE.BoxGeometry(2.5,.06,2.65),new THREE.MeshBasicMaterial({color:0xf59e0b,transparent:true,opacity:.65,blending:THREE.AdditiveBlending}));
   lPad.position.y=-.26;t.add(lPad);
 }else if(heads.has(i)){
   edgeCol=new THREE.Color(0xc084fc);
@@ -1045,7 +1045,7 @@ const glareDot=Math.max(0,-_lookV.dot(moonDir));
 moon.intensity=baseMoonInt*(1.0-0.45*Math.pow(glareDot,1.8));
 if(comp&&comp.passes&&comp.passes[1]){
   const pitchFactor=Math.abs(_lookV.y);
-  comp.passes[1].strength=0.20+0.08*pitchFactor;
+  comp.passes[1].strength=0.32+0.10*pitchFactor;
 }
 
 if(act&&$('start').hidden){tgt.set(act.c.g.position.x*.4,act.c.g.position.y+1.2,act.c.g.position.z*.4)}
