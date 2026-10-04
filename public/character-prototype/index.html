@@ -575,58 +575,40 @@
     const cos = Math.cos;
     const PI2 = Math.PI * 2;
 
-    // ── MOVEMENT PHYSICS ──
-    // Build input direction from WASD (camera-relative)
-    let inputX = 0, inputZ = 0;
-    if (keys.w) inputZ += 1;
-    if (keys.s) inputZ -= 1;
-    if (keys.a) inputX -= 1;
-    if (keys.d) inputX += 1;
-    const hasInput = inputX !== 0 || inputZ !== 0;
+    // ── MOVEMENT PHYSICS (Character-Centric "Tank" Controls) ──
+    // A/D rotate the character
+    if (keys.a) facingAngle += MOVE.turnSpeed * dt;
+    if (keys.d) facingAngle -= MOVE.turnSpeed * dt;
 
-    // Get camera forward/right projected onto XZ plane
-    const camForward = new THREE.Vector3();
-    cam.getWorldDirection(camForward);
-    camForward.y = 0;
-    camForward.normalize();
-    const camRight = new THREE.Vector3().crossVectors(camForward, new THREE.Vector3(0, -1, 0)).normalize();
+    // W/S move forward/backward along the facing direction
+    let inputSpeed = 0;
+    if (keys.w) inputSpeed += 1;
+    if (keys.s) inputSpeed -= 1;
 
-    if (hasInput) {
-      // Normalize diagonal input
-      const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
-      inputX /= len;
-      inputZ /= len;
+    const targetSpeed = inputSpeed !== 0 ? (keys.shift ? MOVE.runSpeed : MOVE.walkSpeed) * inputSpeed : 0;
 
-      // Compute world-space desired direction (camera-relative)
-      const desiredDir = new THREE.Vector3();
-      desiredDir.addScaledVector(camRight, inputX);
-      desiredDir.addScaledVector(camForward, inputZ);
-      desiredDir.normalize();
-
-      // Target speed
-      const targetSpeed = keys.shift ? MOVE.runSpeed : MOVE.walkSpeed;
-
-      // Accelerate toward target speed
-      speed = Math.min(speed + MOVE.accel * dt, targetSpeed);
-
-      // Set velocity
-      velocity.copy(desiredDir).multiplyScalar(speed);
-
-      // Compute facing angle from desired direction
-      const targetAngle = Math.atan2(desiredDir.x, desiredDir.z);
-
-      // Smooth rotation toward facing direction
-      let angleDiff = targetAngle - facingAngle;
-      // Normalize to [-PI, PI]
-      while (angleDiff > Math.PI) angleDiff -= PI2;
-      while (angleDiff < -Math.PI) angleDiff += PI2;
-      facingAngle += angleDiff * Math.min(1, MOVE.turnSpeed * dt);
-
+    // Accelerate / Decelerate
+    if (inputSpeed !== 0) {
+      if (inputSpeed > 0 && speed < targetSpeed) {
+        speed = Math.min(speed + MOVE.accel * dt, targetSpeed);
+      } else if (inputSpeed < 0 && speed > targetSpeed) {
+        speed = Math.max(speed - MOVE.accel * dt, targetSpeed);
+      } else {
+        // If moving opposite to input, decelerate faster
+        speed += (targetSpeed > speed ? MOVE.accel : -MOVE.accel) * dt;
+      }
     } else {
-      // Decelerate
-      speed = Math.max(speed - MOVE.decel * dt, 0);
-      velocity.multiplyScalar(speed > 0.01 ? (speed / (speed + MOVE.decel * dt)) : 0);
+      // Decelerate to zero
+      if (speed > 0) speed = Math.max(speed - MOVE.decel * dt, 0);
+      else if (speed < 0) speed = Math.min(speed + MOVE.decel * dt, 0);
     }
+
+    // Apply facing rotation
+    charGroup.rotation.y = facingAngle;
+
+    // Calculate velocity based on facing angle
+    velocity.x = Math.sin(facingAngle) * speed;
+    velocity.z = Math.cos(facingAngle) * speed;
 
     // Apply velocity to character position
     charGroup.position.x += velocity.x * dt;
@@ -641,29 +623,25 @@
       speed *= 0.5; // bounce dampening
     }
 
-    // Apply facing rotation
-    charGroup.rotation.y = facingAngle;
-
-    // Compute movement blend (0 = idle, 1 = full walk/run)
-    const targetBlend = speed > 0.1 ? Math.min(speed / MOVE.walkSpeed, 1.5) : 0;
-    moveBlend += (targetBlend - moveBlend) * Math.min(1, 8 * dt); // smooth blend
-    const isRunning = speed > MOVE.walkSpeed * 1.1;
+    // Compute movement blend for animation
+    const absSpeed = Math.abs(speed);
+    const targetBlend = absSpeed > 0.1 ? Math.min(absSpeed / MOVE.walkSpeed, 1.5) : 0;
+    moveBlend += (targetBlend - moveBlend) * Math.min(1, 8 * dt);
+    const isRunning = absSpeed > MOVE.walkSpeed * 1.1;
     const runFactor = isRunning ? WALK.runMultiplier : 1.0;
 
-    // Advance walk cycle phase based on actual speed
+    // Reverse walk animation if walking backwards
     walkCyclePhase += speed * WALK.cycleSpeed * dt;
 
     // ── ANIMATION BLENDING ──
-    // idleWeight: 1 when standing, 0 when fully moving
-    // walkWeight: 0 when standing, 1 when fully moving
     const walkWeight = Math.min(moveBlend, 1);
     const idleWeight = 1 - walkWeight;
 
-    // ── IDLE ANIMATION (weighted) ──
+    // ── IDLE ANIMATION ──
     const breathPhase = sin(t * PI2 * IDLE.breathFreq);
 
-    // ── WALK ANIMATION (weighted) ──
-    const wc = walkCyclePhase; // walk cycle shorthand
+    // ── WALK ANIMATION ──
+    const wc = walkCyclePhase;
     const legSwing = sin(wc) * WALK.legSwing * runFactor;
     const armSwing = sin(wc) * WALK.armSwing * runFactor;
     const hipBob = Math.abs(sin(wc * 2)) * WALK.hipBob * runFactor;
@@ -675,58 +653,48 @@
     const footOpp = Math.max(0, -sin(wc)) * WALK.footLift * runFactor;
 
     // ── APPLY BLENDED POSE ──
-
-    // Chest breathing + forward lean
     chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp * idleWeight;
     chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3 * idleWeight;
-    chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor; // lean forward when moving
-    chestBone.rotation.y = walkWeight * chestTwist; // torso counter-twist
+    chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor * Math.sign(speed || 1); 
+    chestBone.rotation.y = walkWeight * chestTwist;
 
-    // Hips: bob + sway
     hipsBone.position.y = baseHipsY
-      + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight  // idle bob
-      + hipBob * walkWeight;                                             // walk bob
+      + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight 
+      + hipBob * walkWeight;                                             
     hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp * idleWeight
       + hipSway * walkWeight;
     hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp * idleWeight;
 
-    // Head: stabilize against body motion
     headBone.position.y = 0.12
       + sin(t * PI2 * IDLE.headBobFreq) * IDLE.headBobAmp * idleWeight;
     headBone.rotation.z = sin(t * PI2 * IDLE.headTiltFreq) * IDLE.headTiltAmp * idleWeight
-      - walkWeight * chestTwist * 0.5; // counter chest twist
+      - walkWeight * chestTwist * 0.5; 
     headBone.rotation.x = sin(t * PI2 * 0.4) * 0.01 * idleWeight
-      - walkWeight * WALK.headStabilize; // slight nod stabilization
+      - walkWeight * WALK.headStabilize; 
 
-    // Shoulders
     lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
     rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
 
-    // Arms: idle pendulum + walk counter-swing
     lUpperArmBone.rotation.x = sin(t * PI2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight
-      + armSwing * walkWeight;   // counter-swing: left arm goes forward when right leg goes forward
+      + armSwing * walkWeight;   
     rUpperArmBone.rotation.x = -sin(t * PI2 * IDLE.armSwingFreq + 0.5) * IDLE.armSwingAmp * idleWeight
-      - armSwing * walkWeight;   // opposite swing
+      - armSwing * walkWeight;   
 
-    // Lower arms: slight bend + walk bounce
     lLowerArmBone.rotation.x = (-0.12 + sin(t * PI2 * 0.8) * 0.02) * idleWeight
       + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
     rLowerArmBone.rotation.x = (-0.12 - sin(t * PI2 * 0.8 + 0.5) * 0.02) * idleWeight
       + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
 
-    // Legs: idle micro-flex + walk cycle
     lUpperLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      + legSwing * walkWeight;     // left leg swing
+      + legSwing * walkWeight;     
     rUpperLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      - legSwing * walkWeight;     // right leg (opposite)
+      - legSwing * walkWeight;     
 
-    // Knees: flex during swing phase
     lLowerLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
       + kneeBend * walkWeight;
     rLowerLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
       + kneeOpp * walkWeight;
 
-    // Feet: lift during swing
     lFootBone.rotation.x = footLift * walkWeight * 0.3;
     rFootBone.rotation.x = footOpp * walkWeight * 0.3;
 
@@ -750,25 +718,37 @@
     ring.material.opacity = 0.35 + sin(t * 1.5) * 0.15;
     innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
 
-    // ── THIRD-PERSON CAMERA FOLLOW ──
-    // Smoothly follow the character's position.
-    // We must move BOTH the camera and the target by the same amount so the camera physically travels.
-    _camLookAt.set(
-      charGroup.position.x,
-      charGroup.position.y + 1.2, // Look at chest height
-      charGroup.position.z
+    // ── THIRD-PERSON CHASE CAMERA ──
+    // The camera is rigidly attached to the character's local coordinates.
+    // Offset is (0, Y, -Z) in the character's local space.
+    const charPos = charGroup.position;
+    
+    // Compute camera position offset based on character's rotation
+    const cosF = cos(facingAngle);
+    const sinF = sin(facingAngle);
+    
+    // We want the camera BEHIND the character. Because Z goes forward (sin/cos mapping above),
+    // we subtract from Z.
+    const offsetX = -CAM_FOLLOW.offset.z * sinF;
+    const offsetZ = -CAM_FOLLOW.offset.z * cosF;
+    
+    _camTarget.set(
+      charPos.x + offsetX,
+      charPos.y + CAM_FOLLOW.offset.y,
+      charPos.z + offsetZ
     );
     
-    // Calculate movement delta with smoothing
-    const panDelta = new THREE.Vector3().subVectors(_camLookAt, ctl.target);
-    panDelta.multiplyScalar(CAM_FOLLOW.smoothLook);
+    _camLookAt.set(
+      charPos.x,
+      charPos.y + CAM_FOLLOW.lookOffset.y,
+      charPos.z
+    );
 
-    // Apply the translation to both target and camera
-    ctl.target.add(panDelta);
-    cam.position.add(panDelta);
-
-    // ── Orbit controls (handles free look & auto-follows the target) ──
-    ctl.update();
+    // Smoothly interpolate camera position and look target
+    cam.position.lerp(_camTarget, CAM_FOLLOW.smoothPos);
+    
+    // Make camera look directly at character
+    cam.lookAt(_camLookAt);
 
     // ── Render ──
     renderer.render(scene, cam);
