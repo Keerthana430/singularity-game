@@ -87,10 +87,12 @@ describe('Rules Engine Core', () => {
       }
       
       state = getInitialState(seed);
+      // Place player just before ladder at 12 (which goes to 29)
+      state.players[0].position = 11;
       const { newState, events } = gameReducer(state, { type: 'ROLL_DICE', playerId: state.players[0].id });
       
       const p1After = newState.players[0];
-      expect(p1After.position).toBe(38);
+      expect(p1After.position).toBe(29);
       
       // Check events
       expect(events.some(e => e.type === 'LANDED_ON_LADDER')).toBe(true);

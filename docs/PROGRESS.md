@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign)
-- **Current stack**: Next.js 16 / React 19 / React Three Fiber v9 / Three.js / Zustand / Tailwind CSS v4 / TypeScript 5 / Vitest / GSAP / Rapier / @react-three/postprocessing / Howler.js
-- **How to run**: npm install && npm run dev (frontend on :3000); test prototype at /prototype
+- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Lighting & Anti-Glare Overhaul
+- **Current stack**: Next.js 16 / React 19 / Three.js / Procedural Shading & Additive Lighting / Canvas Textures / Web Audio API
+- **How to run**: npm run dev (accessible at http://localhost:3000/snake-and-ladder.html and /prototype)
 - **How to test**: npm run test
 - **Open risks**: None.
-- **Next phase**: Ready for next steps (e.g., character assets, deployment).
+- **Next phase**: Ready for user feedback.
 
 ---
 
@@ -289,3 +289,25 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
  -   * * D e f e r r e d * * :   N o n e . 
   
  
+
+---
+
+## Lighting, Environmental Atmosphere, and Anti-Glare Overhaul (2026-10-04)
+- **Built**:
+  - Pure Lambertian Diffuse Shading (MeshLambertMaterial) across tiles, sides, ladders, snakes, characters, dice, and environment to mathematically eliminate view-dependent specular reflection and flashes.
+  - Active Anti-Glare Engine in frame(): continuously tracks camera forward vector relative to light direction and grazing elevation, dynamically attenuating directional light intensity and bloom pass strength to keep lighting soft, comfortable, and glare-free from all angles.
+  - Procedural Collegiate Plaza Paving: radial stone pavers, concentric cyan/pink collegiate rings, and campus emblem.
+  - 14 Lamppost Light Pools: warm amber and sky cyan additive radial light pools on the ground beneath every campus streetlight.
+  - Central Tower Neon Traces: luminous energy conduit textures and circuit lines along the central column.
+  - 70 Floating Night Fireflies / Motes: drifting luminous ambient particles pulsing gently across the plaza and spire.
+  - Active Player Spotlight Halo: soft localized turn glow tracking the moving character.
+  - 3 Balanced Spire Perimeter Accent Lights: positioned outside staircase to gently bathe step faces in crisp, clear nocturnal lighting.
+- **Files created/changed**:
+  - public/snake-and-ladder.html
+  - docs/PROGRESS.md
+- **Exit criteria**:
+  - All surface reflections eliminated / reduced upon viewing angle changes - PASS (verified via browser orbit inspection screenshots).
+  - Scene vitality & lighting improved without blinding or overexposing - PASS (warm street pools, collegiate paving, glowing spire, fireflies).
+  - Camera tracking and smooth transitions preserved - PASS (zero changes to cam, ctl, or tracking formulas).
+- **Known issues**: None.
+- **Deferred**: None.
