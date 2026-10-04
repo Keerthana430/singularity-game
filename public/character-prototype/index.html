@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Character Prototype — Phase 1: Idle</title>
+<style>
+  :root { color-scheme: dark }
+  * { margin: 0; padding: 0; box-sizing: border-box }
+  html, body { height: 100%; overflow: hidden; background: #050816; font-family: 'Segoe UI', system-ui, sans-serif }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none }
+
+  /* HUD overlay */
+  #hud {
+    position: fixed; top: 16px; left: 16px; z-index: 10;
+    background: rgba(8,12,32,0.82); border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 12px; padding: 14px 18px; backdrop-filter: blur(8px);
+    color: #c8d6f0; font-size: 13px; line-height: 1.6;
+    pointer-events: none; max-width: 280px;
+  }
+  #hud h2 { font-size: 15px; color: #22d3ee; margin-bottom: 6px; letter-spacing: .04em }
+  #hud .phase { font-size: 11px; color: #ff4fa3; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px }
+  #hud kbd { background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.3); border-radius: 4px; padding: 1px 5px; font-size: 11px; color: #22d3ee }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="phase">Phase 1</div>
+  <h2>Idle Breathing Stance</h2>
+  <div>Drag to orbit · Scroll to zoom</div>
+  <div style="margin-top:8px;font-size:11px;color:#9aa3cf">
+    Character: Procedural Humanoid<br>
+    Animation: Idle Breathing Loop
+  </div>
+</div>
+
+<script src="/lib/three/three.min.js"></script>
+<script src="/lib/three/OrbitControls.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ─── RENDERER ───────────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  document.body.appendChild(renderer.domElement);
+
+  // ─── SCENE ──────────────────────────────────────────────────
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x050816);
+  scene.fog = new THREE.FogExp2(0x050816, 0.018);
+
+  // ─── CAMERA ─────────────────────────────────────────────────
+  const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  cam.position.set(3, 2.8, 5);
+
+  const ctl = new THREE.OrbitControls(cam, renderer.domElement);
+  ctl.enableDamping = true;
+  ctl.dampingFactor = 0.08;
+  ctl.target.set(0, 1.2, 0);
+  ctl.minDistance = 2;
+  ctl.maxDistance = 15;
+  ctl.maxPolarAngle = Math.PI * 0.48;
+
+  // ─── LIGHTING ───────────────────────────────────────────────
+  // Hemisphere: sky + ground bounce
+  scene.add(new THREE.HemisphereLight(0x4466aa, 0x112233, 0.35));
+
+  // Main directional (moonlight)
+  const dirLight = new THREE.DirectionalLight(0x8899cc, 0.9);
+  dirLight.position.set(-5, 12, 8);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(1024, 1024);
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far = 30;
+  dirLight.shadow.camera.left = -6;
+  dirLight.shadow.camera.right = 6;
+  dirLight.shadow.camera.top = 6;
+  dirLight.shadow.camera.bottom = -2;
+  dirLight.shadow.bias = -0.001;
+  scene.add(dirLight);
+
+  // Cyan rim light (right side)
+  const cyanLight = new THREE.PointLight(0x22d3ee, 1.2, 18);
+  cyanLight.position.set(3, 2, -2);
+  scene.add(cyanLight);
+
+  // Magenta rim light (left side)
+  const magLight = new THREE.PointLight(0xff4fa3, 0.9, 18);
+  magLight.position.set(-3, 2.5, -1);
+  scene.add(magLight);
+
+  // Warm top accent
+  const topLight = new THREE.PointLight(0xfbbf24, 0.3, 12);
+  topLight.position.set(0, 5, 0);
+  scene.add(topLight);
+
+  // ─── ARENA FLOOR ────────────────────────────────────────────
+  // Main platform
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x0c1228, roughness: 0.85, metalness: 0.15
+  });
+  const floor = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.15, 64), floorMat);
+  floor.position.y = -0.075;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Glowing edge ring
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0.5,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(6, 0.04, 8, 96), ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.01;
+  scene.add(ring);
+
+  // Inner ring (magenta)
+  const innerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(4, 0.03, 8, 64),
+    new THREE.MeshBasicMaterial({ color: 0xff4fa3, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  innerRing.rotation.x = -Math.PI / 2;
+  innerRing.position.y = 0.01;
+  scene.add(innerRing);
+
+  // Floor glow circle
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0.06,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(5.5, 48), glowMat);
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = 0.02;
+  scene.add(glow);
+
+  // Grid lines on the floor
+  (function() {
+    const gridHelper = new THREE.GridHelper(12, 24, 0x1a2855, 0x111a33);
+    gridHelper.position.y = 0.01;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.3;
+    scene.add(gridHelper);
+  })();
+
+
+  // ─── PROCEDURAL CHARACTER ───────────────────────────────────
+  // All body parts are built from primitives and attached to a bone hierarchy.
+  // This gives us full programmatic control for animation.
+
+  const charGroup = new THREE.Group();
+  charGroup.position.y = 0;
+  scene.add(charGroup);
+
+  // Material palette
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0x1a1f3d, roughness: 0.55, metalness: 0.3,
+    emissive: 0x0a0e28, emissiveIntensity: 0.3
+  });
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: 0x22d3ee, roughness: 0.3, metalness: 0.6,
+    emissive: 0x22d3ee, emissiveIntensity: 0.5
+  });
+  const darkMat = new THREE.MeshStandardMaterial({
+    color: 0x0e1225, roughness: 0.7, metalness: 0.2
+  });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+  const visorMat = new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0.7
+  });
+
+  // Helper: create a capsule-like shape (cylinder + 2 spheres)
+  function capsule(radius, height, mat) {
+    const g = new THREE.Group();
+    const cylH = Math.max(0, height - radius * 2);
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, cylH, 12), mat);
+    g.add(cyl);
+    const topSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), mat);
+    topSph.position.y = cylH / 2;
+    g.add(topSph);
+    const botSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), mat);
+    botSph.position.y = -cylH / 2;
+    g.add(botSph);
+    return g;
+  }
+
+  // Helper: rounded box
+  function roundedBox(w, h, d, r, mat) {
+    // Use a regular box with beveled edges simulated by scaling
+    const geom = new THREE.BoxGeometry(w, h, d, 2, 2, 2);
+    return new THREE.Mesh(geom, mat);
+  }
+
+  // ── BONE HIERARCHY ──
+  // We use Three.js Groups as "bones" for easy hierarchical animation
+
+  // Root (invisible, at foot level)
+  const rootBone = new THREE.Group();
+  rootBone.name = 'root';
+  charGroup.add(rootBone);
+
+  // Hips
+  const hipsBone = new THREE.Group();
+  hipsBone.name = 'hips';
+  hipsBone.position.y = 0.95;
+  rootBone.add(hipsBone);
+
+  const hipsMesh = roundedBox(0.42, 0.18, 0.25, 0.04, darkMat);
+  hipsBone.add(hipsMesh);
+
+  // Spine
+  const spineBone = new THREE.Group();
+  spineBone.name = 'spine';
+  spineBone.position.y = 0.12;
+  hipsBone.add(spineBone);
+
+  // Chest
+  const chestBone = new THREE.Group();
+  chestBone.name = 'chest';
+  chestBone.position.y = 0.28;
+  spineBone.add(chestBone);
+
+  const chestMesh = roundedBox(0.48, 0.42, 0.28, 0.05, bodyMat);
+  chestMesh.position.y = 0.05;
+  chestBone.add(chestMesh);
+
+  // Accent stripe on chest
+  const chestStripe = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.02, 0.29),
+    accentMat
+  );
+  chestStripe.position.y = 0.1;
+  chestBone.add(chestStripe);
+
+  // Neck
+  const neckBone = new THREE.Group();
+  neckBone.name = 'neck';
+  neckBone.position.y = 0.3;
+  chestBone.add(neckBone);
+
+  const neckMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.08, 0.1, 8),
+    bodyMat
+  );
+  neckBone.add(neckMesh);
+
+  // Head
+  const headBone = new THREE.Group();
+  headBone.name = 'head';
+  headBone.position.y = 0.12;
+  neckBone.add(headBone);
+
+  // Head shape: slightly elongated sphere
+  const headMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 16, 12),
+    bodyMat
+  );
+  headMesh.scale.set(1, 1.15, 1);
+  headBone.add(headMesh);
+
+  // Visor / eye band
+  const visorGeom = new THREE.BoxGeometry(0.28, 0.04, 0.18);
+  const visor = new THREE.Mesh(visorGeom, visorMat);
+  visor.position.set(0, 0.02, 0.06);
+  headBone.add(visor);
+
+  // Eyes (two glowing dots)
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+  eyeL.position.set(-0.06, 0.02, 0.16);
+  headBone.add(eyeL);
+
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+  eyeR.position.set(0.06, 0.02, 0.16);
+  headBone.add(eyeR);
+
+  // ── ARMS ──
+
+  // Left Shoulder
+  const lShoulderBone = new THREE.Group();
+  lShoulderBone.name = 'lShoulder';
+  lShoulderBone.position.set(-0.3, 0.22, 0);
+  chestBone.add(lShoulderBone);
+
+  // Shoulder pad
+  const lShoulderPad = new THREE.Mesh(
+    new THREE.SphereGeometry(0.07, 8, 6),
+    accentMat
+  );
+  lShoulderBone.add(lShoulderPad);
+
+  // Left Upper Arm
+  const lUpperArmBone = new THREE.Group();
+  lUpperArmBone.name = 'lUpperArm';
+  lUpperArmBone.position.y = -0.04;
+  lShoulderBone.add(lUpperArmBone);
+
+  const lUpperArm = capsule(0.055, 0.28, bodyMat);
+  lUpperArm.position.y = -0.12;
+  lUpperArmBone.add(lUpperArm);
+
+  // Left Elbow / Lower Arm
+  const lLowerArmBone = new THREE.Group();
+  lLowerArmBone.name = 'lLowerArm';
+  lLowerArmBone.position.y = -0.28;
+  lUpperArmBone.add(lLowerArmBone);
+
+  const lLowerArm = capsule(0.048, 0.26, darkMat);
+  lLowerArm.position.y = -0.11;
+  lLowerArmBone.add(lLowerArm);
+
+  // Left Hand
+  const lHandBone = new THREE.Group();
+  lHandBone.name = 'lHand';
+  lHandBone.position.y = -0.26;
+  lLowerArmBone.add(lHandBone);
+
+  const lHand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.08, 0.05),
+    accentMat
+  );
+  lHandBone.add(lHand);
+
+  // Right Shoulder
+  const rShoulderBone = new THREE.Group();
+  rShoulderBone.name = 'rShoulder';
+  rShoulderBone.position.set(0.3, 0.22, 0);
+  chestBone.add(rShoulderBone);
+
+  const rShoulderPad = new THREE.Mesh(
+    new THREE.SphereGeometry(0.07, 8, 6),
+    accentMat
+  );
+  rShoulderBone.add(rShoulderPad);
+
+  // Right Upper Arm
+  const rUpperArmBone = new THREE.Group();
+  rUpperArmBone.name = 'rUpperArm';
+  rUpperArmBone.position.y = -0.04;
+  rShoulderBone.add(rUpperArmBone);
+
+  const rUpperArm = capsule(0.055, 0.28, bodyMat);
+  rUpperArm.position.y = -0.12;
+  rUpperArmBone.add(rUpperArm);
+
+  // Right Lower Arm
+  const rLowerArmBone = new THREE.Group();
+  rLowerArmBone.name = 'rLowerArm';
+  rLowerArmBone.position.y = -0.28;
+  rUpperArmBone.add(rLowerArmBone);
+
+  const rLowerArm = capsule(0.048, 0.26, darkMat);
+  rLowerArm.position.y = -0.11;
+  rLowerArmBone.add(rLowerArm);
+
+  // Right Hand
+  const rHandBone = new THREE.Group();
+  rHandBone.name = 'rHand';
+  rHandBone.position.y = -0.26;
+  rLowerArmBone.add(rHandBone);
+
+  const rHand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.08, 0.05),
+    accentMat
+  );
+  rHandBone.add(rHand);
+
+  // ── LEGS ──
+
+  // Left Upper Leg
+  const lUpperLegBone = new THREE.Group();
+  lUpperLegBone.name = 'lUpperLeg';
+  lUpperLegBone.position.set(-0.12, -0.08, 0);
+  hipsBone.add(lUpperLegBone);
+
+  const lUpperLeg = capsule(0.065, 0.38, bodyMat);
+  lUpperLeg.position.y = -0.18;
+  lUpperLegBone.add(lUpperLeg);
+
+  // Left Lower Leg
+  const lLowerLegBone = new THREE.Group();
+  lLowerLegBone.name = 'lLowerLeg';
+  lLowerLegBone.position.y = -0.4;
+  lUpperLegBone.add(lLowerLegBone);
+
+  const lLowerLeg = capsule(0.055, 0.36, darkMat);
+  lLowerLeg.position.y = -0.16;
+  lLowerLegBone.add(lLowerLeg);
+
+  // Left Foot
+  const lFootBone = new THREE.Group();
+  lFootBone.name = 'lFoot';
+  lFootBone.position.y = -0.38;
+  lLowerLegBone.add(lFootBone);
+
+  const lFoot = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.05, 0.16),
+    accentMat
+  );
+  lFoot.position.set(0, -0.02, 0.03);
+  lFootBone.add(lFoot);
+
+  // Right Upper Leg
+  const rUpperLegBone = new THREE.Group();
+  rUpperLegBone.name = 'rUpperLeg';
+  rUpperLegBone.position.set(0.12, -0.08, 0);
+  hipsBone.add(rUpperLegBone);
+
+  const rUpperLeg = capsule(0.065, 0.38, bodyMat);
+  rUpperLeg.position.y = -0.18;
+  rUpperLegBone.add(rUpperLeg);
+
+  // Right Lower Leg
+  const rLowerLegBone = new THREE.Group();
+  rLowerLegBone.name = 'rLowerLeg';
+  rLowerLegBone.position.y = -0.4;
+  rUpperLegBone.add(rLowerLegBone);
+
+  const rLowerLeg = capsule(0.055, 0.36, darkMat);
+  rLowerLeg.position.y = -0.16;
+  rLowerLegBone.add(rLowerLeg);
+
+  // Right Foot
+  const rFootBone = new THREE.Group();
+  rFootBone.name = 'rFoot';
+  rFootBone.position.y = -0.38;
+  rLowerLegBone.add(rFootBone);
+
+  const rFoot = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.05, 0.16),
+    accentMat
+  );
+  rFoot.position.set(0, -0.02, 0.03);
+  rFootBone.add(rFoot);
+
+  // Enable shadows on all character meshes
+  charGroup.traverse(function(child) {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+
+
+  // ─── FLOATING DUST PARTICLES ────────────────────────────────
+  (function() {
+    const count = 80;
+    const positions = new Float32Array(count * 3);
+    const velocities = [];
+    for (let i = 0; i < count; i++) {
+      positions[i * 3]     = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 1] = Math.random() * 5;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      velocities.push({
+        x: (Math.random() - 0.5) * 0.003,
+        y: Math.random() * 0.002 + 0.001,
+        z: (Math.random() - 0.5) * 0.003
+      });
+    }
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const particles = new THREE.Points(geom, mat);
+    scene.add(particles);
+
+    // Store for animation
+    window._dustParticles = { positions, velocities, geom };
+  })();
+
+
+  // ─── IDLE BREATHING ANIMATION ───────────────────────────────
+  // All animation is driven by elapsed time using sinusoidal easing.
+  // No frame-count dependency. Fully deterministic given elapsed time.
+
+  const IDLE = {
+    // Breathing cycle (chest scale Y)
+    breathFreq: 1.8,     // cycles per second (slightly less than 2)
+    breathAmp: 0.015,    // Y scale oscillation amount
+
+    // Hip sway
+    hipSwayFreq: 0.7,
+    hipSwayAmp: 0.008,
+
+    // Head bob
+    headBobFreq: 1.2,
+    headBobAmp: 0.003,
+    headTiltFreq: 0.5,
+    headTiltAmp: 0.015,
+
+    // Shoulder rotation
+    shoulderFreq: 0.9,
+    shoulderAmp: 0.012,
+
+    // Arm pendulum
+    armSwingFreq: 0.6,
+    armSwingAmp: 0.04,
+
+    // Subtle body rise/fall
+    bodyBobFreq: 1.8,
+    bodyBobAmp: 0.006,
+
+    // Weight shift (lean)
+    leanFreq: 0.35,
+    leanAmp: 0.01
+  };
+
+  // Store base positions/rotations
+  const baseHipsY = hipsBone.position.y;
+
+
+  // ─── RENDER LOOP ────────────────────────────────────────────
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    const t = clock.getElapsedTime();
+
+    // ── Idle Breathing Animation ──
+    const sin = Math.sin;
+    const cos = Math.cos;
+    const PI2 = Math.PI * 2;
+
+    // Chest breathing (Y scale)
+    const breathPhase = sin(t * PI2 * IDLE.breathFreq);
+    chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp;
+    chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3;
+
+    // Body bob (hips go up/down with breath)
+    hipsBone.position.y = baseHipsY + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp;
+
+    // Hip sway (subtle side-to-side)
+    hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp;
+    hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp;
+
+    // Head bob and tilt
+    headBone.position.y = 0.12 + sin(t * PI2 * IDLE.headBobFreq) * IDLE.headBobAmp;
+    headBone.rotation.z = sin(t * PI2 * IDLE.headTiltFreq) * IDLE.headTiltAmp;
+    headBone.rotation.x = sin(t * PI2 * 0.4) * 0.01; // very subtle nod
+
+    // Shoulder oscillation (breathing feel)
+    lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp;
+    rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp;
+
+    // Arm pendulum (slight swing)
+    lUpperArmBone.rotation.x = sin(t * PI2 * IDLE.armSwingFreq) * IDLE.armSwingAmp;
+    rUpperArmBone.rotation.x = -sin(t * PI2 * IDLE.armSwingFreq + 0.5) * IDLE.armSwingAmp;
+
+    // Lower arm subtle bend
+    lLowerArmBone.rotation.x = -0.12 + sin(t * PI2 * 0.8) * 0.02;
+    rLowerArmBone.rotation.x = -0.12 - sin(t * PI2 * 0.8 + 0.5) * 0.02;
+
+    // Knee micro-flex (weight shifting)
+    lLowerLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015;
+    rLowerLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015;
+
+    // ── Floating Dust Particles ──
+    if (window._dustParticles) {
+      const dp = window._dustParticles;
+      for (let i = 0; i < dp.velocities.length; i++) {
+        dp.positions[i * 3]     += dp.velocities[i].x;
+        dp.positions[i * 3 + 1] += dp.velocities[i].y;
+        dp.positions[i * 3 + 2] += dp.velocities[i].z;
+        // Reset particle if it goes too high
+        if (dp.positions[i * 3 + 1] > 5) {
+          dp.positions[i * 3 + 1] = 0;
+          dp.positions[i * 3]     = (Math.random() - 0.5) * 10;
+          dp.positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+        }
+      }
+      dp.geom.attributes.position.needsUpdate = true;
+    }
+
+    // ── Glowing ring pulse ──
+    ring.material.opacity = 0.35 + sin(t * 1.5) * 0.15;
+    innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
+
+    // ── Orbit controls ──
+    ctl.update();
+
+    // ── Render ──
+    renderer.render(scene, cam);
+  }
+
+  animate();
+
+
+  // ─── RESIZE HANDLER ─────────────────────────────────────────
+  window.addEventListener('resize', function() {
+    cam.aspect = window.innerWidth / window.innerHeight;
+    cam.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+})();
+</script>
+</body>
+</html>
