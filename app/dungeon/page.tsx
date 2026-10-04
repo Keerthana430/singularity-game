@@ -99,7 +99,7 @@ export default function DungeonPage() {
   const openRoom = useCallback((room: RoomNode, index: number) => {
     if (room.visited && room.cleared) return;
     setRoomIndex(index);
-    setRooms((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, visited: true } : item));
+    setRooms((items) => items.map((item, itemIndex) => itemIndex === index || itemIndex === index + 1 ? { ...item, visited: itemIndex === index ? true : item.visited, discovered: true } : item));
     if (room.type === 'combat' || room.type === 'elite' || room.type === 'boss') {
       setEnemies(spawnEnemies(floor, room)); setPosition({ x: 20, y: 50 }); setSelectedEnemy(null); setMode('combat');
       addLog(room.type === 'boss' ? `${floorData.boss} enters the arena.` : `${room.label} chamber: hostiles are closing in.`);
