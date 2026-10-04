@@ -2,12 +2,34 @@
 
 ## Current State
 
-- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Phase 12 (Lighting & Color Pass), Phase 13 (Duel System)
-- **Current stack**: Next.js 16 / React 19 / Three.js / Procedural Shading & Additive Lighting / Canvas Textures / Web Audio API
-- **How to run**: npm run dev (accessible at http://localhost:3000/snake-and-ladder.html and /prototype)
-- **How to test**: npm run test
-- **Open risks**: None.
-- **Next phase**: Ready for user feedback.
+- **Completed Phases:** 1, 2, 3 (Character Prototype)
+- **Current Stack:** Procedural `three.js` prototype (`/public/character-prototype/`)
+- **How to Run:** Open `http://localhost:3000/character-prototype/index.html`
+- **How to Test:** Check browser interactions directly.
+- **Open Risks:** 
+  - Mouse click interactions (light/heavy attack) need mapping to animations in Phase 4.
+  - Adding a second character for dueling will require state management synchronization.
+- **Next Phase:** Phase 4 (Fighting & Combat Interactions)
+
+---
+
+## Phase 3: Jumping & Gravity (2026-10-04)
+- **Built:** Physics-based jumping mechanics, gravity constant, ground collision, and blended animations for jump poses (tuck/flail/squat) inside the character prototype.
+- **Files created/changed:** 
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions:** 
+  - Used a simple `vy` (vertical velocity) variable and a gravity constant `g`.
+  - Jump states are blended dynamically based on `vy` and ground contact.
+- **Deviations from spec:** None.
+- **Exit criteria:**
+  - Add Spacebar listener for jump - PASS - Logic implemented in `keydown` handler.
+  - Implement vertical velocity, gravity, and ground collision - PASS - Handled in the main update loop (`animate` function).
+  - Add Jump Pose - PASS - Legs tuck and arms raise when `vy > 0`.
+  - Add Fall Pose - PASS - Arms flail and legs point down when `vy < 0`.
+  - Add Landing Squat - PASS - Triggers a compression blend when hitting `y = 0`.
+  - Smoothly blend jump/fall states with movement states - PASS - Jump weights (`w_jump`, `w_fall`, `w_squat`) are additively blended into the procedural sine wave animations.
+- **Known issues:** None.
+- **Deferred:** None.
 
 ---
 

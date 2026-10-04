@@ -26,12 +26,12 @@
 <body>
 
 <div id="hud">
-  <div class="phase">Phase 2</div>
-  <h2>Walking &amp; Running</h2>
-  <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move · <kbd>Shift</kbd> to run</div>
+  <div class="phase">Phase 3</div>
+  <h2>Jumping &amp; Gravity</h2>
+  <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>Space</kbd> to jump</div>
   <div style="margin-top:8px;font-size:11px;color:#9aa3cf">
-    Scroll to zoom · Right-drag to orbit<br>
-    Smooth acceleration · Third-person camera
+    Strict chase camera · Tank controls<br>
+    Smooth acceleration · Jump physics
   </div>
 </div>
 
@@ -486,14 +486,16 @@
 
 
   // ─── INPUT SYSTEM ───────────────────────────────────────────
-  const keys = { w: false, a: false, s: false, d: false, shift: false };
+  const keys = { w: false, a: false, s: false, d: false, shift: false, space: false };
   window.addEventListener('keydown', function(e) {
+    if (e.repeat) return;
     const k = e.key.toLowerCase();
     if (k === 'w') keys.w = true;
     if (k === 'a') keys.a = true;
     if (k === 's') keys.s = true;
     if (k === 'd') keys.d = true;
     if (e.key === 'Shift') keys.shift = true;
+    if (e.code === 'Space') keys.space = true;
   });
   window.addEventListener('keyup', function(e) {
     const k = e.key.toLowerCase();
@@ -502,10 +504,11 @@
     if (k === 's') keys.s = false;
     if (k === 'd') keys.d = false;
     if (e.key === 'Shift') keys.shift = false;
+    if (e.code === 'Space') keys.space = false;
   });
   // Prevent keys from sticking if window loses focus
   window.addEventListener('blur', function() {
-    keys.w = keys.a = keys.s = keys.d = keys.shift = false;
+    keys.w = keys.a = keys.s = keys.d = keys.shift = keys.space = false;
   });
 
 
@@ -516,7 +519,9 @@
     accel: 12.0,           // acceleration (units/sec²)
     decel: 8.0,            // deceleration when no input
     turnSpeed: 10.0,       // rotation lerp speed (rad/sec)
-    arenaRadius: 23.5      // keep character inside arena
+    arenaRadius: 23.5,     // keep character inside arena
+    gravity: -28.0,        // gravity acceleration (units/sec²)
+    jumpForce: 11.5        // initial vertical velocity when jumping
   };
 
   // Movement state
@@ -525,6 +530,12 @@
   let moveBlend = 0;            // 0 = idle, 1 = full walk/run
   let walkCyclePhase = 0;       // accumulated walk animation phase
   let facingAngle = 0;          // current Y rotation of character
+  
+  // Jump state
+  let velocityY = 0;
+  let isGrounded = true;
+  let jumpBlend = 0;            // 0 = grounded, 1 = mid-air
+  let squatPhase = 0;           // for landing compression animation
 
 
   // ─── IDLE BREATHING ANIMATION ───────────────────────────────
@@ -606,13 +617,35 @@
     // Apply facing rotation
     charGroup.rotation.y = facingAngle;
 
-    // Calculate velocity based on facing angle
+    // Calculate horizontal velocity based on facing angle
     velocity.x = Math.sin(facingAngle) * speed;
     velocity.z = Math.cos(facingAngle) * speed;
 
+    // ── VERTICAL PHYSICS (Jump & Gravity) ──
+    if (keys.space && isGrounded) {
+      velocityY = MOVE.jumpForce;
+      isGrounded = false;
+    }
+
+    if (!isGrounded) {
+      velocityY += MOVE.gravity * dt;
+    }
+
     // Apply velocity to character position
     charGroup.position.x += velocity.x * dt;
+    charGroup.position.y += velocityY * dt;
     charGroup.position.z += velocity.z * dt;
+
+    // Ground collision
+    if (charGroup.position.y <= 0) {
+      charGroup.position.y = 0;
+      if (!isGrounded) {
+        // Just landed
+        isGrounded = true;
+        velocityY = 0;
+        squatPhase = 1.0; // Trigger landing squash
+      }
+    }
 
     // Clamp to arena bounds
     const distFromCenter = Math.sqrt(charGroup.position.x * charGroup.position.x + charGroup.position.z * charGroup.position.z);
@@ -634,8 +667,23 @@
     walkCyclePhase += speed * WALK.cycleSpeed * dt;
 
     // ── ANIMATION BLENDING ──
-    const walkWeight = Math.min(moveBlend, 1);
-    const idleWeight = 1 - walkWeight;
+    // Smooth jump state transitions
+    const targetJumpBlend = isGrounded ? 0 : 1;
+    jumpBlend += (targetJumpBlend - jumpBlend) * Math.min(1, 15 * dt);
+    
+    // Decay landing squat
+    if (squatPhase > 0) {
+      squatPhase = Math.max(0, squatPhase - 6 * dt);
+    }
+
+    const groundWeight = 1 - jumpBlend;
+    const walkWeight = Math.min(moveBlend, 1) * groundWeight;
+    const idleWeight = (1 - Math.min(moveBlend, 1)) * groundWeight;
+    
+    // Jump poses
+    const isFalling = velocityY < -1.0 && !isGrounded;
+    const fallWeight = isFalling ? jumpBlend : 0;
+    const jumpRiseWeight = (!isFalling) ? jumpBlend : 0;
 
     // ── IDLE ANIMATION ──
     const breathPhase = sin(t * PI2 * IDLE.breathFreq);
@@ -652,15 +700,23 @@
     const footLift = Math.max(0, sin(wc)) * WALK.footLift * runFactor;
     const footOpp = Math.max(0, -sin(wc)) * WALK.footLift * runFactor;
 
+    // ── JUMP / FALL / SQUAT POSES ──
+    const tuckLegs = -1.2 * jumpRiseWeight + 0.2 * fallWeight + -0.5 * squatPhase;
+    const tuckKnees = 1.4 * jumpRiseWeight + 0.1 * fallWeight + 1.0 * squatPhase;
+    const armFlailZ = 0.5 * jumpRiseWeight + 1.2 * fallWeight;
+    const armFlailX = -0.3 * jumpRiseWeight - 0.8 * fallWeight;
+
     // ── APPLY BLENDED POSE ──
     chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp * idleWeight;
     chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3 * idleWeight;
-    chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor * Math.sign(speed || 1); 
+    chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor * Math.sign(speed || 1)
+      + 0.3 * squatPhase - 0.1 * fallWeight; 
     chestBone.rotation.y = walkWeight * chestTwist;
 
     hipsBone.position.y = baseHipsY
       + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight 
-      + hipBob * walkWeight;                                             
+      + hipBob * walkWeight
+      - 0.4 * squatPhase;                                             
     hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp * idleWeight
       + hipSway * walkWeight;
     hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp * idleWeight;
@@ -670,15 +726,18 @@
     headBone.rotation.z = sin(t * PI2 * IDLE.headTiltFreq) * IDLE.headTiltAmp * idleWeight
       - walkWeight * chestTwist * 0.5; 
     headBone.rotation.x = sin(t * PI2 * 0.4) * 0.01 * idleWeight
-      - walkWeight * WALK.headStabilize; 
+      - walkWeight * WALK.headStabilize
+      - 0.3 * squatPhase + 0.2 * fallWeight; 
 
-    lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
-    rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight;
+    lShoulderBone.rotation.z = sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight
+      + armFlailZ;
+    rShoulderBone.rotation.z = -sin(t * PI2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight
+      - armFlailZ;
 
     lUpperArmBone.rotation.x = sin(t * PI2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight
-      + armSwing * walkWeight;   
+      + armSwing * walkWeight + armFlailX;   
     rUpperArmBone.rotation.x = -sin(t * PI2 * IDLE.armSwingFreq + 0.5) * IDLE.armSwingAmp * idleWeight
-      - armSwing * walkWeight;   
+      - armSwing * walkWeight + armFlailX;   
 
     lLowerArmBone.rotation.x = (-0.12 + sin(t * PI2 * 0.8) * 0.02) * idleWeight
       + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
@@ -686,17 +745,17 @@
       + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
 
     lUpperLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      + legSwing * walkWeight;     
+      + legSwing * walkWeight + tuckLegs;     
     rUpperLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      - legSwing * walkWeight;     
+      - legSwing * walkWeight + tuckLegs;     
 
     lLowerLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      + kneeBend * walkWeight;
+      + kneeBend * walkWeight + tuckKnees;
     rLowerLegBone.rotation.x = -sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
-      + kneeOpp * walkWeight;
+      + kneeOpp * walkWeight + tuckKnees;
 
-    lFootBone.rotation.x = footLift * walkWeight * 0.3;
-    rFootBone.rotation.x = footOpp * walkWeight * 0.3;
+    lFootBone.rotation.x = footLift * walkWeight * 0.3 - 0.3 * jumpRiseWeight + 0.2 * fallWeight;
+    rFootBone.rotation.x = footOpp * walkWeight * 0.3 - 0.3 * jumpRiseWeight + 0.2 * fallWeight;
 
     // ── FLOATING DUST PARTICLES ──
     if (window._dustParticles) {
