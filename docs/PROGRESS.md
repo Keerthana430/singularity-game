@@ -2,12 +2,31 @@
 
 ## Current State
 
-- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Phase 12 (Lighting & Color Pass)
+- **Phases completed**: 10 (Reliability), 11 (Multiplayer Readiness), Phase 3B (Terraced Board Redesign), Phase 12 (Lighting & Color Pass), Phase 13 (Duel System)
 - **Current stack**: Next.js 16 / React 19 / Three.js / Procedural Shading & Additive Lighting / Canvas Textures / Web Audio API
 - **How to run**: npm run dev (accessible at http://localhost:3000/snake-and-ladder.html and /prototype)
 - **How to test**: npm run test
 - **Open risks**: None.
 - **Next phase**: Ready for user feedback.
+
+---
+
+## Phase 13: Duel System Pass (2026-10-04)
+- **Built**: Complete 1v1 duel system triggered upon collision on the same tile. Implemented the rock-paper-scissors-style combat loop, Duel Arena teleportation, and UI integration directly in the main `snake-and-ladder.html`.
+- **Files created/changed**:
+  - `public/snake-and-ladder.html`
+- **Decisions and assumptions**:
+  - The combat UI and logic (`runDuel`, move matrices, retreat logic) was injected into the main IIFE to guarantee access to standard globals (`cam`, `tween`, `ctl`).
+  - Added an automated VS AI decision matrix to allow human vs bot or bot vs bot dueling logic.
+  - Placed the Duel Arena off-screen at `(-40, 20, -40)` and transition the camera dynamically instead of unloading/loading scene elements.
+- **Deviations from spec**: None. 
+- **Exit criteria**:
+  - Duel mechanics correctly implemented - PASS
+  - Collisions trigger a duel - PASS
+  - AI mode automatically resolves turns - PASS
+  - Loser retreats backwards on the main board - PASS
+- **Known issues**: None.
+- **Deferred**: None.
 
 ---
 

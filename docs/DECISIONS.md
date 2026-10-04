@@ -84,11 +84,16 @@
 - **Decision**: **Mulberry32**. It is fast, has better distribution than LCG, and the state can be represented as a single 32-bit integer, making it trivial to serialize in the `GameState`.
 - **Consequences**: We cannot rely on standard `Math.random()`. The random seed state must be carried in the `GameState` and explicitly mutated/advanced during the `gameReducer` when rolls happen.
 
- # #   A D R - 0 1 3 :   T e r r a c e d   B o a r d   L a y o u t   D a t a   M o d e l 
- 
- -   * * C o n t e x t * * :   T h e   g a m e   b o a r d   n e e d s   t o   s w i t c h   f r o m   a   s t a t i c   b o u s t r o p h e d o n   m a t h e m a t i c a l   g r i d   t o   a   3 D   t e r r a c e d   s t r u c t u r e   ( l i k e   s t e p s ) .   S n a k e s   a n d   l a d d e r s   n e e d   t o   w r a p   a c r o s s   t h e s e   t e r r a c e s . 
- -   * * O p t i o n s * * :   ( a )   C o m p u t e   p o s i t i o n s   i n   c o m p o n e n t s   o n   t h e   f l y ,   ( b )   C r e a t e   a   c e n t r a l i z e d   \ B o a r d L a y o u t \   d a t a   s t r u c t u r e   c o m p u t e d   o n c e   a t   s t a r t u p . 
- -   * * D e c i s i o n * * :   * * C e n t r a l i z e d   \ B o a r d L a y o u t \   c o m p u t e d   o n c e * * .   T h e   l a y o u t   g e n e r a t o r   e m i t s   t h e   e x a c t   3 D   p o s i t i o n ,   n o r m a l ,   a n d   t e r r a c e   i n d e x   f o r   e v e r y   t i l e .   A l l   c o m p o n e n t s   ( r e n d e r e r ,   c a m e r a ,   p a t h   l o g i c ,   s n a k e s ,   l a d d e r s )   c o n s u m e   t h i s   l a y o u t   d a t a   i n s t e a d   o f   g u e s s i n g   g e o m e t r y . 
- -   * * C o n s e q u e n c e s * * :   D e - c o u p l e s   v i s u a l   b o a r d   g e o m e t r y   f r o m   t h e   r u l e s   e n g i n e   ( w h i c h   o n l y   k n o w s   a b o u t   t i l e   n u m b e r s   1 - 1 0 0 ) .   A l l o w s   c o m p l e x   p r o c e d u r a l   s n a k e s   t h a t   h u g   t h e   g r o u n d   b y   q u e r y i n g   h e i g h t s   b e t w e e n   t i l e s . 
-  
- 
+## ADR-013: Terraced Board Layout Data Model
+
+- **Context**: The game board needs to switch from a static boustrophedon mathematical grid to a 3D terraced structure (like steps). Snakes and ladders need to wrap across these terraces.
+- **Options**: (a) Compute positions in components on the fly, (b) Create a centralized `BoardLayout` data structure computed once at startup.
+- **Decision**: **Centralized `BoardLayout` computed once**. The layout generator emits the exact 3D position, normal, and terrace index for every tile. All components (renderer, camera, path logic, snakes, ladders) consume this layout data instead of guessing geometry.
+- **Consequences**: De-couples visual board geometry from the rules engine (which only knows about tile numbers 1-100). Allows complex procedural snakes that hug the ground by querying heights between tiles.
+
+## ADR-014: Duel System Architecture
+
+- **Context**: When two players land on the same tile, they must engage in a rock-paper-scissors style combat duel to determine who stays and who is retreated backwards on the board.
+- **Options**: (a) Create a separate HTML page/scene for duels, (b) Create an entirely new separate module `duel-system.js` and inject it dynamically, (c) Integrate duel logic inline with the main IIFE in `snake-and-ladder.html`.
+- **Decision**: **Integrate duel logic inline with the main IIFE in `snake-and-ladder.html`**. 
+- **Consequences**: Allows the duel logic direct access to the existing Three.js globals (`cam`, `tween`, `Snd`, etc.) without complex bridging architectures. Instead of unloading the board, players are teleported to a fixed Duel Arena at an offset position `(-40, 20, -40)` and the camera snaps there for the duration of the duel. This is efficient, avoids reload flickering, and preserves board state perfectly. The main game loop `turn()` is paused via an `await` promise barrier until the duel resolves.
