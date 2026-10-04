@@ -1473,6 +1473,123 @@ function AvatarTorso({ config }: { config: AvatarConfig }) {
   );
 }
 
+function QuantumStaffModel({ isTiny }: { isTiny?: boolean }) {
+  const orbRef = useRef<THREE.Group>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (orbRef.current) {
+      orbRef.current.position.y = 0.06 + Math.sin(t * 2.8) * 0.035;
+    }
+    if (ringRef.current) {
+      ringRef.current.rotation.z = t * 1.6;
+      ringRef.current.rotation.x = Math.PI * 0.4 + Math.sin(t * 1.2) * 0.18;
+    }
+  });
+
+  return (
+    <group scale={isTiny ? [0.65, 0.65, 0.65] : [0.9, 0.9, 0.9]}>
+      {/* Obsidian titanium staff shaft */}
+      <mesh position={[0, 0.45, 0]} castShadow>
+        <cylinderGeometry args={[0.022, 0.025, 1.35, 12]} />
+        <meshStandardMaterial color="#1E293B" metalness={0.85} roughness={0.25} />
+        <AnimeOutline thickness={1.6} />
+      </mesh>
+      {/* Golden grip bands */}
+      {[-0.05, 0.25, 0.65].map((gy, gi) => (
+        <mesh key={gi} position={[0, gy, 0]}>
+          <torusGeometry args={[0.028, 0.008, 6, 16]} />
+          <meshStandardMaterial color="#F59E0B" metalness={0.9} />
+        </mesh>
+      ))}
+      {/* Staff crown: 3 curved claws holding the arcane core */}
+      <group position={[0, 1.15, 0]}>
+        {[0, (Math.PI * 2) / 3, (Math.PI * 4) / 3].map((angle, ai) => (
+          <group key={ai} rotation={[0, angle, 0]}>
+            <mesh position={[0.07, 0.04, 0]} rotation={[0, 0, -0.45]}>
+              <boxGeometry args={[0.02, 0.18, 0.02]} />
+              <meshStandardMaterial color="#F59E0B" metalness={0.9} />
+            </mesh>
+          </group>
+        ))}
+        {/* Floating glowing quantum arcane orb with gentle bobbing */}
+        <group ref={orbRef} position={[0, 0.06, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.08, 16, 16]} />
+            <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3.8} />
+          </mesh>
+          <pointLight color="#38BDF8" intensity={1.4} distance={1.8} />
+        </group>
+        {/* Orbital quantum resonance ring */}
+        <mesh ref={ringRef} position={[0, 0.06, 0]} rotation={[Math.PI * 0.4, 0.2, 0]}>
+          <torusGeometry args={[0.13, 0.012, 8, 24]} />
+          <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.5} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function PlasmaBlasterModel({ isTiny }: { isTiny?: boolean }) {
+  return (
+    <group scale={isTiny ? [0.7, 0.7, 0.7] : [0.95, 0.95, 0.95]}>
+      {/* Receiver chassis */}
+      <mesh position={[0, 0.06, 0.02]} castShadow>
+        <boxGeometry args={[0.045, 0.085, 0.24]} />
+        <meshStandardMaterial color="#1E293B" metalness={0.9} roughness={0.2} />
+        <AnimeOutline thickness={1.5} />
+      </mesh>
+      {/* Top accessory rail */}
+      <mesh position={[0, 0.108, 0.02]}>
+        <boxGeometry args={[0.026, 0.012, 0.20]} />
+        <meshStandardMaterial color="#0F172A" metalness={0.9} />
+      </mesh>
+      {/* Ergonomic pistol grip with trigger guard */}
+      <mesh position={[0, -0.06, -0.05]} rotation={[-0.25, 0, 0]} castShadow>
+        <boxGeometry args={[0.036, 0.12, 0.05]} />
+        <meshStandardMaterial color="#0F172A" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, -0.03, -0.01]} rotation={[0.4, 0, 0]}>
+        <boxGeometry args={[0.015, 0.06, 0.015]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} />
+      </mesh>
+      {/* Glowing plasma battery cell */}
+      <mesh position={[0, 0.13, 0.02]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <cylinderGeometry args={[0.018, 0.018, 0.14, 12]} />
+        <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={3.5} />
+      </mesh>
+      {/* Lateral energy vents */}
+      {[-0.024, 0.024].map((vx, vi) => (
+        <mesh key={vi} position={[vx, 0.06, 0.04]}>
+          <boxGeometry args={[0.005, 0.025, 0.10]} />
+          <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3.0} />
+        </mesh>
+      ))}
+      {/* Twin over-under emitter barrels */}
+      <mesh position={[0, 0.08, 0.16]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.10, 12]} />
+        <meshStandardMaterial color="#1E293B" metalness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.04, 0.16]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.10, 12]} />
+        <meshStandardMaterial color="#1E293B" metalness={0.9} />
+      </mesh>
+      {/* Dual neon muzzle cores */}
+      <mesh position={[0, 0.08, 0.21]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.02, 12]} />
+        <meshStandardMaterial color="#22D3EE" emissive="#22D3EE" emissiveIntensity={4.0} />
+      </mesh>
+      <mesh position={[0, 0.04, 0.21]} rotation={[Math.PI * 0.5, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.02, 12]} />
+        <meshStandardMaterial color="#22D3EE" emissive="#22D3EE" emissiveIntensity={4.0} />
+      </mesh>
+      {/* Muzzle tip point light */}
+      <pointLight position={[0, 0.06, 0.22]} color="#22D3EE" intensity={0.9} distance={1.2} />
+    </group>
+  );
+}
+
 function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT?: number; action?: string }) {
   const props = getBodyProps(config);
   const topMat = useMaterial(config.topColor, 0.5, config.top === 'armor' ? 0.6 : 0);
@@ -1551,14 +1668,14 @@ function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT
 
       const isDualBlaster = config.weapon === 'plasma-blaster';
       if (isDualBlaster) {
-        // Dual blasters combat stance: both arms raised forward
-        leftTargetX = -0.32 + Math.sin(t * 2.2) * 0.02;
-        leftTargetY = 0.12;
-        leftTargetZ = -0.15;
+        // Dual blasters combat stance: both arms raised forward in an aiming pose, clear of torso and legs
+        leftTargetX = -0.58 + Math.sin(t * 2.0) * 0.015;
+        leftTargetY = 0.16;
+        leftTargetZ = -0.16;
 
-        rightTargetX = -0.32 + Math.sin(t * 2.2 + 0.4) * 0.02;
-        rightTargetY = -0.12;
-        rightTargetZ = 0.15;
+        rightTargetX = -0.58 + Math.sin(t * 2.0 + 0.4) * 0.015;
+        rightTargetY = -0.16;
+        rightTargetZ = 0.16;
       } else if (hasWeapon) {
         rightTargetX = -0.24 + Math.sin(t * 1.8 + 0.4) * 0.03;
         rightTargetY = -0.05;
@@ -1668,20 +1785,34 @@ function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT
 
             {/* Weapon held in hand (Both hands for dual blasters, right hand for other weapons) */}
             {shouldRenderWeapon && (
-              <group position={[0, -armL * 0.88, armR * 0.7]} rotation={[Math.PI * 0.45, 0, side === -1 ? -0.15 : 0]}>
+              <group
+                position={[0, -armL * 0.88, armR * 0.7]}
+                rotation={
+                  config.weapon === 'plasma-blaster'
+                    ? [Math.PI * 0.42, side * -0.06, side * -0.08]
+                    : [Math.PI * 0.45, 0, side === -1 ? -0.15 : 0]
+                }
+              >
                 {/* 1. PHOTON SABER — Glowing futuristic laser blade */}
                 {config.weapon === 'photon-blade' ? (
                   <group scale={props.isTiny ? [0.65, 0.65, 0.65] : [0.95, 0.95, 0.95]}>
                     {/* Dark titanium hilt */}
                     <mesh position={[0, -0.04, 0]} castShadow>
-                      <cylinderGeometry args={[0.026, 0.024, 0.22, 16]} />
+                      <cylinderGeometry args={[0.026, 0.024, 0.24, 16]} />
                       <meshStandardMaterial color="#1E293B" metalness={0.9} roughness={0.2} />
                       <AnimeOutline thickness={1.4} />
                     </mesh>
+                    {/* Knurled grip rings */}
+                    {[-0.10, -0.05, 0.0].map((gy, gi) => (
+                      <mesh key={gi} position={[0, gy, 0]}>
+                        <torusGeometry args={[0.027, 0.004, 6, 16]} />
+                        <meshStandardMaterial color="#475569" metalness={0.8} />
+                      </mesh>
+                    ))}
                     {/* Emitter collar ring */}
-                    <mesh position={[0, 0.08, 0]}>
-                      <cylinderGeometry args={[0.034, 0.028, 0.035, 16]} />
-                      <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.5} />
+                    <mesh position={[0, 0.09, 0]}>
+                      <cylinderGeometry args={[0.036, 0.028, 0.04, 16]} />
+                      <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={3.0} />
                     </mesh>
                     {/* Activator switch button */}
                     <mesh position={[0, -0.02, 0.028]}>
@@ -1689,161 +1820,181 @@ function AvatarArms({ config, action = 'idle' }: { config: AvatarConfig; breathT
                       <meshStandardMaterial color="#FFD700" metalness={0.9} />
                     </mesh>
                     {/* Pommel charge cap */}
-                    <mesh position={[0, -0.16, 0]}>
-                      <cylinderGeometry args={[0.030, 0.024, 0.03, 16]} />
+                    <mesh position={[0, -0.17, 0]}>
+                      <cylinderGeometry args={[0.030, 0.024, 0.035, 16]} />
                       <meshStandardMaterial color="#334155" metalness={0.9} />
                     </mesh>
                     {/* Core Laser Beam: pure blinding white core */}
-                    <mesh position={[0, 0.58, 0]}>
-                      <cylinderGeometry args={[0.018, 0.018, 0.98, 16]} />
-                      <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={4.5} />
+                    <mesh position={[0, 0.62, 0]}>
+                      <cylinderGeometry args={[0.016, 0.016, 1.02, 16]} />
+                      <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={4.8} />
                     </mesh>
                     {/* Outer Plasma Containment Shroud: radiant neon emerald aura */}
-                    <mesh position={[0, 0.58, 0]}>
-                      <cylinderGeometry args={[0.038, 0.038, 1.0, 16]} />
+                    <mesh position={[0, 0.62, 0]}>
+                      <cylinderGeometry args={[0.038, 0.038, 1.05, 16]} />
                       <meshStandardMaterial
                         color={config.weaponColor || '#00FF66'}
                         emissive={config.weaponColor || '#00FF66'}
-                        emissiveIntensity={3.2}
+                        emissiveIntensity={3.6}
                         transparent
-                        opacity={0.68}
+                        opacity={0.72}
+                      />
+                    </mesh>
+                    {/* Outer soft glow sheath */}
+                    <mesh position={[0, 0.62, 0]}>
+                      <cylinderGeometry args={[0.062, 0.062, 1.08, 16]} />
+                      <meshStandardMaterial
+                        color={config.weaponColor || '#00FF66'}
+                        emissive={config.weaponColor || '#00FF66'}
+                        emissiveIntensity={1.8}
+                        transparent
+                        opacity={0.20}
                       />
                     </mesh>
                     {/* Rounded plasma tip cap */}
-                    <mesh position={[0, 1.08, 0]}>
+                    <mesh position={[0, 1.15, 0]}>
                       <sphereGeometry args={[0.038, 16, 16]} />
-                      <meshStandardMaterial color="#FFFFFF" emissive="#00FF66" emissiveIntensity={3.5} />
+                      <meshStandardMaterial color="#FFFFFF" emissive={config.weaponColor || '#00FF66'} emissiveIntensity={3.8} />
                     </mesh>
+                    {/* Dynamic Laser Light casting glow onto character */}
+                    <pointLight position={[0, 0.6, 0]} color={config.weaponColor || '#00FF66'} intensity={1.6} distance={2.2} />
                   </group>
                 ) : config.weapon === 'cyber-staff' ? (
                   /* 2. QUANTUM ARCANE STAFF — Arcane floating orb + quantum rings */
-                  <group scale={props.isTiny ? [0.65, 0.65, 0.65] : [0.9, 0.9, 0.9]}>
-                    {/* Obsidian titanium staff shaft */}
-                    <mesh position={[0, 0.45, 0]} castShadow>
-                      <cylinderGeometry args={[0.022, 0.025, 1.35, 12]} />
-                      <meshStandardMaterial color="#1E293B" metalness={0.85} roughness={0.25} />
-                      <AnimeOutline thickness={1.6} />
-                    </mesh>
-                    {/* Golden grip bands */}
-                    {[-0.05, 0.25, 0.65].map((gy, gi) => (
-                      <mesh key={gi} position={[0, gy, 0]}>
-                        <torusGeometry args={[0.028, 0.008, 6, 16]} />
-                        <meshStandardMaterial color="#F59E0B" metalness={0.9} />
-                      </mesh>
-                    ))}
-                    {/* Staff crown: 3 curved claws holding the arcane core */}
-                    <group position={[0, 1.15, 0]}>
-                      {[0, (Math.PI * 2) / 3, (Math.PI * 4) / 3].map((angle, ai) => (
-                        <group key={ai} rotation={[0, angle, 0]}>
-                          <mesh position={[0.07, 0.04, 0]} rotation={[0, 0, -0.45]}>
-                            <boxGeometry args={[0.02, 0.18, 0.02]} />
-                            <meshStandardMaterial color="#F59E0B" metalness={0.9} />
-                          </mesh>
-                        </group>
-                      ))}
-                      {/* Floating glowing quantum arcane orb */}
-                      <mesh position={[0, 0.06, 0]}>
-                        <sphereGeometry args={[0.08, 16, 16]} />
-                        <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3.8} />
-                      </mesh>
-                      {/* Orbital quantum resonance ring */}
-                      <mesh position={[0, 0.06, 0]} rotation={[Math.PI * 0.4, 0.2, 0]}>
-                        <torusGeometry args={[0.13, 0.012, 8, 24]} />
-                        <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.5} />
-                      </mesh>
-                    </group>
-                  </group>
+                  <QuantumStaffModel isTiny={props.isTiny} />
                 ) : config.weapon === 'plasma-blaster' ? (
                   /* 3. DUAL PLASMA BLASTERS — High-tech energy pistols held in BOTH hands */
-                  <group scale={props.isTiny ? [0.7, 0.7, 0.7] : [0.95, 0.95, 0.95]}>
-                    {/* Receiver chassis */}
-                    <mesh position={[0, 0.06, 0.02]} castShadow>
-                      <boxGeometry args={[0.045, 0.085, 0.24]} />
-                      <meshStandardMaterial color="#1E293B" metalness={0.85} roughness={0.25} />
-                      <AnimeOutline thickness={1.5} />
-                    </mesh>
-                    {/* Pistol grip */}
-                    <mesh position={[0, -0.06, -0.05]} rotation={[-0.25, 0, 0]} castShadow>
-                      <boxGeometry args={[0.036, 0.12, 0.05]} />
-                      <meshStandardMaterial color="#0F172A" roughness={0.6} />
-                    </mesh>
-                    {/* Glowing plasma energy battery cell inserted on top */}
-                    <mesh position={[0, 0.11, 0.02]} rotation={[Math.PI * 0.5, 0, 0]}>
-                      <cylinderGeometry args={[0.018, 0.018, 0.14, 12]} />
-                      <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={3.2} />
-                    </mesh>
-                    {/* Muzzle emitter with neon glow */}
-                    <mesh position={[0, 0.06, 0.15]} rotation={[Math.PI * 0.5, 0, 0]}>
-                      <cylinderGeometry args={[0.024, 0.024, 0.04, 12]} />
-                      <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={3.0} />
-                    </mesh>
-                  </group>
+                  <PlasmaBlasterModel isTiny={props.isTiny} />
                 ) : config.weapon === 'void-scythe' ? (
                   /* 4. VOID SOUL SCYTHE — Magnificent curved two-handed reaper scythe */
                   <group scale={props.isTiny ? [0.65, 0.65, 0.65] : [0.95, 0.95, 0.95]}>
                     {/* Long obsidian dark titanium shaft */}
-                    <mesh position={[0, 0.55, 0]} castShadow>
-                      <cylinderGeometry args={[0.024, 0.028, 1.55, 12]} />
+                    <mesh position={[0, 0.60, 0]} castShadow>
+                      <cylinderGeometry args={[0.022, 0.026, 1.70, 14]} />
                       <meshStandardMaterial color="#1E1B4B" metalness={0.9} roughness={0.2} />
                       <AnimeOutline thickness={1.6} />
                     </mesh>
                     {/* Void purple grip wraps */}
                     {[-0.05, 0.35, 0.85].map((wy, wi) => (
                       <mesh key={wi} position={[0, wy, 0]}>
-                        <torusGeometry args={[0.03, 0.008, 6, 16]} />
-                        <meshStandardMaterial color="#A855F7" emissive="#A855F7" emissiveIntensity={1.2} />
+                        <torusGeometry args={[0.028, 0.007, 6, 16]} />
+                        <meshStandardMaterial color="#A855F7" emissive="#A855F7" emissiveIntensity={1.5} />
                       </mesh>
                     ))}
-                    {/* Top scythe mounting socket & horns */}
-                    <group position={[0, 1.30, 0]}>
+                    {/* Top scythe mounting socket & soul core */}
+                    <group position={[0, 1.40, 0]}>
+                      {/* Gothic skull socket bracket */}
                       <mesh>
-                        <boxGeometry args={[0.06, 0.08, 0.08]} />
+                        <boxGeometry args={[0.07, 0.10, 0.09]} />
                         <meshStandardMaterial color="#0F172A" metalness={0.9} />
+                        <AnimeOutline thickness={1.5} />
                       </mesh>
-                      {/* Sweeping crescent scythe blade curving outward */}
-                      <group position={[0.22, 0.02, 0]} rotation={[0, 0, -0.45]}>
-                        {/* Blade spine */}
-                        <mesh castShadow position={[0.15, 0.06, 0]}>
-                          <boxGeometry args={[0.42, 0.04, 0.02]} />
-                          <meshStandardMaterial color="#312E81" metalness={0.9} />
+                      {/* Glowing Void Soul Crystal in center socket */}
+                      <mesh position={[0, 0, 0.03]}>
+                        <octahedronGeometry args={[0.045, 0]} />
+                        <meshStandardMaterial color="#C084FC" emissive="#C084FC" emissiveIntensity={3.5} />
+                      </mesh>
+                      {/* Reverse counter-barb / spike on back side */}
+                      <mesh position={[-0.14, 0.04, 0]} rotation={[0, 0, 0.6]}>
+                        <coneGeometry args={[0.04, 0.22, 4]} />
+                        <meshStandardMaterial color="#312E81" metalness={0.9} />
+                      </mesh>
+                      {/* Large sweeping crescent scythe blade curving outward and down */}
+                      <group position={[0.05, 0, 0]}>
+                        {/* Blade spine base */}
+                        <mesh position={[0.20, 0.08, 0]} rotation={[0, 0, -0.25]} castShadow>
+                          <boxGeometry args={[0.38, 0.045, 0.022]} />
+                          <meshStandardMaterial color="#1E1B4B" metalness={0.9} />
                           <AnimeOutline thickness={1.5} />
                         </mesh>
-                        {/* Blazing void soul energy crescent blade */}
-                        <mesh position={[0.18, -0.06, 0]} rotation={[0, 0, Math.PI * 0.5]}>
-                          <coneGeometry args={[0.16, 0.52, 4]} />
-                          <meshStandardMaterial color="#A855F7" emissive="#C084FC" emissiveIntensity={3.5} />
+                        {/* Blade spine mid curve */}
+                        <mesh position={[0.48, -0.04, 0]} rotation={[0, 0, -0.85]} castShadow>
+                          <boxGeometry args={[0.34, 0.038, 0.02]} />
+                          <meshStandardMaterial color="#1E1B4B" metalness={0.9} />
+                          <AnimeOutline thickness={1.5} />
                         </mesh>
-                        {/* Hooked razor tip */}
-                        <mesh position={[0.44, -0.16, 0]} rotation={[0, 0, 0.8]}>
-                          <coneGeometry args={[0.06, 0.22, 4]} />
-                          <meshStandardMaterial color="#E879F9" emissive="#E879F9" emissiveIntensity={3.2} />
+                        {/* Blade spine hooked tip */}
+                        <mesh position={[0.62, -0.28, 0]} rotation={[0, 0, -1.45]} castShadow>
+                          <boxGeometry args={[0.30, 0.030, 0.018]} />
+                          <meshStandardMaterial color="#1E1B4B" metalness={0.9} />
+                          <AnimeOutline thickness={1.5} />
                         </mesh>
+                        {/* Glowing inner Void Soul crescent edge (curved energy sickle) */}
+                        <mesh position={[0.22, -0.04, 0]} rotation={[0, 0, 0.35]}>
+                          <coneGeometry args={[0.15, 0.48, 4]} />
+                          <meshStandardMaterial color="#A855F7" emissive="#C084FC" emissiveIntensity={3.8} />
+                        </mesh>
+                        <mesh position={[0.46, -0.16, 0]} rotation={[0, 0, -0.35]}>
+                          <coneGeometry args={[0.12, 0.44, 4]} />
+                          <meshStandardMaterial color="#A855F7" emissive="#C084FC" emissiveIntensity={3.8} />
+                        </mesh>
+                        <mesh position={[0.60, -0.42, 0]} rotation={[0, 0, -0.95]}>
+                          <coneGeometry args={[0.07, 0.32, 4]} />
+                          <meshStandardMaterial color="#E879F9" emissive="#E879F9" emissiveIntensity={4.0} />
+                        </mesh>
+                        {/* Void radiance point light */}
+                        <pointLight position={[0.35, -0.10, 0]} color="#C084FC" intensity={1.6} distance={2.0} />
                       </group>
                     </group>
                   </group>
                 ) : config.weapon === 'energy-hammer' ? (
                   /* 5. TITAN FORCE HAMMER — Massive techno kinetic warhammer */
-                  <group scale={props.speciesKey === 'dwarf' ? [1.0, 1.0, 1.0] : [0.88, 0.88, 0.88]}>
-                    {/* Steel shaft */}
-                    <mesh position={[0, 0.45, 0]} castShadow>
-                      <cylinderGeometry args={[0.034, 0.036, 1.15, 10]} />
-                      <meshStandardMaterial color="#334155" metalness={0.85} />
+                  <group scale={props.speciesKey === 'dwarf' ? [1.0, 1.0, 1.0] : [0.90, 0.90, 0.90]}>
+                    {/* Heavy reinforced steel shaft */}
+                    <mesh position={[0, 0.50, 0]} castShadow>
+                      <cylinderGeometry args={[0.036, 0.038, 1.25, 12]} />
+                      <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.3} />
                       <AnimeOutline thickness={1.5} />
                     </mesh>
-                    {/* Colossal dual-faced warhammer head */}
-                    <group position={[0, 0.95, 0]}>
+                    {/* Shaft reinforcement rings */}
+                    {[-0.02, 0.30, 0.70].map((ry, ri) => (
+                      <mesh key={ri} position={[0, ry, 0]}>
+                        <cylinderGeometry args={[0.044, 0.044, 0.03, 12]} />
+                        <meshStandardMaterial color="#F59E0B" metalness={0.9} />
+                      </mesh>
+                    ))}
+                    {/* Heavy industrial bottom pommel */}
+                    <mesh position={[0, -0.14, 0]} castShadow>
+                      <cylinderGeometry args={[0.050, 0.040, 0.06, 12]} />
+                      <meshStandardMaterial color="#1E293B" metalness={0.9} />
+                    </mesh>
+                    {/* Colossal dual-faced techno warhammer head */}
+                    <group position={[0, 1.02, 0]}>
+                      {/* Heavy central chassis block */}
                       <mesh castShadow>
-                        <boxGeometry args={[0.28, 0.24, 0.42]} />
-                        <meshStandardMaterial color="#1E293B" metalness={0.85} roughness={0.3} />
+                        <boxGeometry args={[0.32, 0.28, 0.46]} />
+                        <meshStandardMaterial color="#1E293B" metalness={0.88} roughness={0.25} />
                         <AnimeOutline thickness={1.6} />
                       </mesh>
-                      {/* Twin glowing energy reactor faces */}
-                      {[-0.22, 0.22].map((hz, hi) => (
-                        <mesh key={hi} position={[0, 0, hz]}>
-                          <boxGeometry args={[0.24, 0.20, 0.03]} />
-                          <meshStandardMaterial color="#F97316" emissive="#F97316" emissiveIntensity={3.2} />
+                      {/* Top energy exhaust heat sink */}
+                      <mesh position={[0, 0.15, 0]}>
+                        <boxGeometry args={[0.24, 0.03, 0.36]} />
+                        <meshStandardMaterial color="#F97316" emissive="#F97316" emissiveIntensity={2.5} />
+                      </mesh>
+                      {/* Twin glowing heavy kinetic striking faces */}
+                      {[-0.24, 0.24].map((hz, hi) => (
+                        <group key={hi} position={[0, 0, hz]}>
+                          {/* Beveled face frame */}
+                          <mesh castShadow>
+                            <boxGeometry args={[0.30, 0.26, 0.035]} />
+                            <meshStandardMaterial color="#0F172A" metalness={0.9} />
+                          </mesh>
+                          {/* Glowing kinetic impact reactor face */}
+                          <mesh position={[0, 0, hz > 0 ? 0.02 : -0.02]}>
+                            <boxGeometry args={[0.24, 0.20, 0.015]} />
+                            <meshStandardMaterial color="#F97316" emissive="#F97316" emissiveIntensity={3.6} />
+                          </mesh>
+                        </group>
+                      ))}
+                      {/* Lateral hazard conduit stripes */}
+                      {[-0.17, 0.17].map((sx, si) => (
+                        <mesh key={si} position={[sx, 0, 0]}>
+                          <boxGeometry args={[0.01, 0.12, 0.32]} />
+                          <meshStandardMaterial color="#F59E0B" emissive="#F59E0B" emissiveIntensity={1.8} />
                         </mesh>
                       ))}
+                      {/* Kinetic impact point light */}
+                      <pointLight position={[0, 0, 0.28]} color="#F97316" intensity={1.4} distance={1.8} />
                     </group>
                   </group>
                 ) : config.weapon === 'star-wand' ? (
@@ -2330,12 +2481,24 @@ function AvatarAccessoryHead({ id, config, headRadius }: { id: string; config: A
   switch (id) {
     case 'cat-ears':
       return (
-        <group position={[0, headRadius * 0.9, 0]}>
+        <group position={[0, headRadius * 1.05, headRadius * 0.04]}>
+          {/* Sleek dark headband sitting across crown of hair */}
+          <mesh rotation={[Math.PI * 0.5, 0, 0]}>
+            <torusGeometry args={[headRadius * 0.92, 0.022, 6, 24, Math.PI]} />
+            <meshStandardMaterial color="#1E293B" roughness={0.5} />
+          </mesh>
           {([-1, 1] as const).map((side) => (
-            <group key={side} position={[side * headRadius * 0.55, 0, 0]} rotation={[0, 0, -side * 0.25]}>
-              <mesh geometry={new THREE.ConeGeometry(headRadius * 0.32, headRadius * 0.6, 4)} material={mat} />
-              <mesh position={[0, 0, 0.04]} geometry={new THREE.ConeGeometry(headRadius * 0.2, headRadius * 0.45, 4)}>
-                <meshStandardMaterial color="#FF5C93" roughness={0.4} />
+            <group key={side} position={[side * headRadius * 0.46, headRadius * 0.16, 0]} rotation={[0.06, 0, -side * 0.25]}>
+              {/* Outer cat ear shell */}
+              <mesh position={[0, headRadius * 0.28, 0]} castShadow>
+                <coneGeometry args={[headRadius * 0.30, headRadius * 0.62, 4]} />
+                <meshStandardMaterial color={hexToColor(config.accessoryColor || '#FF5C93')} roughness={0.4} />
+                <AnimeOutline thickness={1.5} />
+              </mesh>
+              {/* Inner pink ear lining */}
+              <mesh position={[0, headRadius * 0.24, 0.035]}>
+                <coneGeometry args={[headRadius * 0.18, headRadius * 0.46, 4]} />
+                <meshStandardMaterial color="#FF8FA3" roughness={0.4} />
               </mesh>
             </group>
           ))}
@@ -2623,18 +2786,52 @@ function AvatarAccessoryBack({ id, config }: { id: string; config: AvatarConfig;
       );
     case 'backpack':
       return (
-        /* Giant Explorer Rucksack & Mascot (from Survivor reference poster) */
+        /* Giant Explorer Rucksack with Bunny Ears, Fluffy Tail & Mascot */
         <group position={[0, 0.04, backZ - 0.08]}>
-          {/* Bulky Canvas Pack Body */}
+          {/* Subtle back rim light so backpack never renders dark/pitch-black */}
+          <pointLight position={[0, 0.20, -0.55]} intensity={2.0} color="#E0E7FF" distance={3.0} />
+
+          {/* Bulky Canvas Pack Body with guaranteed warm caramel canvas color */}
           <mesh castShadow position={[0, 0, 0]}>
             <capsuleGeometry args={[0.16, 0.26, 12, 14]} />
-            <meshToonMaterial color={hexToColor(config.accessoryColor || '#854D0E')} />
+            <meshStandardMaterial
+              color={hexToColor(config.accessoryColor || '#A16207')}
+              roughness={0.65}
+              metalness={0.1}
+              emissive={hexToColor('#522b10')}
+              emissiveIntensity={0.22}
+            />
             <AnimeOutline thickness={1.8} />
           </mesh>
+
+          {/* Cute Bunny Ears mounted on top of rucksack */}
+          {([-1, 1] as const).map((side) => (
+            <group key={side} position={[side * 0.09, 0.36, 0.02]} rotation={[0.12, 0, side * 0.18]}>
+              {/* Outer bunny ear */}
+              <mesh castShadow>
+                <cylinderGeometry args={[0.034, 0.052, 0.32, 12]} />
+                <meshStandardMaterial color="#FFFBEB" roughness={0.6} />
+                <AnimeOutline thickness={1.4} />
+              </mesh>
+              {/* Inner pink ear lining */}
+              <mesh position={[0, 0, 0.022]}>
+                <cylinderGeometry args={[0.018, 0.032, 0.26, 12]} />
+                <meshStandardMaterial color="#FFB6C1" roughness={0.5} />
+              </mesh>
+            </group>
+          ))}
+
+          {/* Adorable Fluffy Round Bunny Tail on lower back */}
+          <mesh position={[0, -0.12, -0.16]} castShadow>
+            <sphereGeometry args={[0.085, 16, 14]} />
+            <meshStandardMaterial color="#FFFBEB" roughness={0.8} />
+            <AnimeOutline thickness={1.4} />
+          </mesh>
+
           {/* Rolled Explorer Bedroll on Top */}
           <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI * 0.5]} castShadow>
             <cylinderGeometry args={[0.07, 0.07, 0.38, 12]} />
-            <meshToonMaterial color={hexToColor('#D97706')} />
+            <meshStandardMaterial color={hexToColor('#D97706')} roughness={0.7} />
             <AnimeOutline thickness={1.6} />
           </mesh>
           {/* Bedroll tie straps */}
@@ -2655,7 +2852,7 @@ function AvatarAccessoryBack({ id, config }: { id: string; config: AvatarConfig;
           <group position={[0.08, 0.24, -0.02]} rotation={[0.1, 0, 0.15]}>
             <mesh castShadow>
               <sphereGeometry args={[0.065, 12, 10]} />
-              <meshToonMaterial color={hexToColor('#A855F7')} />
+              <meshStandardMaterial color={hexToColor('#A855F7')} roughness={0.5} />
               <AnimeOutline thickness={1.4} />
             </mesh>
             {/* Cute big black eyes */}
@@ -2669,14 +2866,14 @@ function AvatarAccessoryBack({ id, config }: { id: string; config: AvatarConfig;
             {[-0.03, 0.03].map((ex, ei) => (
               <mesh key={ei} position={[ex, 0.06, 0]} rotation={[0, 0, ex * 8]}>
                 <cylinderGeometry args={[0.008, 0.012, 0.045, 6]} />
-                <meshToonMaterial color={hexToColor('#A855F7')} />
+                <meshStandardMaterial color={hexToColor('#A855F7')} />
               </mesh>
             ))}
           </group>
           {/* Green "SURVIVOR" Badge Tag */}
           <mesh position={[0.10, -0.12, -0.08]} rotation={[0, 0, 0.22]}>
             <boxGeometry args={[0.14, 0.045, 0.012]} />
-            <meshToonMaterial color={hexToColor('#00FF66')} />
+            <meshStandardMaterial color={hexToColor('#00FF66')} emissive="#00FF66" emissiveIntensity={0.6} />
             <AnimeOutline thickness={1.3} />
           </mesh>
         </group>
