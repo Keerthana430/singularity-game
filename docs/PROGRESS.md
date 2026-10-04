@@ -392,3 +392,24 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - No pure-white blobs - PASS (Bloom threshold raised to 0.6, base exposure 1.0).
 - **Known issues**: None.
 - **Deferred**: None.
+
+---
+
+## Phase 8: Final Game Mode Selection System (2026-10-04)
+- **Built**: 
+  - Final Game Mode selection overlay with exactly two options: PLAY WITH AI and PLAY WITH FRIENDS.
+  - Dynamic 2, 3, or 4 player count selection.
+  - Stripped all difficulty settings and difficulty UI.
+  - Correctly assigns YOU and AI labels for AI mode, and PLAYER 1, PLAYER 2... for friends mode.
+  - Suppressed AI auto-turn firing in Friends mode.
+- **Files created/changed**: 
+  - public/snake-and-ladder.html
+  - docs/PROGRESS.md
+- **Exit criteria**: 
+  - Only two modes exist - PASS.
+  - No difficulty selection - PASS.
+  - AI labels are correctly applied in AI mode - PASS.
+  - Friends labels are correctly applied in Friends mode - PASS.
+  - AI doesn't automatically move in Friends mode - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
