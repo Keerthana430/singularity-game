@@ -1,4 +1,4 @@
-use client;
+'use client';
 // components/LudoShell.tsx — client-only shell for Ludo page
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
