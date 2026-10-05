@@ -96,4 +96,76 @@ function runTests() {
   if (failed > 0) process.exit(1);
 }
 
-runTests();
+// Vitest / ts-node compatibility
+declare const describe: ((name: string, fn: () => void) => void) | undefined;
+declare const it: ((name: string, fn: () => void) => void);
+declare const expect: ((actual: unknown) => {
+  toBe: (expected: unknown) => void;
+  toBeGreaterThan: (expected: number) => void;
+  toBeGreaterThanOrEqual: (expected: number) => void;
+  toBeLessThan: (expected: number) => void;
+  not: { toBe: (expected: unknown) => void };
+});
+
+if (typeof describe === 'function') {
+  describe('Simulate Battle Engine', () => {
+    const avatarA = createDefaultAvatar();
+    avatarA.name = 'TEST-ALPHA';
+    avatarA.species = 'human';
+    avatarA.weapon = 'katana-cyber';
+
+    const avatarB = PRESET_AVATARS[0].avatar;
+    avatarB.name = 'TEST-OMEGA';
+    avatarB.species = 'dwarf';
+    avatarB.weapon = 'heavy-hammer';
+
+    it('Determinism: Same seed produces identical result', () => {
+      const seed = 987654;
+      const r1 = simulateBattle(avatarA, avatarB, seed);
+      const r2 = simulateBattle(avatarA, avatarB, seed);
+      expect!(r1.winnerId).toBe(r2.winnerId);
+      expect!(r1.totalTurns).toBe(r2.totalTurns);
+      expect!(r1.events.length).toBe(r2.events.length);
+      expect!(r1.avatarAFinalHp).toBe(r2.avatarAFinalHp);
+      expect!(r1.avatarBFinalHp).toBe(r2.avatarBFinalHp);
+    });
+
+    it('Seed Variance: Different seeds produce distinct RNG rolls', () => {
+      const r1 = simulateBattle(avatarA, avatarB, 987654);
+      const rDiff = simulateBattle(avatarA, avatarB, 1111);
+      expect!(
+        r1.events[0]?.damage !== rDiff.events[0]?.damage ||
+        r1.events.length !== rDiff.events.length ||
+        r1.avatarAFinalHp !== rDiff.avatarAFinalHp
+      ).toBe(true);
+    });
+
+    it('Winner Logic: Loser HP is reduced to 0 and Winner survives', () => {
+      const r1 = simulateBattle(avatarA, avatarB, 987654);
+      const winnerHp = r1.winnerId === 'avatarA' ? r1.avatarAFinalHp : r1.avatarBFinalHp;
+      const loserHp = r1.winnerId === 'avatarA' ? r1.avatarBFinalHp : r1.avatarAFinalHp;
+      expect!(winnerHp).toBeGreaterThan(0);
+      expect!(loserHp).toBe(0);
+    });
+
+    it('Scoring Formula: calculates correct win and loss scores', () => {
+      const winScore = calculateBattleScore(true, 500, 1000, 5, 2);
+      expect!(winScore).toBe(1750);
+      const lossScore = calculateBattleScore(false, 0, 1000, 12, 0);
+      expect!(lossScore).toBe(320);
+    });
+
+    it('Mulberry32 PRNG: Generates bounded floating point values in [0, 1)', () => {
+      const rng = createSeededRng(42);
+      const s1 = rng();
+      const s2 = rng();
+      expect!(s1).toBeGreaterThanOrEqual(0);
+      expect!(s1).toBeLessThan(1);
+      expect!(s2).toBeGreaterThanOrEqual(0);
+      expect!(s2).toBeLessThan(1);
+      expect!(s1).not.toBe(s2);
+    });
+  });
+} else {
+  runTests();
+}
