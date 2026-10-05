@@ -295,13 +295,34 @@ export default function SnakesAndLaddersPage() {
                 </span>
               )}
             </div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-white/50 mt-1">
-              {activeMovement
-                ? 'EXPLORER SCALING PLATFORMS...'
-                : isPlayerTurn
-                ? 'YOUR TURN // ROLL QUANTUM DIE'
-                : 'RIVAL EXPLORER ADVANCING...'}
-            </span>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap justify-center">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-white/50">
+                {activeMovement
+                  ? 'SCALING PLATFORMS...'
+                  : isPlayerTurn
+                  ? 'YOUR TURN // ROLL DIE'
+                  : 'RIVAL ADVANCING...'}
+              </span>
+              <span className="text-white/20">&bull;</span>
+              <Link
+                href="/prototype"
+                className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/40 transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                title="Switch to 100-Tile Terraced 3D Arcade Engine with Physics & Bloom"
+              >
+                <Sparkles size={9} />
+                <span>100-TILE MATRIX</span>
+              </Link>
+              <a
+                href="/character-prototype/index.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 hover:bg-pink-500/40 transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
+                title="Launch 3D Character Combat Arena with GSAP motions and WASD movement"
+              >
+                <Zap size={9} />
+                <span>COMBAT DOJO</span>
+              </a>
+            </div>
           </div>
 
           {/* Top-Right: Match Timer + Camera Modes & Controls */}

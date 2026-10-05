@@ -31,11 +31,38 @@ export function MainMenu({ onStart }: MainMenuProps) {
             onClick={onStart}
             style={{ fontSize: '1.1rem', padding: '16px' }}
           >
-            ▶ &nbsp; Play
+            ▶ &nbsp; Play 100-Tile Matrix
           </NeonButton>
+
+          <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '8px' }}>
+            <a
+              href="/snakes"
+              style={{ textDecoration: 'none', flex: 1 }}
+            >
+              <NeonButton
+                variant="secondary"
+                fullWidth
+                style={{ fontSize: '0.82rem', padding: '10px 14px' }}
+              >
+                ⌂ 40-Tier Ascent
+              </NeonButton>
+            </a>
+            <a
+              href="/character-prototype/index.html"
+              style={{ textDecoration: 'none', flex: 1 }}
+            >
+              <NeonButton
+                variant="danger"
+                fullWidth
+                style={{ fontSize: '0.82rem', padding: '10px 14px' }}
+              >
+                ⚔ Combat Dojo
+              </NeonButton>
+            </a>
+          </div>
         </div>
 
-        <p style={version}>v0.7.0 – Phase 7</p>
+        <p style={version}>v0.7.0 – Phase 7 Arcade</p>
       </NeonPanel>
     </div>
   );
