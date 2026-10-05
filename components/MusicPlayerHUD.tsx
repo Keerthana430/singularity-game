@@ -105,6 +105,8 @@ export function MusicPlayerHUD() {
   const [sfxMuted, setSfxMuted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const userInteractedRef = useRef(false);
+  const userSelectedTrackRef = useRef(false);
+  const previousPathnameRef = useRef<string | null>(null);
 
   // Subscribe to music engine state
   useEffect(() => {
@@ -143,6 +145,15 @@ export function MusicPlayerHUD() {
 
   // Route-based dynamic theme switching (General music in home, lobby, studio, games)
   useEffect(() => {
+    const isNewRoute = previousPathnameRef.current !== pathname;
+    previousPathnameRef.current = pathname;
+
+    if (!isNewRoute && userSelectedTrackRef.current) {
+      return;
+    }
+
+    userSelectedTrackRef.current = false;
+
     let targetTrack: MusicTrackId = 'cyberpunk';
     if (pathname === '/') targetTrack = 'cyberpunk';
     else if (pathname.startsWith('/lobby')) targetTrack = 'lobby';
@@ -154,12 +165,11 @@ export function MusicPlayerHUD() {
     else if (pathname.startsWith('/contest')) targetTrack = 'contest';
     else targetTrack = 'cyberpunk';
 
-    music.setTrack(targetTrack);
-
-    // Auto-play general music if not explicitly disabled by user
     const savedMute = localStorage.getItem('singularity_music_muted');
-    if (savedMute !== 'true' && !music.getIsPlaying()) {
-      music.start(targetTrack);
+    if (savedMute !== 'true' && music.getIsPlaying()) {
+      music.playTrack(targetTrack);
+    } else {
+      music.setTrack(targetTrack);
     }
   }, [pathname]);
 
@@ -177,10 +187,10 @@ export function MusicPlayerHUD() {
   const handleNextTrack = useCallback(() => {
     const idx = TRACK_ORDER.indexOf(trackId);
     const next = TRACK_ORDER[(idx + 1) % TRACK_ORDER.length];
+    userSelectedTrackRef.current = true;
     sound.playHover();
-    music.setTrack(next);
-    if (!isPlaying) music.start(next);
-  }, [trackId, isPlaying]);
+    music.playTrack(next);
+  }, [trackId]);
 
   const handleToggleSfx = useCallback(() => {
     const newMuted = !sfxMuted;
@@ -298,12 +308,13 @@ export function MusicPlayerHUD() {
                   return (
                     <button
                       key={tid}
+                      type="button"
                       onClick={() => {
+                        userSelectedTrackRef.current = true;
                         sound.playClick();
-                        music.setTrack(tid);
-                        if (!isPlaying) music.start(tid);
+                        music.playTrack(tid);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all"
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer hover:bg-white/10 active:scale-[0.98]"
                       style={{
                         background: active ? `${tc.accent}18` : 'transparent',
                         border: active ? `1px solid ${tc.accent}55` : '1px solid transparent',

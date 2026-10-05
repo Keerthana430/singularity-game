@@ -1121,22 +1121,53 @@ class ProceduralMusicEngine {
     return this.currentTrack;
   }
 
+  public playTrack(trackId: MusicTrackId) {
+    if (!MUSIC_TRACKS[trackId]) return;
+    this.currentTrack = trackId;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('singularity_music_track', trackId);
+      localStorage.removeItem('singularity_music_muted');
+    }
+    this.initCtx();
+    if (!this.ctx) return;
+
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+
+    this.isPlaying = true;
+    this.beat = 0;
+
+    const track = MUSIC_TRACKS[this.currentTrack];
+    const intervalMs = Math.round((60 / track.bpm) * 500);
+
+    this.timer = window.setInterval(() => {
+      this.playStep();
+    }, intervalMs);
+
+    // Immediately trigger step so new track audio starts without any delay
+    this.playStep();
+    this.notify();
+  }
+
   public setTrack(trackId: MusicTrackId) {
     if (!MUSIC_TRACKS[trackId]) return;
-    if (this.currentTrack === trackId) return;
+    if (this.currentTrack === trackId && this.timer && this.isPlaying) return;
     this.currentTrack = trackId;
     if (typeof window !== 'undefined') localStorage.setItem('singularity_music_track', trackId);
     if (this.isPlaying) {
       this.beat = 0;
-      // Reset timer to track's BPM
       if (this.timer) {
         clearInterval(this.timer);
-        const track = MUSIC_TRACKS[this.currentTrack];
-        const intervalMs = Math.round((60 / track.bpm) * 500);
-        this.timer = window.setInterval(() => {
-          this.playStep();
-        }, intervalMs);
+        this.timer = null;
       }
+      const track = MUSIC_TRACKS[this.currentTrack];
+      const intervalMs = Math.round((60 / track.bpm) * 500);
+      this.timer = window.setInterval(() => {
+        this.playStep();
+      }, intervalMs);
+      this.playStep();
     }
     this.notify();
   }
@@ -1169,10 +1200,12 @@ class ProceduralMusicEngine {
     const track = MUSIC_TRACKS[this.currentTrack];
     const intervalMs = Math.round((60 / track.bpm) * 500); // 8th note steps
 
+    if (this.timer) clearInterval(this.timer);
     this.timer = window.setInterval(() => {
       this.playStep();
     }, intervalMs);
 
+    this.playStep();
     this.notify();
   }
 

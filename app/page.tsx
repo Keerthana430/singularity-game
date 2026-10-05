@@ -142,7 +142,7 @@ export default function HomePage() {
 
 
   return (
-    <div className="relative min-h-screen rpg-wood-container text-[#FFF5E6] selection:bg-[#F59E0B] selection:text-black overflow-x-hidden pt-16">
+    <div className="relative min-h-screen bg-[#020502] text-white selection:bg-[#00FF66] selection:text-black overflow-x-hidden pt-16">
       {/* Dynamic Interactive Moving Background with Canvas Spores, Mouse Spotlight, and Nebulae */}
       <InteractiveAmbientBackground />
 
@@ -156,50 +156,51 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-6 flex flex-col gap-6"
           >
-            {/* Tagline Ribbon Badge */}
+            {/* Tagline Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-[#1A3D27] to-[#0D1F15] border border-[#00FF66]/40 w-fit text-xs font-bold text-[#00FF66] shadow-[0_0_20px_rgba(0,255,102,0.2)]"
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 border border-[#00FF66]/40 bg-[#00FF66]/10 backdrop-blur-md w-fit text-xs font-mono font-black text-[#00FF66] shadow-[0_0_20px_rgba(0,255,102,0.2)]"
             >
               <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
-              <span className="tracking-widest uppercase">Ancient Lore &bull; Indie Anime Survivor</span>
-              <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
+              <span className="tracking-widest uppercase">// D3V_UNKNOWN // SYS_01 // ONLINE</span>
             </motion.div>
 
-            {/* Main Headline */}
+            {/* Main Headline with Glitch Effect */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.0] uppercase"
+              className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.0] uppercase"
+              style={{ fontFamily: "'Orbitron', sans-serif" }}
             >
-              <span className="text-[#FFF8EE] drop-shadow-[0_2px_24px_rgba(255,255,255,0.08)]">
-                FORGE YOUR
+              <span className="glitch-text text-white drop-shadow-[0_2px_24px_rgba(255,255,255,0.12)]" data-text="BREAK THE GRID.">
+                BREAK THE GRID.
               </span>{' '}<br />
               <span
-                className="bg-clip-text text-transparent"
+                className="bg-clip-text text-transparent neon-green-text"
                 style={{
-                  backgroundImage: 'linear-gradient(135deg, #FEF3C7 0%, #F59E0B 45%, #00FF66 100%)',
-                  filter: 'drop-shadow(0 0 30px rgba(0,255,102,0.3))',
+                  backgroundImage: 'linear-gradient(135deg, #FFFFFF 0%, #00FF66 60%, #39FF14 100%)',
+                  filter: 'drop-shadow(0 0 35px rgba(0,255,102,0.35))',
                 }}
               >
-                ANIME HERO
+                FORGE CYBER RIG
               </span>
             </motion.h1>
 
             {/* Glowing divider accent */}
-            <div className="w-24 h-0.5 bg-gradient-to-r from-[#00FF66] via-[#F59E0B] to-transparent rounded-full shadow-[0_0_12px_rgba(0,255,102,0.5)]" />
+            <div className="w-28 h-0.5 bg-gradient-to-r from-[#00FF66] via-[#39FF14] to-transparent rounded-full shadow-[0_0_12px_rgba(0,255,102,0.6)]" />
 
             {/* Paragraph Description */}
             <motion.p
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="text-base text-[#A8C4B0] leading-relaxed max-w-xl font-medium"
+              className="text-sm sm:text-base text-white/80 leading-relaxed max-w-xl font-mono"
             >
-              Step into an overgrown realm of mossy ancient ruins and indie fantasy survivors. Hand-tailor your cel-shaded adventurer with organic proportions, weathered iron armor, explorer rucksacks, cloth wraps, and signature weapons.
+              &gt; DESIGN WITHOUT RULES. BUILD WITHOUT LIMITS. <br />
+              Construct procedural 3D anime avatars in real-time. Tune gear, armor plates, radiant dyes & signature weapons across Battle Colosseum, 3D Dungeon, Ludo, and Runway.
             </motion.p>
 
             {/* Action Buttons */}
@@ -207,46 +208,56 @@ export default function HomePage() {
               <Link
                 href="/studio"
                 onClick={() => sound.playClick()}
-                className="rpg-auto-equip-btn flex items-center gap-2 px-6 py-3.5 text-xs font-black uppercase text-[#2A1608] shadow-xl hover:scale-105 transition-all"
+                className="cyber-button flex items-center gap-2 px-7 py-3.5 text-xs font-black uppercase text-black hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,255,102,0.3)]"
               >
                 <Layers size={16} />
-                <span>OUTFITTING BAY</span>
+                <span>&gt; ENTER STUDIO_</span>
                 <ChevronRight size={15} />
               </Link>
 
               <Link
                 href="/lobby"
                 onClick={() => sound.playClick()}
-                className="flex items-center gap-2 px-5 py-3.5 rounded-full border-2 border-[#8C6239] bg-[#2C180E]/90 hover:bg-[#3E2516] text-[#FDE68A] font-bold text-xs uppercase transition-all shadow-md hover:scale-105"
+                className="cyber-button-outline flex items-center gap-2 px-6 py-3.5 text-xs font-bold uppercase text-[#00FF66] hover:scale-105 transition-all shadow-md"
               >
-                <Swords size={16} className="text-[#F59E0B]" />
-                <span>COLOSSEUM</span>
+                <Swords size={16} />
+                <span>[ BATTLE ARENA ]</span>
               </Link>
 
               <Link
                 href="/dungeon"
                 onClick={() => sound.playClick()}
-                className="flex items-center gap-2 px-5 py-3.5 rounded-full border border-[#00FF66]/50 bg-[#00FF66]/10 hover:bg-[#00FF66]/20 text-[#00FF66] text-xs font-bold uppercase transition-all shadow-md hover:scale-105"
+                className="flex items-center gap-2 px-5 py-3.5 border border-[#00FF66]/50 bg-[#00FF66]/10 hover:bg-[#00FF66]/25 text-[#00FF66] font-mono text-xs font-bold uppercase transition-all shadow-[0_0_15px_rgba(0,255,102,0.15)] hover:scale-105"
               >
                 <Compass size={16} />
-                <span>DUNGEON</span>
+                <span>[ 3D DUNGEON ]</span>
               </Link>
 
               <Link
                 href="/ludo"
                 onClick={() => sound.playClick()}
-                className="flex items-center gap-2 px-4 py-3.5 rounded-full border border-[#38BDF8]/40 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] text-xs font-bold uppercase transition-all hover:scale-105"
+                className="flex items-center gap-2 px-5 py-3.5 border border-[#38BDF8]/50 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/25 text-[#38BDF8] font-mono text-xs font-bold uppercase transition-all shadow-[0_0_15px_rgba(56,189,248,0.15)] hover:scale-105"
               >
                 <Dices size={16} />
-                <span>LUDO</span>
+                <span>[ LUDO ]</span>
+              </Link>
+
+              <Link
+                href="/contest"
+                onClick={() => sound.playClick()}
+                className="flex items-center gap-2 px-4 py-3.5 border border-[#FF69B4]/40 bg-[#FF69B4]/10 hover:bg-[#FF69B4]/25 text-[#FF69B4] font-mono text-xs font-bold uppercase transition-all hover:scale-105"
+              >
+                <Heart size={16} />
+                <span className="hidden sm:inline">[ RUNWAY ]</span>
               </Link>
 
               <button
                 onClick={handleRandomize}
-                className="flex items-center gap-2 px-3.5 py-3.5 rounded-full border border-[#D97706]/40 bg-[#24160E]/80 hover:bg-[#382417] text-[#F59E0B] text-xs font-bold transition-all shadow-sm hover:scale-105"
-                title="Randomize Adventurer"
+                className="flex items-center gap-2 px-4 py-3.5 border border-[#00FF66]/30 bg-black/60 hover:bg-[#00FF66]/20 text-[#00FF66] font-mono text-xs transition-all hover:scale-105 cursor-pointer"
+                title="Randomize Hero"
               >
                 <Dices size={16} />
+                <span className="hidden sm:inline">[ RANDOMIZE ]</span>
               </button>
             </div>
           </motion.div>
