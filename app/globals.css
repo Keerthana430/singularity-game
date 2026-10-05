@@ -707,3 +707,9 @@ body::after {
   animation: scanline 9s ease-in-out infinite;
 }
 
+/* ── Neon pulse — used by EventCaption (GameHUD snake/ladder events) ── */
+@keyframes neonPulse {
+  0%   { opacity: 1;   transform: scale(1);    }
+  50%  { opacity: 0.7; transform: scale(1.06); }
+  100% { opacity: 1;   transform: scale(1);    }
+}

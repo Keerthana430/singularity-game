@@ -15,6 +15,40 @@ import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 import { AvatarConfig } from '@/types/avatar';
 import { sound } from '@/lib/audio';
 
+// ─── AMBIENT MOUNTAIN CYBER PARTICLES ──────────────────────────────────────
+function MountainCyberParticles() {
+  const points = useMemo(() => {
+    const p = new Float32Array(300 * 3);
+    for (let i = 0; i < 300; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 16;
+      p[i * 3 + 1] = Math.random() * 14;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 16 - 2;
+    }
+    return p;
+  }, []);
+
+  const pointsRef = useRef<THREE.Points>(null);
+  useFrame((_, delta) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y += delta * 0.03;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[points, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.035}
+        color="#38BDF8"
+        transparent
+        opacity={0.45}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
 // ─── TILE COORDINATES DEFINITION (TILES 1 TO 40) ────────────────────────────
 export interface TileCoord {
   id: number; // 1 to 40
@@ -905,40 +939,6 @@ export function Snakes3DCanvas({
     new THREE.Vector3(MOUNTAIN_TILES[0].pos[0], MOUNTAIN_TILES[0].pos[1] + 0.12, MOUNTAIN_TILES[0].pos[2])
   );
 
-// ─── AMBIENT MOUNTAIN CYBER PARTICLES ──────────────────────────────────────
-function MountainCyberParticles() {
-  const points = useMemo(() => {
-    const p = new Float32Array(300 * 3);
-    for (let i = 0; i < 300; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 16;
-      p[i * 3 + 1] = Math.random() * 14;
-      p[i * 3 + 2] = (Math.random() - 0.5) * 16 - 2;
-    }
-    return p;
-  }, []);
-
-  const pointsRef = useRef<THREE.Points>(null);
-  useFrame((_, delta) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y += delta * 0.03;
-    }
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[points, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.035}
-        color="#38BDF8"
-        transparent
-        opacity={0.45}
-        sizeAttenuation
-      />
-    </points>
-  );
-}
 
   return (
     <div className="w-full h-full rounded-none overflow-hidden bg-[#020502]">
