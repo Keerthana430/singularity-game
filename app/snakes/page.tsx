@@ -80,7 +80,7 @@ export default function SnakesAndLaddersPage() {
       setDiceRoll(roll);
       setIsRolling(false);
       const actorName = currentTurn === 'player' ? (currentAvatar.name || 'You') : 'AI';
-      logAction(`🎲 ${actorName} → ${roll}`);
+      logAction(`[ROLL] ${actorName} → ${roll}`);
       moveClimber(currentTurn, roll);
     }, 450);
   };
@@ -122,17 +122,17 @@ export default function SnakesAndLaddersPage() {
       setWinner(turn);
       if (turn === 'player') {
         addCoins(500);
-        addToast('🏆 Summit conquered! +500 Coins', 'success');
+        addToast('[SUMMIT] Summit conquered! +500 Coins', 'success');
       }
-      logAction(`👑 ${name} reached the summit!`);
+      logAction(`[CHAMPION] ${name} reached the summit!`);
       return;
     }
 
     if (LADDERS[landedTile]) {
       const topTile = LADDERS[landedTile];
       sound.playLadderClimb();
-      addToast(`🪜 Ladder! #${landedTile} → #${topTile}`, 'success');
-      logAction(`🪜 ${name} #${landedTile}→#${topTile}`);
+      addToast(`[LADDER] Ascent! #${landedTile} → #${topTile}`, 'success');
+      logAction(`[LADDER] ${name} #${landedTile}→#${topTile}`);
 
       const p0 = MOUNTAIN_TILES[landedTile - 1].pos;
       const p1 = MOUNTAIN_TILES[topTile - 1].pos;
@@ -155,8 +155,8 @@ export default function SnakesAndLaddersPage() {
     if (SNAKES[landedTile]) {
       const tailTile = SNAKES[landedTile];
       sound.playSnakeSlide();
-      addToast(`🐍 Snake! #${landedTile} → #${tailTile}`, 'error');
-      logAction(`🐍 ${name} #${landedTile}→#${tailTile}`);
+      addToast(`[SNAKE] Descent! #${landedTile} → #${tailTile}`, 'error');
+      logAction(`[SNAKE] ${name} #${landedTile}→#${tailTile}`);
 
       const pHead = MOUNTAIN_TILES[landedTile - 1].pos;
       const pTail = MOUNTAIN_TILES[tailTile - 1].pos;

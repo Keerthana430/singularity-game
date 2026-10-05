@@ -53,12 +53,19 @@ const DEFAULT_BATTLE_LEADERBOARD: BattleLeaderboardEntry[] = [
   { name: 'PIXEL-BYTE', rating: 2310, victories: 31, losses: 11, winRate: 74, classRole: 'Rogue Hacker' },
 ];
 
-const TICKER_ITEMS = [
-  { icon: '⚔️', tag: 'COLOSSEUM', text: 'Operative KAGE-07 advanced to Grand Finals (+650 COINS bounty)', color: '#F59E0B', link: '/lobby' },
-  { icon: '🏰', tag: 'DUNGEON', text: 'Explorer VEX-TITAN breached Floor 4 // Overgrown Sanctuary', color: '#00FF66', link: '/dungeon' },
-  { icon: '🎲', tag: 'LUDO', text: 'Cerulean Vanguard rolled double 6 for an instant sanctuary sprint', color: '#38BDF8', link: '/ludo' },
-  { icon: '👑', tag: 'RUNWAY', text: 'Celestial AURA-V achieved 2,400+ style likes in Hall of Fashion', color: '#F472B6', link: '/contest' },
-  { icon: '🗡️', tag: 'STUDIO', text: 'New Relic "Photon Katana" cel-shaded and tuned in Outfitting Bay', color: '#34D399', link: '/studio' },
+const TICKER_ITEMS: {
+  iconType: 'colosseum' | 'dungeon' | 'ludo' | 'snakes' | 'runway' | 'studio';
+  tag: string;
+  text: string;
+  color: string;
+  link: string;
+}[] = [
+  { iconType: 'colosseum', tag: 'COLOSSEUM', text: 'Operative KAGE-07 advanced to Grand Finals (+650 COINS bounty)', color: '#F59E0B', link: '/lobby' },
+  { iconType: 'dungeon', tag: 'DUNGEON', text: 'Explorer VEX-TITAN breached Floor 4 // Bio-Sanctuary', color: '#00FF66', link: '/dungeon' },
+  { iconType: 'ludo', tag: 'LUDO', text: 'Cerulean Vanguard rolled double 6 for an instant sanctuary sprint', color: '#38BDF8', link: '/ludo' },
+  { iconType: 'snakes', tag: 'SNAKES', text: 'Pilot QUANTUM-9 warped via Anti-Grav Ladder to Sector 88', color: '#A855F7', link: '/snakes' },
+  { iconType: 'runway', tag: 'RUNWAY', text: 'Celestial AURA-V achieved 2,400+ style likes in Hall of Fashion', color: '#F472B6', link: '/contest' },
+  { iconType: 'studio', tag: 'STUDIO', text: 'New Relic "Photon Katana" tuned in Outfitting Bay', color: '#34D399', link: '/studio' },
 ];
 
 export default function HomePage() {
@@ -208,8 +215,22 @@ export default function HomePage() {
                 <span className="text-[#00FF66] font-bold">LIVE SIGNAL</span>
               </div>
 
-              <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                <span className="text-base">{TICKER_ITEMS[tickerIndex].icon}</span>
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
+                <div
+                  className="w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-colors shadow-sm"
+                  style={{
+                    color: TICKER_ITEMS[tickerIndex].color,
+                    borderColor: `${TICKER_ITEMS[tickerIndex].color}50`,
+                    background: `${TICKER_ITEMS[tickerIndex].color}18`,
+                  }}
+                >
+                  {TICKER_ITEMS[tickerIndex].iconType === 'colosseum' && <Swords size={13} />}
+                  {TICKER_ITEMS[tickerIndex].iconType === 'dungeon' && <Compass size={13} />}
+                  {TICKER_ITEMS[tickerIndex].iconType === 'ludo' && <Dices size={13} />}
+                  {TICKER_ITEMS[tickerIndex].iconType === 'snakes' && <Zap size={13} />}
+                  {TICKER_ITEMS[tickerIndex].iconType === 'runway' && <Sparkles size={13} />}
+                  {TICKER_ITEMS[tickerIndex].iconType === 'studio' && <Layers size={13} />}
+                </div>
                 <span
                   className="font-mono text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded border"
                   style={{
@@ -235,156 +256,224 @@ export default function HomePage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* SECTION 1: THE FOUR OFFICIAL GAME EXPEDITIONS               */}
+      {/* SECTION 1: THE SIX OFFICIAL GAME EXPEDITIONS & SUITES        */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-[#5C3D27]/40 z-10">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2C180E] border border-[#8C6239] text-xs font-bold text-[#F59E0B] mb-3">
-            <Swords size={13} aria-hidden="true" />
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#5C3D27]/40 z-10">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C180E] border border-[#8C6239] text-xs sm:text-sm font-bold text-[#F59E0B] mb-3 shadow-md">
+            <Swords size={15} aria-hidden="true" />
             <span>ACTIVE EXPEDITION QUESTS</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#FFF8EE]">
+          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-[#FFF8EE]" style={{ fontFamily: "'Orbitron', sans-serif" }}>
             SELECT YOUR ADVENTURE
           </h2>
-          <p className="text-[#CBB49C] mt-3 text-xs sm:text-sm">
-            Deploy your custom hand-drawn avatar into tactical 3D colosseums, procedural ruin descents, 4-faction board warfare, and global runway showcases.
+          <p className="text-[#D4C3B3] mt-4 text-sm sm:text-base leading-relaxed">
+            Deploy your custom hand-drawn avatar into tactical 3D colosseums, procedural ruin descents, 4-faction board warfare, zero-gravity cosmic grids, and global runway showcases.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
           {/* Game 1: Battle Royale */}
-          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#F59E0B] hover:-translate-y-1.5 transition-all shadow-xl">
+          <div className="rpg-leather-panel p-6 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#F59E0B] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#180E08] to-[#0A0503]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-xl bg-[#D97706]/15 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B] group-hover:scale-110 transition-transform">
-                  <Swords size={22} />
+                <div className="w-12 h-12 rounded-xl bg-[#D97706]/20 border border-[#F59E0B]/50 flex items-center justify-center text-[#F59E0B] group-hover:scale-110 transition-transform shadow-md">
+                  <Swords size={24} />
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#D97706]/20 border border-[#F59E0B]/40 text-[#FDE68A]">
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#D97706]/20 border border-[#F59E0B]/40 text-[#FDE68A]">
                   8-Hero Arena
                 </span>
               </div>
-              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#F59E0B] transition-colors mb-2">
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#F59E0B] transition-colors mb-2.5 tracking-wide">
                 COLOSSEUM ARENA
               </h3>
-              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
-                Step onto the ancient mossy ruin grounds. Battle through Quarter-Finals, Semi-Finals, and Grand Finals with species combat arts and tactical parries.
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
+                Step onto the ancient mossy ruin grounds. Battle through Quarter-Finals, Semi-Finals, and Grand Finals with species combat arts, tactical counter-parries, and devastating Overdrives.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">3D VFX</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Species Arts</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#FCD34D]">+650 COINS</span>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#1A1009] border border-[#442817] font-medium">3D VFX</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1A1009] border border-[#442817] font-medium">Species Arts</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1A1009] border border-[#442817] text-[#FCD34D] font-bold">+650 COINS</span>
               </div>
             </div>
 
             <Link
               href="/lobby"
               onClick={() => sound.playClick()}
-              className="rpg-auto-equip-btn w-full py-2.5 px-3 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 hover:scale-102 transition-all shadow-md"
+              className="rpg-auto-equip-btn w-full py-3 px-4 text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:scale-102 transition-all shadow-md rounded-xl"
             >
               <span>Deploy to Arena</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={15} />
             </Link>
           </div>
 
           {/* Game 2: Dungeon Roguelike */}
-          <div className="rpg-leather-panel p-5 border-2 border-[#1E4D34] flex flex-col justify-between group hover:border-[#00FF66] hover:-translate-y-1.5 transition-all shadow-xl bg-gradient-to-b from-[#08150E] to-[#040B07]">
+          <div className="rpg-leather-panel p-6 border-2 border-[#1E4D34] flex flex-col justify-between group hover:border-[#00FF66] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#08150E] to-[#040B07]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-xl bg-[#00FF66]/15 border border-[#00FF66]/40 flex items-center justify-center text-[#00FF66] group-hover:scale-110 transition-transform">
-                  <Compass size={22} />
+                <div className="w-12 h-12 rounded-xl bg-[#00FF66]/20 border border-[#00FF66]/50 flex items-center justify-center text-[#00FF66] group-hover:scale-110 transition-transform shadow-md">
+                  <Compass size={24} />
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66]">
-                  6-Floor Descent
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66]">
+                  6-Floor 3D Ruin
                 </span>
               </div>
-              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#00FF66] transition-colors mb-2">
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#00FF66] transition-colors mb-2.5 tracking-wide">
                 DUNGEON // DESCENT
               </h3>
-              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
-                Descend into procedural ruin chambers. Battle adaptive hostiles, acquire relic builds, conquer multi-phase bosses, and decide the Core&apos;s fate.
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
+                Descend into procedural ruin chambers. Battle adaptive hostiles with real-time WASD combat, assemble powerful relic synergies, and conquer multi-phase boss guardians.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
-                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624]">Procedural</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624]">Relic Builds</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#0A170F] border border-[#163624] text-[#00FF66]">+850 COINS</span>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#0A170F] border border-[#163624] font-medium">Active WASD</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0A170F] border border-[#163624] font-medium">Relic Synergies</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0A170F] border border-[#163624] text-[#00FF66] font-bold">+850 COINS</span>
               </div>
             </div>
 
             <Link
               href="/dungeon"
               onClick={() => sound.playClick()}
-              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#00FF66] to-[#00993D] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-b from-[#00FF66] to-[#00993D] text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
             >
               <span>Descend Ruin</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={15} />
             </Link>
           </div>
 
           {/* Game 3: Colosseum Ludo */}
-          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#38BDF8] hover:-translate-y-1.5 transition-all shadow-xl">
+          <div className="rpg-leather-panel p-6 border-2 border-[#1E3A5F] flex flex-col justify-between group hover:border-[#38BDF8] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#081524] to-[#040810]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/40 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                  <Dices size={22} />
+                <div className="w-12 h-12 rounded-xl bg-[#38BDF8]/20 border border-[#38BDF8]/50 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform shadow-md">
+                  <Dices size={24} />
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#BAE6FD]">
-                  4-Player Table
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[#BAE6FD]">
+                  4-Player 3D Board
                 </span>
               </div>
-              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#38BDF8] transition-colors mb-2">
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#38BDF8] transition-colors mb-2.5 tracking-wide">
                 COLOSSEUM LUDO
               </h3>
-              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
-                Gather at the grand colosseum table. Choose between 4 distinct factions, roll physical 3D dice, capture opposing tokens, and sprint to sanctuary.
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
+                Gather at the grand colosseum table. Choose between 4 distinct factions, roll physical 3D quantum dice, capture opposing tokens, and trigger quantum power-up tiles.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Physics Dice</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Clash</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#BAE6FD]">Safe Havens</span>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#0B1726] border border-[#1A334E] font-medium">Physics Dice</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0B1726] border border-[#1A334E] font-medium">Combat Clashes</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0B1726] border border-[#1A334E] text-[#BAE6FD] font-bold">+500 COINS</span>
               </div>
             </div>
 
             <Link
               href="/ludo"
               onClick={() => sound.playClick()}
-              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-b from-[#38BDF8] to-[#0284C7] text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
             >
               <span>Enter Ludo Table</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={15} />
             </Link>
           </div>
 
-          {/* Game 4: Beauty Contest */}
-          <div className="rpg-leather-panel p-5 border-2 border-[#5C3D27] flex flex-col justify-between group hover:border-[#FF5C93] hover:-translate-y-1.5 transition-all shadow-xl">
+          {/* Game 4: Cosmic Snakes & Ladders */}
+          <div className="rpg-leather-panel p-6 border-2 border-[#3B1C54] flex flex-col justify-between group hover:border-[#A855F7] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#180A26] to-[#0B0414]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-xl bg-[#FF5C93]/15 border border-[#FF5C93]/40 flex items-center justify-center text-[#FF5C93] group-hover:scale-110 transition-transform">
-                  <Crown size={22} />
+                <div className="w-12 h-12 rounded-xl bg-[#A855F7]/20 border border-[#A855F7]/50 flex items-center justify-center text-[#A855F7] group-hover:scale-110 transition-transform shadow-md">
+                  <Zap size={24} />
                 </div>
-                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FF5C93]/20 border border-[#FF5C93]/40 text-[#FBCFE8]">
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#A855F7]/20 border border-[#A855F7]/40 text-[#E9D5FF]">
+                  100-Tile Quantum Grid
+                </span>
+              </div>
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#A855F7] transition-colors mb-2.5 tracking-wide">
+                COSMIC SNAKES
+              </h3>
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
+                Ascend the 10x10 zero-gravity cyber matrix. Ride anti-grav hyper-ladders straight to the summit, dodge wormhole black-hole drops, and trigger propulsion speed boosts.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#1B0C2B] border border-[#3A1856] font-medium">Hyper-Ladders</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1B0C2B] border border-[#3A1856] font-medium">Wormholes</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1B0C2B] border border-[#3A1856] text-[#E9D5FF] font-bold">+400 COINS</span>
+              </div>
+            </div>
+
+            <Link
+              href="/snakes"
+              onClick={() => sound.playClick()}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-b from-[#A855F7] to-[#7E22CE] text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
+            >
+              <span>Ascend Matrix</span>
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+
+          {/* Game 5: Beauty Contest */}
+          <div className="rpg-leather-panel p-6 border-2 border-[#5C1D38] flex flex-col justify-between group hover:border-[#FF5C93] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#1C0A14] to-[#0C0409]">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#FF5C93]/20 border border-[#FF5C93]/50 flex items-center justify-center text-[#FF5C93] group-hover:scale-110 transition-transform shadow-md">
+                  <Crown size={24} />
+                </div>
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#FF5C93]/20 border border-[#FF5C93]/40 text-[#FBCFE8]">
                   Community Stage
                 </span>
               </div>
-              <h3 className="text-lg font-black uppercase text-[#FFF8EE] group-hover:text-[#FF5C93] transition-colors mb-2">
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#FF5C93] transition-colors mb-2.5 tracking-wide">
                 BEAUTY RUNWAY
               </h3>
-              <p className="text-xs text-[#CBB49C] leading-relaxed mb-4">
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
                 Showcase your customized hero in the Hall of Fashion. Gain likes, climb the global popularity rankings, and win exclusive cosmetics and crowns.
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-5 text-[10px] text-[#A8927E]">
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Voting</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817]">Crowns</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#1A1009] border border-[#442817] text-[#FBCFE8]">Badges</span>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#1C0913] border border-[#3D1429] font-medium">Decentralized Votes</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1C0913] border border-[#3D1429] font-medium">Prestige Badges</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#1C0913] border border-[#3D1429] text-[#FBCFE8] font-bold">+350 COINS</span>
               </div>
             </div>
 
             <Link
               href="/contest"
               onClick={() => sound.playClick()}
-              className="w-full py-2.5 px-3 rounded-full bg-gradient-to-b from-[#F472B6] to-[#DB2777] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:brightness-110 transition-all shadow-md"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-b from-[#F472B6] to-[#DB2777] text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
             >
               <span>Enter Runway</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+
+          {/* Game 6: Avatar Studio */}
+          <div className="rpg-leather-panel p-6 border-2 border-[#134E4A] flex flex-col justify-between group hover:border-[#34D399] hover:-translate-y-1.5 transition-all shadow-xl rounded-2xl bg-gradient-to-b from-[#061816] to-[#020A09]">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#34D399]/20 border border-[#34D399]/50 flex items-center justify-center text-[#34D399] group-hover:scale-110 transition-transform shadow-md">
+                  <Layers size={24} />
+                </div>
+                <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#34D399]/20 border border-[#34D399]/40 text-[#A7F3D0]">
+                  Outfitting Bay
+                </span>
+              </div>
+              <h3 className="text-xl font-black uppercase text-[#FFF8EE] group-hover:text-[#34D399] transition-colors mb-2.5 tracking-wide">
+                AVATAR STUDIO
+              </h3>
+              <p className="text-sm text-[#CBB49C] leading-relaxed mb-5">
+                Deep cybernetic customization suite. Equip legendary relic weapons, tune procedural particle auras, adjust species gear color palettes, and export 3D avatar builds.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6 text-xs text-[#A8927E]">
+                <span className="px-2.5 py-1 rounded-md bg-[#0A1E1B] border border-[#153F39] font-medium">Deep Customizer</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0A1E1B] border border-[#153F39] font-medium">Relic Outfits</span>
+                <span className="px-2.5 py-1 rounded-md bg-[#0A1E1B] border border-[#153F39] text-[#A7F3D0] font-bold">3D Stage</span>
+              </div>
+            </div>
+
+            <Link
+              href="/studio"
+              onClick={() => sound.playClick()}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-b from-[#34D399] to-[#059669] text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-md"
+            >
+              <span>Open Avatar Studio</span>
+              <ArrowRight size={15} />
             </Link>
           </div>
         </div>
@@ -395,163 +484,264 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <p className="text-xs font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// OFFICIAL_RULEBOOK_CODEX //</p>
-          <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+          <p className="text-xs sm:text-sm font-mono font-black uppercase tracking-widest text-[#00FF66] mb-2">// OFFICIAL_RULEBOOK_CODEX //</p>
+          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
             GAME RULES & COMBAT PROTOCOLS
           </h2>
-          <p className="text-white/70 mt-3 text-xs sm:text-sm font-mono">
-            &gt; Master the official mechanics, combat scaling, evasion physics, and win conditions for all three game modes.
+          <p className="text-white/80 mt-3 text-sm sm:text-base font-mono leading-relaxed">
+            &gt; Master the official mechanics, combat scaling, evasion physics, and win conditions across all Singularity game protocols.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
           {/* Rules: Battle Royale */}
-          <div className="hud-box glass-panel p-5 border border-[#00FF66]/30 flex flex-col gap-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#00FF66]/20">
-              <Swords size={20} className="text-[#00FF66]" />
-              <h3 className="text-sm font-black uppercase font-mono text-white">
-                Battle Royale Protocol
-              </h3>
+          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#00FF66]/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66]">
+                  <Swords size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Colosseum Battle
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#00FF66]/15 text-[#00FF66] border border-[#00FF66]/30">8-HERO</span>
             </div>
 
-
-            <div className="space-y-3.5 text-xs font-mono text-white/80">
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">01.</span>
-                <p><strong className="text-white">Tournament Bracket:</strong> 8-fighter elimination bracket spanning Quarter-Finals, Semi-Finals, and Grand Finals.</p>
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Tournament Bracket:</strong> 8-fighter elimination bracket spanning Quarter-Finals, Semi-Finals, and Grand Finals.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">02.</span>
-                <p><strong className="text-white">Species Combat Arts:</strong> Each species has 4 unique moves: Strike (Physical scaling), Magic (Arcane scaling), Shield (Damage absorption & counter-parry reflect), and Ultimate Overdrive (100% energy).</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Species Combat Arts:</strong> Each species has 4 unique moves: Strike (Physical scaling), Magic (Arcane scaling), Shield (Damage absorption & counter-parry reflect), and Ultimate Overdrive (100% energy).</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">03.</span>
-                <p><strong className="text-white">Dodge & Critical Hits:</strong> High agility grants acrobatic evasive leap (taking 0 damage). Critical strikes bypass armor with cinematic impact shockwaves.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Dodge & Critical Hits:</strong> High agility grants acrobatic evasive leap (taking 0 damage). Critical strikes bypass armor with cinematic impact shockwaves.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">04.</span>
-                <p><strong className="text-white">Nanite Medbay Cooldown:</strong> Damage sustained requires 30s–5m recovery before re-entering arena (or instant stimpack for 50 COINS). Fairies heal 40% faster.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Nanite Medbay Recovery:</strong> Damage sustained requires 30s–5m recovery before re-entering arena (or instant stimpack for 50 COINS). Fairies heal 40% faster.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">05.</span>
-                <p><strong className="text-white">Coin Rewards:</strong> +150 COINS Quarter, +300 COINS Semi, +650 COINS Grand Champion prize.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Coin Rewards:</strong> +150 COINS Quarter, +300 COINS Semi, +650 COINS Grand Champion prize.</p>
               </div>
             </div>
           </div>
 
           {/* Rules: Dungeon Descent */}
-          <div className="hud-box glass-panel p-5 border border-[#00FF66]/30 flex flex-col gap-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#00FF66]/20">
-              <Compass size={20} className="text-[#00FF66]" />
-              <h3 className="text-sm font-black uppercase font-mono text-white">
-                Dungeon Protocol
-              </h3>
+          <div className="hud-box glass-panel p-6 border border-[#00FF66]/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#00FF66]/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#00FF66]/15 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66]">
+                  <Compass size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Dungeon Descent
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#00FF66]/15 text-[#00FF66] border border-[#00FF66]/30">6-FLOOR</span>
             </div>
 
-            <div className="space-y-3.5 text-xs font-mono text-white/80">
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">01.</span>
-                <p><strong className="text-white">Procedural Route:</strong> Node chamber map with Combat, Elites, Relic Caches, and Merchants.</p>
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Procedural Route:</strong> Node chamber map with Combat, Elites, Relic Caches, and Cyber Merchants.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">02.</span>
-                <p><strong className="text-white">Active Combat:</strong> Real-time WASD movement, dodges, arc pulses, and Overdrive abilities.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Active Combat:</strong> Real-time WASD movement, dash evasions, arc pulses, and Overdrive abilities.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">03.</span>
-                <p><strong className="text-white">Adaptive Relics:</strong> Shape your build per floor with attack mods, health restores, and soul shards.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Adaptive Relics:</strong> Shape your build per floor with attack mods, health restores, and soul shards.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">04.</span>
-                <p><strong className="text-white">Multi-Phase Bosses:</strong> Defeat floor guardians with bullet patterns and stage transitions.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Multi-Phase Bosses:</strong> Defeat floor guardians with bullet patterns, minion spawns, and stage transitions.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#00FF66] font-bold">05.</span>
-                <p><strong className="text-white">Core Endings:</strong> Resolve the Core at Floor 6 for up to +850 COINS and narrative epilogues.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-[#00FF66] font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Core Endings:</strong> Resolve the Core at Floor 6 for up to +850 COINS and narrative epilogues.</p>
               </div>
             </div>
           </div>
 
           {/* Rules: Cyber Ludo */}
-          <div className="hud-box glass-panel p-5 border border-cyan-500/30 flex flex-col gap-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-cyan-500/20">
-              <Dices size={20} className="text-cyan-400" />
-              <h3 className="text-sm font-black uppercase font-mono text-white">
-                Cyber Ludo Protocol
-              </h3>
+          <div className="hud-box glass-panel p-6 border border-cyan-500/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-cyan-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <Dices size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Cyber Ludo
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">4-FACTION</span>
             </div>
 
-
-            <div className="space-y-3.5 text-xs font-mono text-white/80">
-              <div className="flex items-start gap-2.5">
-                <span className="text-cyan-400 font-bold">01.</span>
-                <p><strong className="text-white">Base Deployment:</strong> 4 tokens per player. You must roll a <strong className="text-cyan-300">6</strong> on the quantum die to deploy a token onto the track. Rolling 6 grants an instant bonus roll.</p>
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-cyan-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Base Deployment:</strong> 4 tokens per player. You must roll a <strong className="text-cyan-300">6</strong> on the quantum die to deploy a token onto the track. Rolling 6 grants an instant bonus roll.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-cyan-400 font-bold">02.</span>
-                <p><strong className="text-white">Capture & Bonus Turns:</strong> Landing on an opponent token on any regular track square captures it, sending it back to base and awarding a free bonus turn.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-cyan-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Capture & Bonus Turns:</strong> Landing on an opponent token on any regular track square captures it, sending it back to base and awarding a free bonus turn.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-cyan-400 font-bold">03.</span>
-                <p><strong className="text-white">Safe Star Havens:</strong> 8 tiles marked with golden Stars ⭐ are quantum-shielded sanctuaries where pieces cannot be captured.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-cyan-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Safe Star Havens:</strong> 8 tiles marked with Star sanctuaries are quantum-shielded zones where pieces cannot be captured.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-cyan-400 font-bold">04.</span>
-                <p><strong className="text-white">Cyber Power-Up Tiles:</strong> Special squares grant Overdrive (+2 steps), Quantum Shield (safe from 1 capture), or Warp Portal (+4 leap).</p>
+              <div className="flex items-start gap-3">
+                <span className="text-cyan-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Cyber Power-Up Tiles:</strong> Special squares grant Overdrive Boost (+2 steps), Quantum Shield (safe from 1 capture), or Warp Portal (+4 leap).</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-cyan-400 font-bold">05.</span>
-                <p><strong className="text-white">Singularity Nexus (Win):</strong> Exact roll required to reach the center Home. First player to guide all 4 avatars home wins 1st Place (+500 COINS).</p>
+              <div className="flex items-start gap-3">
+                <span className="text-cyan-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Singularity Nexus (Win):</strong> Exact roll required to reach the center Home. First player to guide all 4 avatars home wins 1st Place (+500 COINS).</p>
               </div>
             </div>
           </div>
 
-          {/* Rules: Beauty Contest */}
-          <div className="hud-box glass-panel p-5 border border-[#FF69B4]/30 flex flex-col gap-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#FF69B4]/20">
-              <Heart size={20} className="text-[#FF69B4]" />
-              <h3 className="text-sm font-black uppercase font-mono text-white">
-                Beauty Runway Protocol
-              </h3>
+          {/* Rules: Cosmic Snakes & Ladders */}
+          <div className="hud-box glass-panel p-6 border border-purple-500/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-purple-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Zap size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Cosmic Snakes
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">100-TILE</span>
             </div>
 
-
-            <div className="space-y-3.5 text-xs font-mono text-white/80">
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#FF69B4] font-bold">01.</span>
-                <p><strong className="text-white">Entry Submission:</strong> Submit your customized avatar build with an expressive, personal tagline to enter the public contest pool.</p>
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Serpentine Grid:</strong> 100 numbered tiles arranged in a boustrophedon zigzag trajectory across the zero-gravity quantum sector.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#FF69B4] font-bold">02.</span>
-                <p><strong className="text-white">Decentralized Voting:</strong> Each player casts 1 vote per contest cycle to ensure balanced and fair community evaluation.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Anti-Grav Hyper-Ladders:</strong> Landing at the base of a cyber ladder propels your avatar upward across sectors instantly to higher tiers.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#FF69B4] font-bold">03.</span>
-                <p><strong className="text-white">Style Aesthetics:</strong> Avatars evaluated across color harmony, accessories, and thematic cybernetic cohesion.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Cosmic Wormholes:</strong> Landing on an anomaly maw pulls your avatar downward to an earlier sector. Navigate with care!</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#FF69B4] font-bold">04.</span>
-                <p><strong className="text-white">Podium Rankings:</strong> Live leaderboard tracks votes with top creators earning prestige badges and the coveted Beauty Crown.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Overdrive Rolls:</strong> Rolling a <strong className="text-purple-300">6</strong> triggers an instant bonus propulsion roll, accelerating your path to the summit.</p>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <span className="text-[#FF69B4] font-bold">05.</span>
-                <p><strong className="text-white">Cycle Reset:</strong> Weekly cycles crown new champions, archive hall-of-fame entries, and reward bonus coin prizes.</p>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Summit Escape (Win):</strong> Exact roll required on tile 100 to escape the singularity and claim 1st Place (+400 COINS).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rules: Beauty Runway */}
+          <div className="hud-box glass-panel p-6 border border-[#FF69B4]/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#FF69B4]/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#FF69B4]/15 border border-[#FF69B4]/30 flex items-center justify-center text-[#FF69B4]">
+                  <Crown size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Beauty Runway
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#FF69B4]/15 text-[#FF69B4] border border-[#FF69B4]/30">STYLE VOTE</span>
+            </div>
+
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-[#FF69B4] font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Entry Submission:</strong> Submit your customized avatar build with an expressive tagline to enter the public contest pool.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-[#FF69B4] font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Decentralized Voting:</strong> Each player casts 1 vote per contest cycle to ensure balanced and fair community evaluation.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-[#FF69B4] font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Style Aesthetics:</strong> Avatars evaluated across color harmony, accessories, and thematic cybernetic cohesion.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-[#FF69B4] font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Podium Rankings:</strong> Live leaderboard tracks votes with top creators earning prestige badges and the coveted Beauty Crown.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-[#FF69B4] font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Cycle Reset:</strong> Weekly cycles crown new champions, archive hall-of-fame entries, and reward bonus coin prizes (+350 COINS).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rules: Avatar Studio */}
+          <div className="hud-box glass-panel p-6 border border-emerald-500/30 flex flex-col gap-5 rounded-2xl bg-black/40 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-emerald-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Layers size={20} />
+                </div>
+                <h3 className="text-base sm:text-lg font-black uppercase font-mono text-white tracking-wide">
+                  Avatar Studio
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">OUTFITTING</span>
+            </div>
+
+            <div className="space-y-4 text-sm font-sans sm:font-mono text-white/85 leading-relaxed">
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">01.</span>
+                <p><strong className="text-white font-bold">Species Archetypes:</strong> Select from 5 core archetypes (Human, Cyborg, Kitsune, Elf, Fairy) with unique physical attributes.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">02.</span>
+                <p><strong className="text-white font-bold">Relic Equipment Bay:</strong> Equip legendary weapons, headgear, armor, and accessories with live cel-shaded previews.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">03.</span>
+                <p><strong className="text-white font-bold">Color Matrix Tuning:</strong> Real-time hex color customization for hair, eyes, outfit accents, and particle glow emissions.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">04.</span>
+                <p><strong className="text-white font-bold">Interactive 3D Stage:</strong> Inspect your avatar with full 360° camera rotation, combat animations, and lighting controls.</p>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-400 font-bold text-sm sm:text-base shrink-0 mt-0.5">05.</span>
+                <p><strong className="text-white font-bold">Universal Sync:</strong> Saves instantly to local storage, immediately ready for deployment in all 5 game arenas.</p>
               </div>
             </div>
           </div>

@@ -180,7 +180,7 @@ export default function ContestPage() {
     }
     const success = await renameTeam(renameInput.trim());
     if (success) {
-      addToast('✅ Team name updated!', 'success');
+      addToast('Team name updated!', 'success');
       setIsRenamingTeam(false);
     }
   };
@@ -218,10 +218,9 @@ export default function ContestPage() {
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.2, ease: 'easeOut' }}
-              className="absolute text-[#FF007F] drop-shadow-[0_0_15px_#FF007F]"
-              style={{ fontSize: `${particle.size}px` }}
+              className="absolute text-[#FF007F] drop-shadow-[0_0_15px_#FF007F] flex items-center justify-center"
             >
-              ♥
+              <Heart size={particle.size} className="fill-current text-[#FF007F]" />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -507,23 +506,25 @@ export default function ContestPage() {
               <div className="flex items-center gap-2 font-mono text-xs">
                 <button
                   onClick={() => setSortBy('likes')}
-                  className={`px-3 py-1.5 rounded-xl border transition-all ${
+                  className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
                     sortBy === 'likes'
                       ? 'bg-[#FF007F] text-white border-[#FF007F] shadow-[0_0_12px_#FF007F]'
                       : 'border-white/10 text-white/50 hover:text-white'
                   }`}
                 >
-                  ♥ Most Hearts
+                  <Heart size={13} className="fill-current" />
+                  <span>Most Liked</span>
                 </button>
                 <button
                   onClick={() => setSortBy('newest')}
-                  className={`px-3 py-1.5 rounded-xl border transition-all ${
+                  className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
                     sortBy === 'newest'
                       ? 'bg-[#FF007F] text-white border-[#FF007F] shadow-[0_0_12px_#FF007F]'
                       : 'border-white/10 text-white/50 hover:text-white'
                   }`}
                 >
-                  ★ Newest Looks
+                  <Sparkles size={13} />
+                  <span>Newest Looks</span>
                 </button>
               </div>
             </div>
@@ -598,7 +599,7 @@ export default function ContestPage() {
                             {entry.name}
                           </span>
                           <span className="font-black text-[#FF007F] flex items-center gap-1">
-                            <span>♡</span>
+                            <Heart size={11} className="fill-current text-[#FF007F]" />
                             <span>{entry.likes}</span>
                           </span>
                         </div>
@@ -842,7 +843,10 @@ export default function ContestPage() {
                   <p className="text-xs font-black uppercase mt-1 text-white truncate max-w-[100px]">
                     {topThree[1].name}
                   </p>
-                  <p className="text-[10px] text-[#FF007F]">♥ {topThree[1].likes}</p>
+                  <p className="text-[10px] text-[#FF007F] flex items-center justify-center gap-1">
+                    <Heart size={10} className="fill-current" />
+                    <span>{topThree[1].likes}</span>
+                  </p>
                 </div>
                 <div className="w-full h-16 bg-slate-400/10 border border-slate-400/30 rounded-t-2xl" />
               </div>
@@ -865,7 +869,10 @@ export default function ContestPage() {
                   <p className="text-sm font-black uppercase mt-1 text-[#FFD700] truncate max-w-[120px]">
                     {topThree[0].name}
                   </p>
-                  <p className="text-xs text-[#FF007F] font-bold">♥ {topThree[0].likes}</p>
+                  <p className="text-xs text-[#FF007F] font-bold flex items-center justify-center gap-1">
+                    <Heart size={12} className="fill-current" />
+                    <span>{topThree[0].likes}</span>
+                  </p>
                 </div>
                 <div className="w-full h-24 bg-[#FFD700]/10 border border-[#FFD700]/40 rounded-t-2xl" />
               </div>
@@ -887,7 +894,10 @@ export default function ContestPage() {
                   <p className="text-xs font-black uppercase mt-1 text-white truncate max-w-[100px]">
                     {topThree[2].name}
                   </p>
-                  <p className="text-[10px] text-[#FF007F]">♥ {topThree[2].likes}</p>
+                  <p className="text-[10px] text-[#FF007F] flex items-center justify-center gap-1">
+                    <Heart size={10} className="fill-current" />
+                    <span>{topThree[2].likes}</span>
+                  </p>
                 </div>
                 <div className="w-full h-12 bg-amber-600/10 border border-amber-600/30 rounded-t-2xl" />
               </div>

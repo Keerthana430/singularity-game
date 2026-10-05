@@ -6,17 +6,17 @@ import { createDefaultAvatar } from '../../data/defaults';
 import { PRESET_AVATARS } from '../../data/presets';
 
 function runTests() {
-  console.log('🧪 RUNNING SIMULATE BATTLE ENGINE TEST SUITE...\n');
+  console.log('[TEST] RUNNING SIMULATE BATTLE ENGINE TEST SUITE...\n');
 
   let passed = 0;
   let failed = 0;
 
   function assert(condition: boolean, testName: string) {
     if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
+      console.log(`  [PASS] ${testName}`);
       passed++;
     } else {
-      console.error(`  ❌ FAIL: ${testName}`);
+      console.error(`  [FAIL] ${testName}`);
       failed++;
     }
   }

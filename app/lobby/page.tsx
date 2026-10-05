@@ -352,9 +352,9 @@ export default function LobbyPage() {
         instantHeal();
         setPlayerFighter((prev) => ({ ...prev, hp: prev.maxHp }));
         sound.playEquip();
-        addToast('⚡ Nanite Stimpack applied! Avatar restored for tournament.', 'success');
+        addToast('Nanite Stimpack applied! Avatar restored for tournament.', 'success');
       } else {
-        addToast(`⏳ Avatar is regenerating in Medbay (${healTimeLeft}s left). Need 50 coins to bypass.`, 'info');
+        addToast(`Avatar is regenerating in Medbay (${healTimeLeft}s left). Need 50 coins to bypass.`, 'info');
         setTournamentStage('idle');
         return;
       }
@@ -570,9 +570,8 @@ export default function LobbyPage() {
       // Status effect chance
       if (currentAttack.statusChance > 0 && Math.random() < currentAttack.statusChance) {
         const effectName = (currentAttack.statusEffect || 'burn').toUpperCase();
-        const effectEmoji = currentAttack.statusEffect === 'burn' ? '🔥' : currentAttack.statusEffect === 'poison' ? '☠️' : currentAttack.statusEffect === 'freeze' ? '❄️' : '⚡';
         setOpponentBurnTurns(currentAttack.statusDuration || 2);
-        addFloatingText(`${effectEmoji} ${effectName}!`, 'opponent', false, currentAttack.vfxAccent);
+        addFloatingText(`[${effectName}]!`, 'opponent', false, currentAttack.vfxAccent);
       }
     } else if (moveType === 'strike') {
       sound.playSlash();
@@ -587,9 +586,8 @@ export default function LobbyPage() {
       // Status effect chance for strikes
       if (currentAttack.statusChance > 0 && Math.random() < currentAttack.statusChance) {
         const effectName = (currentAttack.statusEffect || 'bleed').toUpperCase();
-        const effectEmoji = currentAttack.statusEffect === 'bleed' ? '🩸' : currentAttack.statusEffect === 'stun' ? '💫' : currentAttack.statusEffect === 'freeze' ? '❄️' : '⚡';
         setOpponentBurnTurns(currentAttack.statusDuration || 2);
-        addFloatingText(`${effectEmoji} ${effectName}!`, 'opponent', false, currentAttack.vfxAccent);
+        addFloatingText(`[${effectName}]!`, 'opponent', false, currentAttack.vfxAccent);
       }
     } else if (moveType === 'ultimate') {
       if (overdriveEnergy < 100) return;
@@ -605,7 +603,7 @@ export default function LobbyPage() {
       if (currentAttack.statusEffect) {
         const effectName = currentAttack.statusEffect.toUpperCase();
         setOpponentBurnTurns(currentAttack.statusDuration || 2);
-        addFloatingText(`💥 ${effectName}!`, 'opponent', true, currentAttack.vfxSpark);
+        addFloatingText(`[${effectName}]!`, 'opponent', true, currentAttack.vfxSpark);
       }
     }
 
@@ -630,13 +628,13 @@ export default function LobbyPage() {
         sound.playSweep();
         setOpponentAction('dodge');
         setIsAttackDodge(true);
-        addFloatingText('💨 EVADED!', 'opponent', false, '#38BDF8');
+        addFloatingText('[EVADED!]', 'opponent', false, '#38BDF8');
       } else {
         sound.playImpact();
         if (isCrit) {
           setOpponentAction('crit-hit');
           triggerShake();
-          addFloatingText(`💥 -${finalDmg} CRIT!`, 'opponent', true, currentAttack.vfxSpark);
+          addFloatingText(`-${finalDmg} CRIT!`, 'opponent', true, currentAttack.vfxSpark);
         } else {
           setOpponentAction('hit');
           addFloatingText(`-${finalDmg}`, 'opponent', false, currentAttack.vfxColor);
@@ -692,7 +690,7 @@ export default function LobbyPage() {
       const oppHpAfterBurn = Math.max(0, opponentFighter.hp - burnDmg);
       setOpponentBurnTurns((t) => t - 1);
       setOpponentFighter((prev) => (prev ? { ...prev, hp: oppHpAfterBurn } : null));
-      addFloatingText(`🔥 -${burnDmg} BURN`, 'opponent', false, '#F97316');
+      addFloatingText(`-${burnDmg} BURN`, 'opponent', false, '#F97316');
 
       if (oppHpAfterBurn <= 0) {
         handleMatchVictory();
@@ -740,7 +738,7 @@ export default function LobbyPage() {
     if (aiMove === 'charge') {
       setOpponentEnergy((e) => Math.min(100, e + 35));
       setOpponentAction('defend');
-      addFloatingText('⚡ CHARGING OVERDRIVE', 'opponent', false, '#FCD34D');
+      addFloatingText('[OVERDRIVE CHARGING]', 'opponent', false, '#FCD34D');
       setBattleLogs((prev) => [
         ...prev,
         {
@@ -811,12 +809,12 @@ export default function LobbyPage() {
 
       if (playerEvaded) {
         oppDmg = 0;
-        addFloatingText('💨 EVADED!', 'player', false, '#38BDF8');
+        addFloatingText('[EVADED!]', 'player', false, '#38BDF8');
       } else {
         if (playerWasShielding) {
           addFloatingText(`PARRY BLOCKED -${oppDmg}`, 'player', false, activeShieldAttack?.vfxColor || '#38BDF8');
         } else {
-          addFloatingText(isOppCrit ? `💥 -${oppDmg} CRIT!` : `-${oppDmg}`, 'player', isOppCrit);
+          addFloatingText(isOppCrit ? `-${oppDmg} CRIT!` : `-${oppDmg}`, 'player', isOppCrit);
         }
       }
 
@@ -824,7 +822,7 @@ export default function LobbyPage() {
       if (playerWasShielding && parryReflectDmg > 0 && !playerEvaded) {
         setTimeout(() => {
           setOpponentFighter((prev) => prev ? { ...prev, hp: Math.max(0, prev.hp - parryReflectDmg) } : null);
-          addFloatingText(`⚡ PARRY REFLECT -${parryReflectDmg}`, 'opponent', true, '#38BDF8');
+          addFloatingText(`[REFLECT] -${parryReflectDmg}`, 'opponent', true, '#38BDF8');
         }, 200);
       }
 
@@ -870,7 +868,7 @@ export default function LobbyPage() {
     instantHeal();
     setPlayerFighter((prev) => ({ ...prev, hp: prev.maxHp }));
     sound.playEquip();
-    addToast('⚡ Instant Nanite Stimpack! Healing cooldown bypassed.', 'success');
+    addToast('Instant Nanite Stimpack! Healing cooldown bypassed.', 'success');
   };
 
   // Auto-fight continuous simulation
@@ -925,7 +923,7 @@ export default function LobbyPage() {
                 className="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-[9px] font-bold transition-all ml-0.5"
                 title="Use Stimpack (50 Coins)"
               >
-                ⚡ 50🪙
+                50 COINS
               </button>
             </div>
           )}
@@ -1227,12 +1225,12 @@ export default function LobbyPage() {
                 <div className="flex flex-wrap items-center gap-1">
                   {playerParryActive && (
                     <span className="px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400 text-sky-300 text-[9px] font-mono font-bold animate-pulse">
-                      🛡️ PARRY ACTIVE
+                      PARRY ACTIVE
                     </span>
                   )}
                   {playerBurnTurns > 0 && (
                     <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
-                      🔥 BURN ({playerBurnTurns}T)
+                      [BURN] ({playerBurnTurns}T)
                     </span>
                   )}
                 </div>
@@ -1267,7 +1265,7 @@ export default function LobbyPage() {
                 {opponentBurnTurns > 0 && (
                   <div className="flex justify-end">
                     <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-400 text-orange-300 text-[9px] font-mono font-bold">
-                      🔥 BURN ({opponentBurnTurns}T)
+                      [BURN] ({opponentBurnTurns}T)
                     </span>
                   </div>
                 )}
@@ -1307,7 +1305,7 @@ export default function LobbyPage() {
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-ping" />
                     <span className="text-xs font-mono font-black text-[#00FF66] uppercase tracking-widest">
-                      {tournamentStage === 'champion' ? '👑 TOURNAMENT CHAMPION // VICTORY' : '⚔️ STAGE KNOCKOUT // ROUND WON'}
+                      {tournamentStage === 'champion' ? 'TOURNAMENT CHAMPION // VICTORY' : 'STAGE KNOCKOUT // ROUND WON'}
                     </span>
                   </div>
 
@@ -1339,7 +1337,7 @@ export default function LobbyPage() {
                         className="px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
                       >
                         <Zap size={13} className="text-amber-400 animate-pulse" />
-                        <span>Stimpack ({healTimeLeft}s • 50🪙)</span>
+                        <span>Stimpack ({healTimeLeft}s • 50 COINS)</span>
                       </button>
                     )}
 
@@ -1357,7 +1355,7 @@ export default function LobbyPage() {
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                     <span className="text-xs font-mono font-black text-red-400 uppercase tracking-widest">
-                      ☠️ AVATAR DEFEATED // EXTRACTION REQUIRED
+                      AVATAR DEFEATED // EXTRACTION REQUIRED
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-2.5 w-full">
@@ -1367,7 +1365,7 @@ export default function LobbyPage() {
                         className="px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
                       >
                         <Zap size={13} className="text-amber-400 animate-pulse" />
-                        <span>Instant Nanite Stimpack (50🪙)</span>
+                        <span>Instant Nanite Stimpack (50 COINS)</span>
                       </button>
                     )}
                     <button
@@ -1458,7 +1456,7 @@ export default function LobbyPage() {
                         <Flame size={13} className={overdriveEnergy >= 100 ? 'text-amber-400' : 'text-white/40'} />
                       </div>
                       <span className="text-[9px] font-mono text-amber-300 block truncate">
-                        {overdriveEnergy >= 100 ? '★ UNLEASH ★' : `${overdriveEnergy}% / 100%`}
+                        {overdriveEnergy >= 100 ? 'UNLEASH OVERDRIVE' : `${overdriveEnergy}% / 100%`}
                       </span>
                     </button>
                   </div>

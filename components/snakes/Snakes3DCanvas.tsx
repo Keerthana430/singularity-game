@@ -10,6 +10,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { Crown } from 'lucide-react';
 import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 import { AvatarConfig } from '@/types/avatar';
 import { sound } from '@/lib/audio';
@@ -448,7 +449,7 @@ function MountainEnvironment() {
         <group position={[0, 2.4, 0]}>
           <Html center distanceFactor={12}>
             <div className="px-4 py-1.5 rounded-full bg-amber-400 text-black font-black font-mono text-xs uppercase shadow-[0_0_30px_#F59E0B] border-2 border-white select-none whitespace-nowrap animate-bounce flex items-center gap-1.5">
-              <span>👑</span>
+              <Crown size={14} className="inline text-black fill-current" />
               <span>CYBER SUMMIT APEX // 5,000M</span>
             </div>
           </Html>
@@ -790,9 +791,9 @@ function MountainDice3D({
                   e.stopPropagation();
                   onRoll();
                 }}
-                className="px-2.5 py-0.5 rounded-full bg-[#00FF66] text-black font-black font-mono text-[11px] uppercase shadow-[0_0_12px_#00FF66] border border-white cursor-pointer hover:scale-110 active:scale-95 transition-all select-none whitespace-nowrap animate-bounce"
+                className="px-3 py-1 rounded-full bg-[#00FF66] text-black font-black font-mono text-[11px] uppercase shadow-[0_0_12px_#00FF66] border border-white cursor-pointer hover:scale-110 active:scale-95 transition-all select-none whitespace-nowrap animate-bounce tracking-wider"
               >
-                🎲 ROLL
+                ROLL QUANTUM DIE
               </div>
             </Html>
           </group>

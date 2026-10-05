@@ -377,7 +377,10 @@ export function RpgEquipmentScreen() {
                 exit={{ opacity: 0, y: -8 }}
                 className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-[#00FF66]/15 border border-[#00FF66]/50 backdrop-blur-sm"
               >
-                <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">👁 Previewing</span>
+                <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest flex items-center gap-1.5">
+                  <Eye size={12} />
+                  <span>Previewing</span>
+                </span>
               </motion.div>
             )}
           </AnimatePresence>

@@ -9,6 +9,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { Heart, Sparkles } from 'lucide-react';
 import { AvatarConfig } from '@/types/avatar';
 import { AvatarModel, getBodyProps } from '@/components/avatar/AvatarModel';
 
@@ -403,8 +404,8 @@ function FloatingStyleScoreHUD({
         >
           {/* Top connection spark indicator */}
           <div className="flex flex-col items-center">
-            <span className="text-sm animate-pulse">✨</span>
-            <span className="text-[9px] font-mono text-[#FF007F] font-black uppercase tracking-widest">
+            <Sparkles size={14} className="text-[#FF007F] animate-pulse" />
+            <span className="text-[9px] font-mono text-[#FF007F] font-black uppercase tracking-widest mt-0.5">
               AVATAR
             </span>
             <div className="w-px h-3 bg-gradient-to-b from-[#FF007F] to-transparent" />
@@ -447,9 +448,9 @@ function FloatingStyleScoreHUD({
                 </span>
               </div>
               <div className="px-2 py-1.5 rounded-xl bg-[#FF007F]/10 border border-[#FF007F]/30 flex flex-col items-center">
-                <span className="text-[8px] font-mono text-[#FF007F]/80 uppercase">HEARTS</span>
+                <span className="text-[8px] font-mono text-[#FF007F]/80 uppercase">LIKES</span>
                 <span className="text-xs font-black font-mono text-[#FF007F] flex items-center gap-1">
-                  <span>♡</span>
+                  <Heart size={11} className="fill-current text-[#FF007F]" />
                   <span>{likes}</span>
                 </span>
               </div>
@@ -468,7 +469,8 @@ function FloatingStyleScoreHUD({
                     : 'bg-gradient-to-r from-[#FF007F] to-[#FF5C93] text-white hover:brightness-110'
                 }`}
               >
-                <span>{isVoted ? '♥ VOTED' : '♥ VOTE'}</span>
+                <Heart size={11} className={isVoted ? 'fill-current' : ''} />
+                <span>{isVoted ? 'VOTED' : 'VOTE'}</span>
               </button>
             )}
           </div>

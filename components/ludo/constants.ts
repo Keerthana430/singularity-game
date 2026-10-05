@@ -69,8 +69,8 @@ export const YARD_PODS: Record<PlayerColor, [number, number][]> = {
 export const SAFE_TRACK_INDICES = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
 export const CYBER_POWERUPS: CyberTilePowerUp[] = [
-  { index: 4, type: 'boost', label: 'Overdrive Boost (+2)', icon: '⚡' },
-  { index: 17, type: 'shield', label: 'Quantum Shield', icon: '🛡️' },
-  { index: 30, type: 'warp', label: 'Cyber Warp (+4)', icon: '🌀' },
-  { index: 43, type: 'boost', label: 'Overdrive Boost (+2)', icon: '⚡' },
+  { index: 4, type: 'boost', label: 'Overdrive Boost (+2)', icon: 'BOOST' },
+  { index: 17, type: 'shield', label: 'Quantum Shield', icon: 'SHIELD' },
+  { index: 30, type: 'warp', label: 'Cyber Warp (+4)', icon: 'WARP' },
+  { index: 43, type: 'boost', label: 'Overdrive Boost (+2)', icon: 'BOOST' },
 ];

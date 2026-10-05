@@ -324,9 +324,9 @@ function QuantumDice3D({
                   e.stopPropagation();
                   onRoll();
                 }}
-                className="px-3.5 py-1.5 rounded-full bg-[#00FF66] text-[#101426] font-bold font-mono text-xs uppercase shadow-[0_4px_16px_rgba(0,255,102,0.4)] cursor-pointer hover:scale-110 active:scale-95 transition-all select-none whitespace-nowrap animate-bounce border border-white/60"
+                className="px-3.5 py-1.5 rounded-full bg-[#00FF66] text-[#101426] font-bold font-mono text-xs uppercase shadow-[0_4px_16px_rgba(0,255,102,0.4)] cursor-pointer hover:scale-110 active:scale-95 transition-all select-none whitespace-nowrap animate-bounce border border-white/60 tracking-wider"
               >
-                🎲 ROLL LOUNGE DIE
+                ROLL QUANTUM DIE
               </div>
             </Html>
           </group>
@@ -858,7 +858,7 @@ function CombatClashVfx({
                 : 'bg-red-950/90 border-red-500 text-white shadow-[0_0_25px_#EF4444]'
             }`}
           >
-            {clash.outcome === 'shield_defend' ? '🛡️ SHIELD BLOCKED!' : '💥 KNOCKOUT CAPTURE!'}
+            {clash.outcome === 'shield_defend' ? '[DEFENDED] SHIELD BLOCKED!' : '[KNOCKOUT] CAPTURED!'}
           </div>
         </Html>
       </group>

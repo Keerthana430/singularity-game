@@ -20,6 +20,10 @@ import {
   Camera,
   Compass,
   Trees,
+  Shield,
+  Crosshair,
+  Crown,
+  Swords,
 } from 'lucide-react';
 import { useAvatarStore } from '@/store/avatarStore';
 import { AvatarConfig } from '@/types/avatar';
@@ -123,10 +127,10 @@ export const YARD_PODS: Record<PlayerColor, [number, number][]> = {
 export const SAFE_TRACK_INDICES = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
 export const CYBER_POWERUPS: CyberTilePowerUp[] = [
-  { index: 4, type: 'boost', label: 'Overdrive Boost (+2)', icon: '⚡' },
-  { index: 17, type: 'shield', label: 'Quantum Shield', icon: '🛡️' },
-  { index: 30, type: 'warp', label: 'Cyber Warp (+4)', icon: '🌀' },
-  { index: 43, type: 'boost', label: 'Overdrive Boost (+2)', icon: '⚡' },
+  { index: 4, type: 'boost', label: 'Overdrive Boost (+2)', icon: 'BOOST' },
+  { index: 17, type: 'shield', label: 'Quantum Shield', icon: 'SHIELD' },
+  { index: 30, type: 'warp', label: 'Cyber Warp (+4)', icon: 'WARP' },
+  { index: 43, type: 'boost', label: 'Overdrive Boost (+2)', icon: 'BOOST' },
 ];
 
 export default function LudoPage() {
@@ -187,7 +191,7 @@ export default function LudoPage() {
       name: currentAvatar.name || 'Astraea Cadet',
       isAi: false,
       avatar: currentAvatar,
-      colorHex: '#0099FF', // Astraea Vanguard (Cerulean Hexagon 🛡️)
+      colorHex: '#0099FF', // Astraea Vanguard (Cerulean Hexagon [SHIELD])
       accentHex: '#38BDF8',
       bgHex: 'rgba(0, 153, 255, 0.18)',
       pieces: [
@@ -202,7 +206,7 @@ export default function LudoPage() {
       name: 'Hyperion Corsair',
       isAi: true,
       avatar: PRESET_AVATARS[1]?.avatar || currentAvatar,
-      colorHex: '#FF6633', // Hyperion Corsair (Tangerine Crosshair 🎯)
+      colorHex: '#FF6633', // Hyperion Corsair (Tangerine Crosshair [TARGET])
       accentHex: '#FF8A3D',
       bgHex: 'rgba(255, 102, 51, 0.18)',
       pieces: [
@@ -217,7 +221,7 @@ export default function LudoPage() {
       name: 'Solar Nova',
       isAi: true,
       avatar: PRESET_AVATARS[3]?.avatar || currentAvatar,
-      colorHex: '#FFC700', // Solar Nova (Solar Crown 👑 - True Yellow-Gold)
+      colorHex: '#FFC700', // Solar Nova (Solar Crown [CROWN] - True Yellow-Gold)
       accentHex: '#FFE580',
       bgHex: 'rgba(255, 199, 0, 0.18)',
       pieces: [
@@ -232,7 +236,7 @@ export default function LudoPage() {
       name: 'Void Syndicate',
       isAi: true,
       avatar: PRESET_AVATARS[2]?.avatar || currentAvatar,
-      colorHex: '#9D4EDD', // Void Syndicate (Violet Diamond 💎)
+      colorHex: '#9D4EDD', // Void Syndicate (Violet Diamond [DIAMOND])
       accentHex: '#C084FC',
       bgHex: 'rgba(157, 78, 221, 0.18)',
       pieces: [
@@ -294,13 +298,13 @@ export default function LudoPage() {
       setDiceRoll(roll);
       setIsRolling(false);
 
-      logAction(`🎲 ${activePlayer.name} rolled a ${roll}!`);
+      logAction(`[ROLL] ${activePlayer.name} rolled a ${roll}!`);
 
       if (roll === 6) {
         const nextSixes = consecutiveSixes + 1;
         if (nextSixes >= 3) {
-          logAction(`⚠️ 3 consecutive sixes! Turn forfeited per official rules.`);
-          addToast('⚠️ Three 6s in a row! Turn forfeited.', 'info');
+          logAction(`[ALERT] 3 consecutive sixes! Turn forfeited per official rules.`);
+          addToast('[ALERT] Three 6s in a row! Turn forfeited.', 'info');
           setConsecutiveSixes(0);
           setTimeout(() => advanceToNextPlayer(false), turnDelay);
           return;
@@ -456,11 +460,11 @@ export default function LudoPage() {
         if (powerup.type === 'boost') {
           setActivePowerUpBanner({
             type: 'boost',
-            text: `⚡ OVERDRIVE BOOST! +2 EXTRA TILES`,
+            text: `OVERDRIVE BOOST! +2 EXTRA TILES`,
             color: '#00FF66',
           });
-          addToast(`⚡ ${movedPlayer.name} triggered Overdrive! +2 Step Boost!`, 'success');
-          addFloatingText('⚡ +2 OVERDRIVE!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#00FF66');
+          addToast(`[OVERDRIVE] ${movedPlayer.name} triggered Overdrive! +2 Step Boost!`, 'success');
+          addFloatingText('+2 OVERDRIVE!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#00FF66');
           const nextStep = Math.min(57, finalStep + 2);
 
           // Staged secondary animation: Pawn visibly hops the 2 bonus tiles!
@@ -497,7 +501,7 @@ export default function LudoPage() {
         } else if (powerup.type === 'shield') {
           setActivePowerUpBanner({
             type: 'shield',
-            text: `🛡️ QUANTUM SHIELD EQUIPPED! PROTECTED FROM KNOCKOUT`,
+            text: `QUANTUM SHIELD EQUIPPED! PROTECTED FROM KNOCKOUT`,
             color: '#38BDF8',
           });
           setTimeout(() => setActivePowerUpBanner(null), 2000);
@@ -511,16 +515,16 @@ export default function LudoPage() {
                 : pl
             )
           );
-          addToast(`🛡️ ${movedPlayer.name} gained a Quantum Shield!`, 'info');
-          addFloatingText('🛡️ SHIELD EQUIPPED!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#38BDF8');
+          addToast(`[SHIELD] ${movedPlayer.name} gained a Quantum Shield!`, 'info');
+          addFloatingText('SHIELD EQUIPPED!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#38BDF8');
         } else if (powerup.type === 'warp') {
           setActivePowerUpBanner({
             type: 'warp',
-            text: `🌀 QUANTUM WARP! +4 EXTRA TILES`,
+            text: `QUANTUM WARP! +4 EXTRA TILES`,
             color: '#C084FC',
           });
-          addToast(`🌀 ${movedPlayer.name} triggered Cyber Warp! +4 Warp!`, 'success');
-          addFloatingText('🌀 +4 WARP!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#C084FC');
+          addToast(`[WARP] ${movedPlayer.name} triggered Cyber Warp! +4 Warp!`, 'success');
+          addFloatingText('+4 WARP!', [worldPos[0], worldPos[1] + 1.2, worldPos[2]], '#C084FC');
           const nextStep = Math.min(57, finalStep + 4);
 
           // Staged secondary animation: Pawn visibly hops the 4 warp tiles!
@@ -606,9 +610,9 @@ export default function LudoPage() {
               stage: 'clash',
             });
 
-            addFloatingText('🛡️ SHIELD BLOCKED!', [clashPos[0], clashPos[1] + 1.2, clashPos[2]], '#38BDF8');
-            addToast(`🛡️ ${defPlayer.name}'s Quantum Shield absorbed the strike!`, 'info');
-            logAction(`🛡️ ${defPlayer.name}'s shield repelled ${movedPlayer.name}'s attack!`);
+            addFloatingText('SHIELD BLOCKED!', [clashPos[0], clashPos[1] + 1.2, clashPos[2]], '#38BDF8');
+            addToast(`[DEFEND] ${defPlayer.name}'s Quantum Shield absorbed the strike!`, 'info');
+            logAction(`[DEFEND] ${defPlayer.name}'s shield repelled ${movedPlayer.name}'s attack!`);
 
             setTimeout(() => {
               sound.playEquip();
@@ -650,9 +654,9 @@ export default function LudoPage() {
           setTimeout(() => {
             sound.playImpact();
             setActiveClash((prev) => (prev ? { ...prev, stage: 'resolve' } : null));
-            addFloatingText('💥 KNOCKOUT CAPTURE!', [clashPos[0], clashPos[1] + 1.2, clashPos[2]], '#EF4444');
-            addToast(`💥 ${movedPlayer.name} CAPTURED ${defPlayer.name}'s avatar!`, 'error');
-            logAction(`💥 ${movedPlayer.name} captured ${defPlayer.name}'s piece in 3D combat!`);
+            addFloatingText('KNOCKOUT CAPTURE!', [clashPos[0], clashPos[1] + 1.2, clashPos[2]], '#EF4444');
+            addToast(`[KNOCKOUT] ${movedPlayer.name} CAPTURED ${defPlayer.name}'s avatar!`, 'error');
+            logAction(`[KNOCKOUT] ${movedPlayer.name} captured ${defPlayer.name}'s piece in 3D combat!`);
 
             setPlayers((prev) =>
               prev.map((pl) => {
@@ -668,7 +672,7 @@ export default function LudoPage() {
           setTimeout(() => {
             setActiveClash(null);
             sound.playEquip();
-            logAction(`⚡ Bonus turn granted to ${movedPlayer.name}!`);
+            logAction(`[BONUS] Extra turn granted to ${movedPlayer.name}!`);
             advanceToNextPlayer(true);
           }, 1300);
 
@@ -680,8 +684,8 @@ export default function LudoPage() {
     // Check Goal
     if (targetStep === 57) {
       sound.playWin();
-      addFloatingText('🌟 GOAL REACHED!', [0, 1.8, 0], '#00FF66');
-      logAction(`🌟 ${movedPlayer.name} reached the Singularity Nexus!`);
+      addFloatingText('GOAL REACHED!', [0, 1.8, 0], '#00FF66');
+      logAction(`[GOAL] ${movedPlayer.name} reached the Singularity Nexus!`);
     }
 
     // Check Match Win
@@ -694,7 +698,7 @@ export default function LudoPage() {
       setWinner(movedPlayer);
       if (movedPlayer.id === 'red') {
         addCoins(500);
-        addToast('🏆 1ST PLACE CHAMPION! +500 Cyber Coins earned!', 'success');
+        addToast('[CHAMPION] 1ST PLACE! +500 Cyber Coins earned!', 'success');
       } else {
         addToast(`${movedPlayer.name} completed all 4 tokens and claimed 1st Place!`, 'info');
       }
@@ -704,7 +708,7 @@ export default function LudoPage() {
     const grantBonusTurn = roll === 6;
     if (grantBonusTurn) {
       sound.playEquip();
-      logAction(`⚡ ${movedPlayer.name} rolled a 6! Granted extra roll.`);
+      logAction(`[BONUS] ${movedPlayer.name} rolled a 6! Granted extra roll.`);
     }
 
     advanceToNextPlayer(grantBonusTurn);
@@ -863,7 +867,7 @@ export default function LudoPage() {
                 className="text-xs font-bold font-mono tracking-wider uppercase"
                 style={{ color: activePlayer.colorHex }}
               >
-                {activePlayer.id === 'red' ? '🛡️ ASTRAEA' : activePlayer.id === 'green' ? '🎯 HYPERION' : activePlayer.id === 'yellow' ? '👑 SOLAR' : '💎 VOID'}
+                {activePlayer.id === 'red' ? 'ASTRAEA' : activePlayer.id === 'green' ? 'HYPERION' : activePlayer.id === 'yellow' ? 'SOLAR' : 'VOID'}
               </span>
               {activeMovement && (
                 <span className="text-[9px] text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full border border-[#00FF66]/40 animate-pulse font-mono">
@@ -871,13 +875,13 @@ export default function LudoPage() {
                 </span>
               )}
               {activeClash && (
-                <span className="text-[9px] text-red-400 bg-red-500/20 px-2 py-0.5 rounded-full border border-red-500/40 animate-pulse font-mono">
-                  ⚔️ CLASH
+                <span className="text-[9px] text-red-400 bg-red-500/20 px-2 py-0.5 rounded-full border border-red-500/40 animate-pulse font-mono flex items-center gap-1">
+                  <Swords size={10} /> CLASH
                 </span>
               )}
             </div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-[#8F97B0] mt-1">
-              {activePlayer.isAi ? `${activePlayer.name.toUpperCase()} PONDERING MOVE...` : 'STATION LOUNGE // ROLL LOUNGE DIE'}
+              {activePlayer.isAi ? `${activePlayer.name.toUpperCase()} PONDERING MOVE...` : 'STATION LOUNGE // ROLL QUANTUM DIE'}
             </span>
           </div>
 
@@ -932,12 +936,12 @@ export default function LudoPage() {
         </div>
 
         {/* ─── 4 FACTION BASES (OVERLAYING THE 4 QUADRANTS) ─── */}
-        {/* Top-Left: ASTRAEA VANGUARD (🛡️ Cerulean Hexagon #0099FF) */}
+        {/* Top-Left: ASTRAEA VANGUARD */}
         <div className="absolute top-24 left-4 z-10 pointer-events-none">
           <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
             currentTurn === 'red' ? 'border-[#0099FF] shadow-[0_0_18px_rgba(0,153,255,0.45)]' : 'border-white/10'
           }`}>
-            <span className="text-base" title="Astraea Vanguard">🛡️</span>
+            <Shield size={16} className="text-[#0099FF]" />
             <div className="flex flex-col">
               <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[0].name}
@@ -961,7 +965,7 @@ export default function LudoPage() {
           </div>
         </div>
 
-        {/* Top-Right: HYPERION CORSAIR (🎯 Tangerine Crosshair #FF6633) */}
+        {/* Top-Right: HYPERION CORSAIR */}
         <div className="absolute top-24 right-4 z-10 pointer-events-none">
           <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
             currentTurn === 'green' ? 'border-[#FF6633] shadow-[0_0_18px_rgba(255,102,51,0.45)]' : 'border-white/10'
@@ -981,7 +985,7 @@ export default function LudoPage() {
                 ))}
               </div>
             </div>
-            <span className="text-base" title="Hyperion Corsair">🎯</span>
+            <Crosshair size={16} className="text-[#FF6633]" />
             {currentTurn === 'green' && (
               <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE
@@ -990,12 +994,12 @@ export default function LudoPage() {
           </div>
         </div>
 
-        {/* Bottom-Left: VOID SYNDICATE (💎 Violet Diamond #9D4EDD) */}
+        {/* Bottom-Left: VOID SYNDICATE */}
         <div className="absolute bottom-28 left-4 z-10 pointer-events-none">
           <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
             currentTurn === 'blue' ? 'border-[#9D4EDD] shadow-[0_0_18px_rgba(157,78,221,0.45)]' : 'border-white/10'
           }`}>
-            <span className="text-base" title="Void Syndicate">💎</span>
+            <Sparkles size={16} className="text-[#9D4EDD]" />
             <div className="flex flex-col">
               <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
                 {players[3].name}
@@ -1019,7 +1023,7 @@ export default function LudoPage() {
           </div>
         </div>
 
-        {/* Bottom-Right: SOLAR NOVA (👑 Solar Crown #FFC700) */}
+        {/* Bottom-Right: SOLAR NOVA */}
         <div className="absolute bottom-28 right-4 z-10 pointer-events-none">
           <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
             currentTurn === 'yellow' ? 'border-[#FFC700] shadow-[0_0_18px_rgba(255,199,0,0.45)]' : 'border-white/10'
@@ -1039,7 +1043,7 @@ export default function LudoPage() {
                 ))}
               </div>
             </div>
-            <span className="text-base" title="Solar Nova">👑</span>
+            <Crown size={16} className="text-[#FFC700]" />
             {currentTurn === 'yellow' && (
               <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
                 ACTIVE

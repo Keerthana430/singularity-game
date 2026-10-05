@@ -427,7 +427,13 @@ function WeaponsPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial<Ava
                             : 'bg-white/10 hover:bg-white/20 text-white'
                         }`}
                       >
-                        {isEquipped ? '✓ Equipped' : 'Equip Weapon'}
+                        {isEquipped ? (
+                          <span className="flex items-center gap-1 justify-center">
+                            <Check size={12} /> EQUIPPED
+                          </span>
+                        ) : (
+                          'EQUIP WEAPON'
+                        )}
                       </button>
 
                       <button

@@ -27,6 +27,7 @@ import {
   Smile,
   CircleDot,
   Hexagon,
+  Coins,
 } from 'lucide-react';
 import { AvatarItem, Rarity } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
@@ -433,7 +434,7 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
         </div>
         {!isUnlocked ? (
           <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-[9px] shrink-0 font-mono">
-            <span>🪙</span>
+            <Coins size={11} className="text-amber-400" />
             <span>{cost}</span>
           </div>
         ) : (

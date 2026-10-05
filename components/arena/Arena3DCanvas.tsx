@@ -281,7 +281,7 @@ function StageEntranceBanner({ biome, roundKey }: { biome: BiomeType; roundKey?:
       text: 'text-orange-400',
     },
     mystic: {
-      badge: '✨ CELESTIAL ANOMALY ✨',
+      badge: '[CELESTIAL ANOMALY]',
       name: 'LUMINESCENT TWILIGHT GROVE',
       hazard: 'TERRAIN: RUNIC MOSS • ENERGY: ASTRAL SURGE',
       border: 'border-purple-500/70 shadow-[0_0_25px_rgba(168,85,247,0.45)]',
