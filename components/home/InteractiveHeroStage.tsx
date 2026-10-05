@@ -178,45 +178,8 @@ export function InteractiveHeroStage() {
         </div>
       </div>
 
-      {/* Interactive Hero Quick-Select Switcher & Live Stats HUD */}
-      <div className="w-full mt-4 space-y-3">
-        {/* Preset Archetype Chips */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase text-[#00FF66] font-bold tracking-widest pl-1">
-              ARCHETYPES:
-            </span>
-            {PRESET_AVATARS.slice(0, 3).map((preset) => {
-              const isActive = currentAvatar.name.toLowerCase() === preset.name.toLowerCase();
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => handleSelectPreset(preset.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 border ${
-                    isActive
-                      ? 'bg-[#00FF66] text-[#05120B] border-[#33FF88] shadow-[0_0_12px_rgba(0,255,102,0.4)]'
-                      : 'bg-[#18261E]/80 border-white/10 text-white/70 hover:border-[#00FF66]/50 hover:text-white'
-                  }`}
-                >
-                  <Sparkles size={11} className={isActive ? 'text-[#05120B]' : 'text-[#00FF66]'} />
-                  <span>{preset.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={handleRandomHero}
-            className="px-3 py-1.5 rounded-full text-xs font-bold uppercase bg-[#D97706]/20 border border-[#F59E0B]/40 text-[#F59E0B] hover:bg-[#D97706]/40 transition-all flex items-center gap-1.5 shrink-0"
-            title="Randomize Hero Gear & Colors"
-          >
-            <Dices size={13} />
-            <span>Randomize</span>
-          </button>
-        </div>
-
-        {/* Live Combat Telemetry HUD Matrix */}
-        <div className="p-3.5 rounded-2xl border border-[#00FF66]/20 bg-[#0C1A12]/90 backdrop-blur-md grid grid-cols-4 gap-2 text-center shadow-lg">
+      {/* Live Combat Telemetry HUD Matrix */}
+      <div className="w-full mt-4 p-3.5 rounded-2xl border border-[#00FF66]/20 bg-[#0C1A12]/90 backdrop-blur-md grid grid-cols-4 gap-2 text-center shadow-lg">
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-1 text-[10px] font-mono uppercase text-white/50">
               <Flame size={11} className="text-[#EF4444]" />
@@ -274,6 +237,5 @@ export function InteractiveHeroStage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
