@@ -2,12 +2,36 @@
 
 ## Current State
 
-- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype)
+- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype, Refactor)
 - **Current Stack:** Procedural `three.js` prototype (`/public/character-prototype/`)
-- **How to Run:** Open `http://localhost:3000/character-prototype/index.html`
-- **How to Test:** Check browser interactions directly.
+- **How to Run:** Open `http://localhost:3000/character-prototype/index.html` (or via Live Server)
+- **How to Test:** Check browser interactions directly. Right-drag to rotate camera, Left-click to JAB/CROSS combo, Spacebar to jump, Left-click while in air for JUMP_ATTACK.
 - **Open Risks:** None.
 - **Next Phase:** None.
+
+---
+
+## Phase 5d: SkinnedMesh Refactor & Advanced Combat (2026-10-05)
+- **Built**:
+  - Replaced rigid segmented limb groups with `THREE.SkinnedMesh` and `THREE.Skeleton` for seamless, non-breaking joints at elbows and knees.
+  - Implemented dynamic procedural `Bone` weight assignment in `createSkinnedLimb` to prevent polygon tearing or stretching during extreme bends.
+  - Overhauled jump attack (mid-air strike) logic: triggering attack mid-air performs a heavy downward smash (JUMP_ATTACK, JUMP_ATTACK_RECOVERY).
+  - Implemented completely overhauled GSAP timelines mapped directly to skeletal `rotation` and `position` properties for the player's core components (`rootBone`, `spine`, `upperArm`, `lowerArm`).
+  - Added full knock-back physics on the enemy upon their health reaching 0 (lose state).
+  - Maximized polygon counts to 64 segments on player/enemy head, shoulder pads, and neck.
+- **Files created/changed**:
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions**:
+  - The `SkinnedMesh` uses a capsule-like geometry configuration (`CylinderGeometry` with adequate height segments) so that bone weights transition smoothly between the upper and lower arm/leg.
+  - Jump attack forces the player quickly down to the ground.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - Limbs do not break apart at joints during punching - PASS.
+  - Enemy knock-back physics on defeat - PASS.
+  - Player can jump and attack - PASS.
+  - Maximize polygons on remaining body parts (shoulders, head, neck, eyes) - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
 
 ---
 
@@ -479,5 +503,41 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Deleted docs/DUEL.md
 - **Exit criteria**: 
   - Duel completely removed - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
+
+---
+
+## Phase 5b: Character Model Smoothing & Damage Scaling Update (2026-10-05)
+- **Built**: 
+  - Upgraded the procedural character mesh from `BoxGeometry` to `CylinderGeometry` (limbs) and `SphereGeometry` (joints, chest, head) to make the character look more like a smooth, humanoid mannequin.
+  - Implemented specific damage scaling based on attack type (`JAB`: 5, `CROSS`: 10, `HOOK`: 15, `UPPERCUT`: 18, `JUMP_ATTACK`: 25).
+- **Files created/changed**: 
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions**: 
+  - Kept the procedural generation approach instead of external `.glb` models for now to allow easy porting of the code to other projects.
+- **Deviations from spec**: None.
+- **Exit criteria**: 
+  - Smooth character appearance (higher polygon count for cylinders/spheres) - PASS.
+  - Realistic damage scaling applied properly to the enemy HP bar - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
+
+---
+
+## Phase 5c: Animation Dynamics & Maximum Geometry Smoothing (2026-10-05)
+- **Built**: 
+  - Exaggerated elbow joint snapping and tucking during punches and combat idle stance for a more dynamic feel.
+  - Deepened the squash/compression animation for the jump landing (knees bend deeply, spine crouches down).
+  - Maximized the procedural polygon counts (up to 64 segments per mesh) to give the character perfectly round limbs and joints without needing external `.glb` models.
+- **Files created/changed**: 
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions**: 
+  - Proceeded with the procedural approach maxed out to 64 segments instead of importing custom assets, based on user preference to keep everything in code and incredibly smooth.
+- **Deviations from spec**: None.
+- **Exit criteria**: 
+  - Character feels completely round and smooth - PASS.
+  - Landing squash is visibly pronounced - PASS.
+  - Elbow movement during strikes feels dynamic and tucks properly - PASS.
 - **Known issues**: None.
 - **Deferred**: None.

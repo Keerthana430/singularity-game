@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Character Prototype — Phase 2: Walking</title>
+<title>Character Prototype — Combat Arena</title>
 <style>
   :root { color-scheme: dark }
   * { margin: 0; padding: 0; box-sizing: border-box }
@@ -21,19 +21,106 @@
   #hud h2 { font-size: 15px; color: #22d3ee; margin-bottom: 6px; letter-spacing: .04em }
   #hud .phase { font-size: 11px; color: #ff4fa3; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px }
   #hud kbd { background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.3); border-radius: 4px; padding: 1px 5px; font-size: 11px; color: #22d3ee }
+
+  /* Health / Stamina bars */
+  #combat-hud {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 20;
+    display: flex; gap: 32px; align-items: flex-start; pointer-events: none;
+  }
+  .fighter-bar { width: 280px; }
+  .fighter-bar.right { text-align: right; }
+  .fighter-bar .name { font-size: 12px; color: #c8d6f0; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; font-family: 'Segoe UI', system-ui, sans-serif; }
+  .bar-bg {
+    width: 100%; height: 14px; border-radius: 7px;
+    background: rgba(8,12,32,0.7); border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(6px); overflow: hidden; margin-bottom: 3px;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 7px; transition: width 0.3s ease;
+  }
+  .hp-fill { background: linear-gradient(90deg, #22d3ee, #06b6d4); }
+  .hp-fill.enemy { background: linear-gradient(90deg, #ff4fa3, #ff2277); }
+  .stamina-fill { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+  .bar-bg.stamina { height: 8px; border-radius: 4px; }
+  .vs-text { font-size: 22px; font-weight: 900; color: #ff4fa3; text-shadow: 0 0 12px #ff4fa3; padding-top: 6px; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* KO overlay */
+  #ko-overlay {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  #ko-overlay.show { display: flex; }
+  #ko-overlay .ko-text {
+    font-size: 96px; font-weight: 900; color: #ff4fa3;
+    text-shadow: 0 0 40px #ff4fa3, 0 0 80px #ff2277;
+    animation: koPulse 0.6s ease-out;
+  }
+  @keyframes koPulse { 0% { transform: scale(3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  #ko-overlay .ko-sub { font-size: 18px; color: #c8d6f0; margin-top: 12px; }
+  #ko-overlay button {
+    margin-top: 24px; padding: 12px 32px; font-size: 16px; font-weight: 600;
+    background: linear-gradient(135deg, #22d3ee, #06b6d4); color: #050816;
+    border: none; border-radius: 8px; cursor: pointer; pointer-events: auto;
+    transition: transform 0.2s; letter-spacing: .04em;
+  }
+  #ko-overlay button:hover { transform: scale(1.05); }
+
+  /* Difficulty selector */
+  #difficulty-select {
+    position: fixed; bottom: 16px; right: 16px; z-index: 10;
+    background: rgba(8,12,32,0.82); border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 8px; padding: 8px 12px; backdrop-filter: blur(8px);
+    font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; color: #c8d6f0;
+  }
+  #difficulty-select select {
+    background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.3);
+    border-radius: 4px; color: #22d3ee; padding: 2px 6px; font-size: 11px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
 <div id="hud">
-  <div class="phase">Phase 4</div>
-  <h2>Light Punch</h2>
-  <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>Space</kbd> to jump</div>
-  <div style="margin-top:4px"><kbd>Left Click</kbd> Light Punch · <kbd>Right Drag</kbd> Camera</div>
-  <div style="margin-top:8px;font-size:11px;color:#9aa3cf">
-    Procedural combat animations · Impact particles<br>
-    Commitment window (no moving while punching)
+  <div class="phase">Combat Arena</div>
+  <h2>Boxing System</h2>
+  <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Shift</kbd> run · <kbd>Space</kbd> jump</div>
+  <div style="margin-top:4px"><kbd>LClick</kbd> Light · <kbd>RClick</kbd> Heavy · <kbd>Ctrl</kbd> Dodge/Block</div>
+  <div style="margin-top:4px;font-size:11px;color:#9aa3cf">
+    W+Click=Jab/Cross · A/D+Click=Hook · S/no dir+Click=Uppercut<br>
+    Ctrl+dir=Dodge · Ctrl alone=Block · Air+Click=Jump Attack<br>
+    <kbd>Mid Mouse</kbd> Camera orbit · <kbd>Scroll</kbd> Zoom
   </div>
+</div>
+
+<div id="combat-hud">
+  <div class="fighter-bar">
+    <div class="name">Player</div>
+    <div class="bar-bg"><div class="bar-fill hp-fill" id="player-hp" style="width:100%"></div></div>
+    <div class="bar-bg stamina"><div class="bar-fill stamina-fill" id="player-stamina" style="width:100%"></div></div>
+  </div>
+  <div class="vs-text">VS</div>
+  <div class="fighter-bar right">
+    <div class="name">Opponent</div>
+    <div class="bar-bg"><div class="bar-fill hp-fill enemy" id="enemy-hp" style="width:100%"></div></div>
+    <div class="bar-bg stamina"><div class="bar-fill stamina-fill" id="enemy-stamina" style="width:100%"></div></div>
+  </div>
+</div>
+
+<div id="ko-overlay">
+  <div class="ko-text">K.O!</div>
+  <div class="ko-sub" id="ko-message">You Win!</div>
+  <button id="ko-restart">Fight Again</button>
+</div>
+
+<div id="difficulty-select">
+  AI: <select id="ai-difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
 </div>
 
 <script src="/lib/three/three.min.js"></script>
@@ -63,7 +150,7 @@
   const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 400);
   cam.position.set(0, 3.5, 6);
 
-  // OrbitControls for manual override (right-drag orbit, scroll zoom)
+  // OrbitControls for manual override (middle-drag orbit, scroll zoom)
   const ctl = new THREE.OrbitControls(cam, renderer.domElement);
   ctl.enableDamping = true;
   ctl.dampingFactor = 0.08;
@@ -73,10 +160,12 @@
   ctl.maxPolarAngle = Math.PI * 0.48;
   ctl.enablePan = false;
   ctl.mouseButtons = {
-    LEFT: null, // Free left-click for combat
-    MIDDLE: THREE.MOUSE.DOLLY,
-    RIGHT: THREE.MOUSE.ROTATE
+    LEFT: null,                 // Free left-click for light attacks
+    MIDDLE: THREE.MOUSE.ROTATE, // Camera orbit on middle mouse
+    RIGHT: null                 // Free right-click for heavy attacks
   };
+  // Prevent right-click context menu
+  renderer.domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
   // Third-person follow cam config
   const CAM_FOLLOW = {
@@ -167,37 +256,84 @@
     scene.add(gridHelper);
   })();
 
-  // ─── PUNCHING BAG (DUMMY TARGET) ────────────────────────────
-  const bagGroup = new THREE.Group();
-  bagGroup.position.set(0, 0, -3); // Placed slightly in front of center
-  scene.add(bagGroup);
+  // ─── OPPONENT CHARACTER ──────────────────────────────────────
+  // Built with the same bone hierarchy as the player but different colors.
+  const enemyBodyMat = new THREE.MeshStandardMaterial({ color: 0x3d1a1a, roughness: 0.55, metalness: 0.3, emissive: 0x280a0a, emissiveIntensity: 0.3 });
+  const enemyAccentMat = new THREE.MeshStandardMaterial({ color: 0xff4fa3, roughness: 0.3, metalness: 0.6, emissive: 0xff4fa3, emissiveIntensity: 0.5 });
+  const enemyDarkMat = new THREE.MeshStandardMaterial({ color: 0x25100e, roughness: 0.7, metalness: 0.2 });
+  const enemyEyeMat = new THREE.MeshBasicMaterial({ color: 0xff4fa3 });
+  const enemyVisorMat = new THREE.MeshBasicMaterial({ color: 0xff4fa3, transparent: true, opacity: 0.7 });
 
-  const bagBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.6, 0.8, 0.15, 16), 
-    new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-  );
-  bagBase.position.y = 0.075;
-  bagGroup.add(bagBase);
+  function buildCharacter(mat, accent, dark, eyeM, visorM) {
+    const group = new THREE.Group();
+    const bones = {};
+    bones.root = new THREE.Group(); bones.root.name = 'root'; group.add(bones.root);
+    bones.hips = new THREE.Group(); bones.hips.name = 'hips'; bones.hips.position.y = 0.95; bones.root.add(bones.hips);
+    bones.hips.add(roundedBox(0.42, 0.18, 0.25, 0.04, dark));
+    bones.spine = new THREE.Group(); bones.spine.name = 'spine'; bones.spine.position.y = 0.12; bones.hips.add(bones.spine);
+    bones.chest = new THREE.Group(); bones.chest.name = 'chest'; bones.chest.position.y = 0.28; bones.spine.add(bones.chest);
+    const cm = roundedBox(0.48, 0.42, 0.28, 0.05, mat); cm.position.y = 0.05; bones.chest.add(cm);
+    const cs = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.29), accent); cs.position.y = 0.1; bones.chest.add(cs);
+    bones.neck = new THREE.Group(); bones.neck.name = 'neck'; bones.neck.position.y = 0.3; bones.chest.add(bones.neck);
+    bones.neck.add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.1, 32), mat));
+    bones.head = new THREE.Group(); bones.head.name = 'head'; bones.head.position.y = 0.12; bones.neck.add(bones.head);
+    const hm = new THREE.Mesh(new THREE.SphereGeometry(0.16, 64, 48), mat); hm.scale.set(1, 1.15, 1); bones.head.add(hm);
+    const vg = new THREE.BoxGeometry(0.28, 0.04, 0.18); bones.head.add(new THREE.Mesh(vg, visorM).translateX(0).translateY(0.02).translateZ(0.06));
+    const eL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeM); eL.position.set(-0.06, 0.02, 0.16); bones.head.add(eL);
+    const eR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeM); eR.position.set(0.06, 0.02, 0.16); bones.head.add(eR);
+    // Arms
+    bones.lShoulder = new THREE.Group(); bones.lShoulder.position.set(-0.3, 0.22, 0); bones.chest.add(bones.lShoulder);
+    bones.lShoulder.add(new THREE.Mesh(new THREE.SphereGeometry(0.07, 32, 24), accent));
+    
+    const lArmObj = createSkinnedLimb(0.055, 0.28, 0.26, mat);
+    bones.lUpperArm = lArmObj.upperBone; bones.lUpperArm.name = 'lUpperArm'; bones.lUpperArm.position.y = -0.04; 
+    bones.lShoulder.add(bones.lUpperArm); bones.lShoulder.add(lArmObj.mesh);
+    bones.lLowerArm = lArmObj.lowerBone; bones.lLowerArm.name = 'lLowerArm';
+    
+    bones.lHand = new THREE.Group(); bones.lHand.position.y = -0.26; bones.lLowerArm.add(bones.lHand);
+    bones.lHand.add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 32, 24), accent));
+    bones.rShoulder = new THREE.Group(); bones.rShoulder.position.set(0.3, 0.22, 0); bones.chest.add(bones.rShoulder);
+    bones.rShoulder.add(new THREE.Mesh(new THREE.SphereGeometry(0.07, 32, 24), accent));
+    
+    const rArmObj = createSkinnedLimb(0.055, 0.28, 0.26, mat);
+    bones.rUpperArm = rArmObj.upperBone; bones.rUpperArm.name = 'rUpperArm'; bones.rUpperArm.position.y = -0.04;
+    bones.rShoulder.add(bones.rUpperArm); bones.rShoulder.add(rArmObj.mesh);
+    bones.rLowerArm = rArmObj.lowerBone; bones.rLowerArm.name = 'rLowerArm';
+    
+    bones.rHand = new THREE.Group(); bones.rHand.position.y = -0.26; bones.rLowerArm.add(bones.rHand);
+    bones.rHand.add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 32, 24), accent));
+    // Left Leg
+    bones.lLegJoint = new THREE.Group(); bones.lLegJoint.name = 'lLegJoint'; bones.lLegJoint.position.set(-0.12, -0.08, 0); bones.hips.add(bones.lLegJoint);
+    const lLegObj = createSkinnedLimb(0.065, 0.40, 0.38, mat);
+    bones.lUpperLeg = lLegObj.upperBone; bones.lUpperLeg.name = 'lUpperLeg'; bones.lUpperLeg.position.set(0, 0, 0);
+    bones.lLegJoint.add(bones.lUpperLeg); bones.lLegJoint.add(lLegObj.mesh);
+    bones.lLowerLeg = lLegObj.lowerBone; bones.lLowerLeg.name = 'lLowerLeg';
+    
+    bones.lFoot = new THREE.Group(); bones.lFoot.position.y = -0.38; bones.lLowerLeg.add(bones.lFoot);
+    const lf = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), accent); lf.scale.set(0.8, 0.5, 1.4); lf.position.set(0, -0.02, 0.03); bones.lFoot.add(lf);
+    
+    // Right Leg
+    bones.rLegJoint = new THREE.Group(); bones.rLegJoint.name = 'rLegJoint'; bones.rLegJoint.position.set(0.12, -0.08, 0); bones.hips.add(bones.rLegJoint);
+    const rLegObj = createSkinnedLimb(0.065, 0.40, 0.38, mat);
+    bones.rUpperLeg = rLegObj.upperBone; bones.rUpperLeg.name = 'rUpperLeg'; bones.rUpperLeg.position.set(0, 0, 0);
+    bones.rLegJoint.add(bones.rUpperLeg); bones.rLegJoint.add(rLegObj.mesh);
+    bones.rLowerLeg = rLegObj.lowerBone; bones.rLowerLeg.name = 'rLowerLeg';
+    
+    bones.rFoot = new THREE.Group(); bones.rFoot.position.y = -0.38; bones.rLowerLeg.add(bones.rFoot);
+    const rf = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), accent); rf.scale.set(0.8, 0.5, 1.4); rf.position.set(0, -0.02, 0.03); bones.rFoot.add(rf);
+    group.traverse(function(c) { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return { group, bones };
+  }
 
-  const bagPole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.06, 2.0, 8), 
-    new THREE.MeshStandardMaterial({ color: 0x444444 })
-  );
-  bagPole.position.y = 1.0;
-  bagGroup.add(bagPole);
+  const enemy = buildCharacter(enemyBodyMat, enemyAccentMat, enemyDarkMat, enemyEyeMat, enemyVisorMat);
+  const enemyGroup = enemy.group;
+  const eb = enemy.bones; // shorthand for enemy bones
+  enemyGroup.position.set(0, 0, -3);
+  enemyGroup.rotation.y = Math.PI; // Face the player
+  scene.add(enemyGroup);
 
-  const bagMat = new THREE.MeshStandardMaterial({ 
-    color: 0xff3333, roughness: 0.7, metalness: 0.1 
-  });
-  const bagMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.4, 16), bagMat);
-  const bagPivot = new THREE.Group();
-  bagPivot.position.y = 0.5; // pivot point lower down
-  bagMesh.position.y = 0.7; 
-  bagPivot.add(bagMesh);
-  bagGroup.add(bagPivot);
-  
-  let bagRecoilX = 0;
-  let bagRecoilZ = 0;
+  // Enemy animation base positions
+  const enemyBaseHipsY = eb.hips.position.y;
 
   // ─── PROCEDURAL CHARACTER ───────────────────────────────────
   // All body parts are built from primitives and attached to a bone hierarchy.
@@ -228,22 +364,68 @@
   function capsule(radius, height, mat) {
     const g = new THREE.Group();
     const cylH = Math.max(0, height - radius * 2);
-    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, cylH, 12), mat);
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, cylH, 32), mat);
     g.add(cyl);
-    const topSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), mat);
+    const topSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 24), mat);
     topSph.position.y = cylH / 2;
     g.add(topSph);
-    const botSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 8), mat);
+    const botSph = new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 24), mat);
     botSph.position.y = -cylH / 2;
     g.add(botSph);
     return g;
   }
 
-  // Helper: rounded box
+  // Helper: Create seamless procedural SkinnedMesh for limbs
+  function createSkinnedLimb(radius, upperLength, lowerLength, mat) {
+    const totalLength = upperLength + lowerLength;
+    const geom = new THREE.CylinderGeometry(radius, radius, totalLength, 32, 32);
+    geom.translate(0, -totalLength/2, 0); // Origin at top
+
+    const pos = geom.attributes.position;
+    const skinIndices = [];
+    const skinWeights = [];
+    const jointY = -upperLength;
+    const blendZone = radius * 3.0;
+    
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      let wUpper = 0, wLower = 0;
+      if (y > jointY + blendZone/2) {
+        wUpper = 1; wLower = 0;
+      } else if (y < jointY - blendZone/2) {
+        wUpper = 0; wLower = 1;
+      } else {
+        const t = (jointY + blendZone/2 - y) / blendZone;
+        wLower = t;
+        wUpper = 1 - t;
+      }
+      skinIndices.push(0, 1, 0, 0);
+      skinWeights.push(wUpper, wLower, 0, 0);
+    }
+    
+    geom.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+    geom.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
+    
+    const upperBone = new THREE.Bone();
+    const lowerBone = new THREE.Bone();
+    lowerBone.position.y = -upperLength;
+    upperBone.add(lowerBone);
+    
+    const mesh = new THREE.SkinnedMesh(geom, mat);
+    const skeleton = new THREE.Skeleton([upperBone, lowerBone]);
+    mesh.add(upperBone);
+    mesh.bind(skeleton);
+    
+    return { mesh, upperBone, lowerBone };
+  }
+
+  // Helper: high-poly rounded body parts
   function roundedBox(w, h, d, r, mat) {
-    // Use a regular box with beveled edges simulated by scaling
-    const geom = new THREE.BoxGeometry(w, h, d, 2, 2, 2);
-    return new THREE.Mesh(geom, mat);
+    // We use a high-resolution sphere and scale it to form a smooth organic torso/hips
+    const geom = new THREE.SphereGeometry(1, 64, 48);
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.scale.set(w/2, h/2, d/2);
+    return mesh;
   }
 
   // ── BONE HIERARCHY ──
@@ -260,7 +442,8 @@
   hipsBone.position.y = 0.95;
   rootBone.add(hipsBone);
 
-  const hipsMesh = roundedBox(0.42, 0.18, 0.25, 0.04, darkMat);
+  const hipsMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 64, 48), darkMat);
+  hipsMesh.scale.set(1.2, 0.7, 1);
   hipsBone.add(hipsMesh);
 
   // Spine
@@ -275,8 +458,9 @@
   chestBone.position.y = 0.28;
   spineBone.add(chestBone);
 
-  const chestMesh = roundedBox(0.48, 0.42, 0.28, 0.05, bodyMat);
-  chestMesh.position.y = 0.05;
+  const chestMesh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 64, 48), bodyMat);
+  chestMesh.position.y = 0.08;
+  chestMesh.scale.set(1.2, 1.1, 0.85);
   chestBone.add(chestMesh);
 
   // Accent stripe on chest
@@ -294,7 +478,7 @@
   chestBone.add(neckBone);
 
   const neckMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.08, 0.1, 8),
+    new THREE.CylinderGeometry(0.06, 0.08, 0.1, 32),
     bodyMat
   );
   neckBone.add(neckMesh);
@@ -307,7 +491,7 @@
 
   // Head shape: slightly elongated sphere
   const headMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.16, 16, 12),
+    new THREE.SphereGeometry(0.16, 64, 48),
     bodyMat
   );
   headMesh.scale.set(1, 1.15, 1);
@@ -320,11 +504,11 @@
   headBone.add(visor);
 
   // Eyes (two glowing dots)
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
   eyeL.position.set(-0.06, 0.02, 0.16);
   headBone.add(eyeL);
 
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
   eyeR.position.set(0.06, 0.02, 0.16);
   headBone.add(eyeR);
 
@@ -338,30 +522,22 @@
 
   // Shoulder pad
   const lShoulderPad = new THREE.Mesh(
-    new THREE.SphereGeometry(0.07, 8, 6),
+    new THREE.SphereGeometry(0.07, 32, 24),
     accentMat
   );
   lShoulderBone.add(lShoulderPad);
 
-  // Left Upper Arm
-  const lUpperArmBone = new THREE.Group();
+  // Left Arm SkinnedMesh
+  const lArmObj = createSkinnedLimb(0.055, 0.28, 0.26, bodyMat);
+  const lUpperArmBone = lArmObj.upperBone;
   lUpperArmBone.name = 'lUpperArm';
   lUpperArmBone.position.y = -0.04;
   lShoulderBone.add(lUpperArmBone);
-
-  const lUpperArm = capsule(0.055, 0.28, bodyMat);
-  lUpperArm.position.y = -0.12;
-  lUpperArmBone.add(lUpperArm);
+  lShoulderBone.add(lArmObj.mesh);
 
   // Left Elbow / Lower Arm
-  const lLowerArmBone = new THREE.Group();
+  const lLowerArmBone = lArmObj.lowerBone;
   lLowerArmBone.name = 'lLowerArm';
-  lLowerArmBone.position.y = -0.28;
-  lUpperArmBone.add(lLowerArmBone);
-
-  const lLowerArm = capsule(0.048, 0.26, darkMat);
-  lLowerArm.position.y = -0.11;
-  lLowerArmBone.add(lLowerArm);
 
   // Left Hand
   const lHandBone = new THREE.Group();
@@ -370,7 +546,7 @@
   lLowerArmBone.add(lHandBone);
 
   const lHand = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 0.08, 0.05),
+    new THREE.SphereGeometry(0.06, 32, 24),
     accentMat
   );
   lHandBone.add(lHand);
@@ -382,30 +558,22 @@
   chestBone.add(rShoulderBone);
 
   const rShoulderPad = new THREE.Mesh(
-    new THREE.SphereGeometry(0.07, 8, 6),
+    new THREE.SphereGeometry(0.07, 32, 24),
     accentMat
   );
   rShoulderBone.add(rShoulderPad);
 
-  // Right Upper Arm
-  const rUpperArmBone = new THREE.Group();
+  // Right Arm SkinnedMesh
+  const rArmObj = createSkinnedLimb(0.055, 0.28, 0.26, bodyMat);
+  const rUpperArmBone = rArmObj.upperBone;
   rUpperArmBone.name = 'rUpperArm';
   rUpperArmBone.position.y = -0.04;
   rShoulderBone.add(rUpperArmBone);
+  rShoulderBone.add(rArmObj.mesh);
 
-  const rUpperArm = capsule(0.055, 0.28, bodyMat);
-  rUpperArm.position.y = -0.12;
-  rUpperArmBone.add(rUpperArm);
-
-  // Right Lower Arm
-  const rLowerArmBone = new THREE.Group();
+  // Right Elbow / Lower Arm
+  const rLowerArmBone = rArmObj.lowerBone;
   rLowerArmBone.name = 'rLowerArm';
-  rLowerArmBone.position.y = -0.28;
-  rUpperArmBone.add(rLowerArmBone);
-
-  const rLowerArm = capsule(0.048, 0.26, darkMat);
-  rLowerArm.position.y = -0.11;
-  rLowerArmBone.add(rLowerArm);
 
   // Right Hand
   const rHandBone = new THREE.Group();
@@ -414,32 +582,30 @@
   rLowerArmBone.add(rHandBone);
 
   const rHand = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 0.08, 0.05),
+    new THREE.SphereGeometry(0.06, 32, 24),
     accentMat
   );
   rHandBone.add(rHand);
 
   // ── LEGS ──
 
-  // Left Upper Leg
-  const lUpperLegBone = new THREE.Group();
-  lUpperLegBone.name = 'lUpperLeg';
-  lUpperLegBone.position.set(-0.12, -0.08, 0);
-  hipsBone.add(lUpperLegBone);
+  // Left Leg Container
+  const lLegJoint = new THREE.Group();
+  lLegJoint.name = 'lLegJoint';
+  lLegJoint.position.set(-0.12, -0.08, 0);
+  hipsBone.add(lLegJoint);
 
-  const lUpperLeg = capsule(0.065, 0.38, bodyMat);
-  lUpperLeg.position.y = -0.18;
-  lUpperLegBone.add(lUpperLeg);
+  // Left Leg SkinnedMesh
+  const lLegObj = createSkinnedLimb(0.065, 0.40, 0.38, bodyMat);
+  const lUpperLegBone = lLegObj.upperBone;
+  lUpperLegBone.name = 'lUpperLeg';
+  lUpperLegBone.position.set(0, 0, 0);
+  lLegJoint.add(lUpperLegBone);
+  lLegJoint.add(lLegObj.mesh);
 
   // Left Lower Leg
-  const lLowerLegBone = new THREE.Group();
+  const lLowerLegBone = lLegObj.lowerBone;
   lLowerLegBone.name = 'lLowerLeg';
-  lLowerLegBone.position.y = -0.4;
-  lUpperLegBone.add(lLowerLegBone);
-
-  const lLowerLeg = capsule(0.055, 0.36, darkMat);
-  lLowerLeg.position.y = -0.16;
-  lLowerLegBone.add(lLowerLeg);
 
   // Left Foot
   const lFootBone = new THREE.Group();
@@ -448,31 +614,30 @@
   lLowerLegBone.add(lFootBone);
 
   const lFoot = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 0.05, 0.16),
+    new THREE.SphereGeometry(0.08, 32, 24),
     accentMat
   );
+  lFoot.scale.set(0.8, 0.5, 1.4);
   lFoot.position.set(0, -0.02, 0.03);
   lFootBone.add(lFoot);
 
-  // Right Upper Leg
-  const rUpperLegBone = new THREE.Group();
-  rUpperLegBone.name = 'rUpperLeg';
-  rUpperLegBone.position.set(0.12, -0.08, 0);
-  hipsBone.add(rUpperLegBone);
+  // Right Leg Container
+  const rLegJoint = new THREE.Group();
+  rLegJoint.name = 'rLegJoint';
+  rLegJoint.position.set(0.12, -0.08, 0);
+  hipsBone.add(rLegJoint);
 
-  const rUpperLeg = capsule(0.065, 0.38, bodyMat);
-  rUpperLeg.position.y = -0.18;
-  rUpperLegBone.add(rUpperLeg);
+  // Right Leg SkinnedMesh
+  const rLegObj = createSkinnedLimb(0.065, 0.40, 0.38, bodyMat);
+  const rUpperLegBone = rLegObj.upperBone;
+  rUpperLegBone.name = 'rUpperLeg';
+  rUpperLegBone.position.set(0, 0, 0);
+  rLegJoint.add(rUpperLegBone);
+  rLegJoint.add(rLegObj.mesh);
 
   // Right Lower Leg
-  const rLowerLegBone = new THREE.Group();
+  const rLowerLegBone = rLegObj.lowerBone;
   rLowerLegBone.name = 'rLowerLeg';
-  rLowerLegBone.position.y = -0.4;
-  rUpperLegBone.add(rLowerLegBone);
-
-  const rLowerLeg = capsule(0.055, 0.36, darkMat);
-  rLowerLeg.position.y = -0.16;
-  rLowerLegBone.add(rLowerLeg);
 
   // Right Foot
   const rFootBone = new THREE.Group();
@@ -481,9 +646,10 @@
   rLowerLegBone.add(rFootBone);
 
   const rFoot = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 0.05, 0.16),
+    new THREE.SphereGeometry(0.08, 32, 24),
     accentMat
   );
+  rFoot.scale.set(0.8, 0.5, 1.4);
   rFoot.position.set(0, -0.02, 0.03);
   rFootBone.add(rFoot);
 
@@ -524,9 +690,9 @@
 
 
   // ─── INPUT SYSTEM ───────────────────────────────────────────
-  const keys = { w: false, a: false, s: false, d: false, shift: false, space: false };
+  const keys = { w: false, a: false, s: false, d: false, shift: false, space: false, ctrl: false };
   window.addEventListener('keydown', function(e) {
-    if (e.repeat) return;
+    if (e.repeat || window._isKO) return;
     const k = e.key.toLowerCase();
     if (k === 'w') keys.w = true;
     if (k === 'a') keys.a = true;
@@ -534,6 +700,23 @@
     if (k === 'd') keys.d = true;
     if (e.key === 'Shift') keys.shift = true;
     if (e.code === 'Space') keys.space = true;
+    if (k === 'control') {
+      keys.ctrl = true;
+      // Trigger dodge if moving
+      if (combatState === 'IDLE' && (keys.w || keys.a || keys.s || keys.d)) {
+        let dx = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+        let dz = (keys.s ? 1 : 0) - (keys.w ? 1 : 0);
+        combatState = 'DODGING';
+        gsap.killTweensOf(dodgeAnim);
+        dodgeAnim.weight = 0;
+        dodgeAnim.x = dx * 1.5;
+        dodgeAnim.z = dz * 1.5;
+        dodgeAnim.squat = 1.0;
+        let dodgeTl = gsap.timeline({ onComplete: () => { combatState = 'IDLE'; } });
+        dodgeTl.to(dodgeAnim, { weight: 1.0, duration: 0.15, ease: "power2.out" });
+        dodgeTl.to(dodgeAnim, { weight: 0, squat: 0, duration: 0.25, ease: "power2.inOut" });
+      }
+    }
   });
   window.addEventListener('keyup', function(e) {
     const k = e.key.toLowerCase();
@@ -543,70 +726,172 @@
     if (k === 'd') keys.d = false;
     if (e.key === 'Shift') keys.shift = false;
     if (e.code === 'Space') keys.space = false;
+    if (k === 'control') keys.ctrl = false;
   });
   // Prevent keys from sticking if window loses focus
   window.addEventListener('blur', function() {
-    keys.w = keys.a = keys.s = keys.d = keys.shift = keys.space = false;
+    keys.w = keys.a = keys.s = keys.d = keys.shift = keys.space = keys.ctrl = false;
   });
 
   // Combat Input
-  const combatAnim = { pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0 };
+  const combatAnim = { pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0 };
+  const dodgeAnim = { weight: 0, x: 0, z: 0, squat: 0 };
+  const enemyReact = { weight: 0, chestTwist: 0, spineBend: 0, knockdown: 0 };
+  window._isKO = false;
+  let playerHp = 100;
+  let enemyHp = 100;
   let currentPunchTl = null;
 
-  window.addEventListener('mousedown', function(e) {
-    if (e.button === 0 && (combatState === 'IDLE' || (currentPunchTl && currentPunchTl.progress() > 0.5)) && isGrounded) { // Left click
-      if (timeSinceLastPunch > 0.8) punchCombo = 0;
-      const isLeft = punchCombo % 2 === 0;
-      combatState = isLeft ? 'PUNCH_L' : 'PUNCH_R';
-      punchCombo++;
-      punchHitEffectSpawned = false;
-      timeSinceLastPunch = 0;
-
-      if (currentPunchTl) currentPunchTl.kill();
-
-      combatAnim.pWeight = 0;
-      combatAnim.pElbow = -1.8;
-      combatAnim.pChestTwist = isLeft ? 0.4 : -0.4;
-      combatAnim.pShoulder = 0;
-
-      currentPunchTl = gsap.timeline({
-        onComplete: () => {
-          combatState = 'IDLE';
-        }
-      });
-
-      // Windup
-      currentPunchTl.to(combatAnim, { pWeight: 1.0, duration: 0.08, ease: "power1.out" });
-
-      // Strike
-      currentPunchTl.to(combatAnim, {
-        pElbow: -0.2, pChestTwist: isLeft ? -0.5 : 0.5, pShoulder: 0.6,
-        duration: 0.12, ease: "power2.in",
-        onUpdate: function() {
-          if (!punchHitEffectSpawned && this.progress() > 0.6) {
-            charGroup.updateMatrixWorld(true);
-            const fistPos = new THREE.Vector3(0, -0.4, 0);
-            fistPos.applyMatrix4(isLeft ? lLowerArmBone.matrixWorld : rLowerArmBone.matrixWorld);
-            
-            const bagCenter = new THREE.Vector3();
-            bagMesh.getWorldPosition(bagCenter);
-            if (fistPos.distanceTo(bagCenter) < 1.1) {
-              spawnImpactParticles(fistPos);
-              const pushDir = new THREE.Vector3().subVectors(bagCenter, charGroup.position).normalize();
-              bagRecoilX = pushDir.x * 0.8; bagRecoilZ = pushDir.z * 0.8;
-            }
-            punchHitEffectSpawned = true;
-          }
-        }
-      });
-
-      // Recovery
-      currentPunchTl.to(combatAnim, {
-        pWeight: 0, pElbow: -1.8, pChestTwist: isLeft ? 0.4 : -0.4, pShoulder: 0,
-        duration: 0.35, ease: "power2.out"
-      });
+  // Function to handle game reset
+  document.getElementById('ko-restart').addEventListener('click', () => {
+    playerHp = 100; enemyHp = 100; window._isKO = false;
+    document.getElementById('player-hp').style.width = '100%';
+    document.getElementById('enemy-hp').style.width = '100%';
+    document.getElementById('ko-overlay').classList.remove('show');
+    
+    gsap.killTweensOf(enemyReact);
+    enemyReact.weight = 0;
+    enemyReact.knockdown = 0;
+    
+    // Reset Enemy knockdown transforms
+    if (window._enemyGroup) {
+      window._enemyGroup.position.y = 0;
+      window._enemyGroup.rotation.x = 0;
     }
   });
+
+  window.addEventListener('pointerdown', function(e) {
+    if (window._isKO) return;
+    
+    // Check if jump attack
+    const isJumpAttack = !isGrounded;
+
+    if (e.button === 0 || e.button === 2) { 
+      if ((combatState === 'IDLE' || (currentPunchTl && currentPunchTl.progress() > 0.5))) {
+        if (timeSinceLastPunch > 0.8) punchCombo = 0;
+        
+        let attackType = 'JAB';
+        let isLeft = true;
+        
+        if (isJumpAttack) {
+          attackType = 'JUMP_ATTACK';
+          isLeft = false;
+        } else if (e.button === 2) { 
+          attackType = (keys.w || keys.s) ? 'UPPERCUT' : 'HOOK';
+          isLeft = false;
+        } else { 
+          if (keys.a || keys.d) {
+            attackType = 'HOOK';
+            isLeft = punchCombo % 2 === 0;
+          } else if (keys.s) {
+            attackType = 'UPPERCUT';
+            isLeft = punchCombo % 2 === 0;
+          } else {
+            attackType = 'JAB';
+            isLeft = punchCombo % 2 === 0;
+            if (!isLeft) attackType = 'CROSS';
+          }
+        }
+
+        combatState = isLeft ? 'PUNCH_L' : 'PUNCH_R';
+        punchCombo++;
+        punchHitEffectSpawned = false;
+        timeSinceLastPunch = 0;
+
+        if (currentPunchTl) currentPunchTl.kill();
+
+        combatAnim.pWeight = 0;
+        combatAnim.pElbow = -2.5;
+        combatAnim.pChestTwist = isLeft ? 0.4 : -0.4;
+        combatAnim.pShoulder = 0;
+        combatAnim.pHook = 0;
+        combatAnim.pUpper = 0;
+        combatAnim.pLunge = 0;
+
+        currentPunchTl = gsap.timeline({
+          onComplete: () => {
+            combatState = 'IDLE';
+            combatAnim.pWeight = 0; // reset
+          }
+        });
+
+        let strikeElbow = -0.1, strikeChest = isLeft ? -0.7 : 0.7, strikeShoulder = 0.8;
+        let windupHook = 0, strikeHook = 0, windupUpper = 0, strikeUpper = 0;
+        let strikeDur = 0.12, lungeDist = 0.4, recoilDur = 0.35, recoilDelay = "+=0.05";
+        
+        if (attackType === 'HOOK') {
+          strikeElbow = -1.5; strikeChest = isLeft ? -0.9 : 0.9; strikeShoulder = 1.0;
+          windupHook = -0.6; strikeHook = 1.2; strikeDur = 0.15; lungeDist = 0.3; recoilDur = 0.4;
+        } else if (attackType === 'UPPERCUT') {
+          strikeElbow = -2.2; strikeChest = isLeft ? -0.7 : 0.7; strikeShoulder = 1.2;
+          windupUpper = -0.8; strikeUpper = 1.3; strikeDur = 0.14; lungeDist = 0.2; recoilDur = 0.45;
+        } else if (attackType === 'CROSS') {
+          strikeChest = isLeft ? -0.8 : 0.8; strikeDur = 0.14; lungeDist = 0.6; recoilDur = 0.4;
+        } else if (attackType === 'JUMP_ATTACK') {
+          strikeElbow = -0.2; strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = 1.0; strikeDur = 0.15; lungeDist = 0.8; recoilDur = 0.5; recoilDelay = "+=0.15";
+        }
+
+        // 1. Windup (Anticipation)
+        currentPunchTl.to(combatAnim, { pWeight: 1.0, pHook: windupHook, pUpper: windupUpper, pLunge: -0.1, duration: 0.1, ease: "power2.out" });
+        
+        // 2. Strike (Follow-through)
+        currentPunchTl.to(combatAnim, {
+          pElbow: strikeElbow, pChestTwist: strikeChest, pShoulder: strikeShoulder, pHook: strikeHook, pUpper: strikeUpper, pLunge: lungeDist,
+          duration: strikeDur, ease: "back.out(1.5)",
+          onUpdate: function() {
+            if (!punchHitEffectSpawned && this.progress() > 0.6) {
+              charGroup.updateMatrixWorld(true);
+              const fistPos = new THREE.Vector3(0, -0.4, 0);
+              fistPos.applyMatrix4(isLeft ? lLowerArmBone.matrixWorld : rLowerArmBone.matrixWorld);
+              
+              const enemyCenter = new THREE.Vector3();
+              enemyGroup.getWorldPosition(enemyCenter);
+              enemyCenter.y += 1.0;
+              if (fistPos.distanceTo(enemyCenter) < 1.6) {
+                spawnImpactParticles(fistPos);
+                
+                let damage = 5;
+                if (attackType === 'CROSS') damage = 10;
+                else if (attackType === 'HOOK') damage = 15;
+                else if (attackType === 'UPPERCUT') damage = 18;
+                else if (attackType === 'JUMP_ATTACK') damage = 25;
+                
+                enemyHp = Math.max(0, enemyHp - damage);
+                document.getElementById('enemy-hp').style.width = enemyHp + '%';
+                
+                gsap.killTweensOf(enemyReact);
+                enemyReact.weight = 0;
+                gsap.to(enemyReact, {
+                  weight: 1.0, chestTwist: isLeft ? -0.3 : 0.3, spineBend: 0.4,
+                  duration: 0.1, yoyo: true, repeat: 1, ease: "power2.out"
+                });
+                
+                if (enemyHp <= 0 && !window._isKO) {
+                  window._isKO = true;
+                  document.getElementById('ko-overlay').classList.add('show');
+                  document.getElementById('ko-message').innerText = "You Win!";
+                  
+                  // Knockdown animation
+                  gsap.killTweensOf(enemyReact);
+                  enemyReact.weight = 1.0;
+                  gsap.to(enemyGroup.position, { z: enemyGroup.position.z + 1.5, y: 0.2, duration: 0.4, ease: "power2.out" });
+                  gsap.to(enemyGroup.position, { y: 0, duration: 0.2, delay: 0.4, ease: "bounce.out" });
+                  gsap.to(enemyGroup.rotation, { x: -Math.PI / 2, duration: 0.5, ease: "power3.inOut" });
+                }
+              }
+              punchHitEffectSpawned = true;
+            }
+          }
+        });
+        
+        // 3. Recoil / Recovery (Heavy Physics)
+        currentPunchTl.to(combatAnim, {
+          pWeight: 0.2, pElbow: -2.0, pChestTwist: 0, pShoulder: 0, pHook: 0, pUpper: 0, pLunge: 0,
+          duration: recoilDur, ease: "power4.out"
+        }, recoilDelay);
+      }
+    }
+  }, true);
 
   // ─── COMBAT PARTICLES ─────────────────────────────────────────
   const impactParticles = [];
@@ -858,8 +1143,8 @@
 
     // ── JUMP / FALL / SQUAT POSES ──
     // Tuck legs up, keep knees bent.
-    const tuckLegs = -1.0 * jumpRiseWeight + 0.1 * fallWeight + -0.5 * squatPhase;
-    const tuckKnees = 1.2 * jumpRiseWeight + 0.1 * fallWeight + 1.0 * squatPhase;
+    const tuckLegs = -1.0 * jumpRiseWeight + 0.1 * fallWeight + -1.2 * squatPhase;
+    const tuckKnees = 1.2 * jumpRiseWeight + 0.1 * fallWeight + 1.8 * squatPhase;
     // Flail arms: slightly out during rise, up during fall
     const armFlailZ = 0.3 * jumpRiseWeight + 0.8 * fallWeight;
     const armFlailX = 0.2 * jumpRiseWeight - 1.2 * fallWeight;
@@ -870,14 +1155,14 @@
     chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp * idleWeight;
     chestBone.scale.x = 1 - breathPhase * IDLE.breathAmp * 0.3 * idleWeight;
     chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor * Math.sign(speed || 1)
-      + 0.3 * squatPhase - 0.1 * fallWeight; 
+      + 0.8 * squatPhase - 0.1 * fallWeight; 
     chestBone.rotation.y = walkWeight * chestTwist;
     chestBone.rotation.z = -turnSpeed * 0.05 * walkWeight; // Lean into turns
 
     hipsBone.position.y = baseHipsY
       + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight 
       + hipBob * walkWeight
-      - 0.4 * squatPhase;                                             
+      - 0.8 * squatPhase;                                             
     hipsBone.rotation.z = sin(t * PI2 * IDLE.hipSwayFreq) * IDLE.hipSwayAmp * idleWeight
       + hipSway * walkWeight;
     hipsBone.rotation.y = sin(t * PI2 * IDLE.leanFreq) * IDLE.leanAmp * idleWeight;
@@ -930,11 +1215,12 @@
       const g = stanceWeight;
       lUpperArmBone.rotation.x = lUpperArmBone.rotation.x * (1-g) + (-1.2) * g;
       lUpperArmBone.rotation.z = lUpperArmBone.rotation.z * (1-g) + (0.3) * g;
-      lLowerArmBone.rotation.x = lLowerArmBone.rotation.x * (1-g) + (-1.8) * g;
+      lLowerArmBone.rotation.x = lLowerArmBone.rotation.x * (1-g) + (-2.2) * g;
 
       rUpperArmBone.rotation.x = rUpperArmBone.rotation.x * (1-g) + (-1.2) * g;
       rUpperArmBone.rotation.z = rUpperArmBone.rotation.z * (1-g) + (-0.3) * g;
-      rLowerArmBone.rotation.x = rLowerArmBone.rotation.x * (1-g) + (-1.8) * g;
+      rLowerArmBone.rotation.x = rLowerArmBone.rotation.x * (1-g) + (-2.2) * g;
+      
       
       chestBone.rotation.y += 0.3 * g;
       hipsBone.rotation.y -= 0.2 * g;
@@ -947,26 +1233,64 @@
       const isLeft = combatState === 'PUNCH_L';
       const pWeight = combatAnim.pWeight;
       
+      let armRotX = (-Math.PI/2) * pWeight;
+      let armRotZ = (isLeft ? -0.1 : 0.1) * pWeight;
+      
+      // Apply hook/uppercut modifiers
+      armRotX += combatAnim.pUpper * 0.8;
+      armRotZ += combatAnim.pHook * (isLeft ? 0.6 : -0.6);
+
       if (isLeft) {
-        lUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + lUpperArmBone.rotation.x * (1-pWeight);
-        lUpperArmBone.rotation.z = (-0.1) * pWeight + lUpperArmBone.rotation.z * (1-pWeight);
+        lUpperArmBone.rotation.x = armRotX + lUpperArmBone.rotation.x * (1-pWeight);
+        lUpperArmBone.rotation.z = armRotZ + lUpperArmBone.rotation.z * (1-pWeight);
         lLowerArmBone.rotation.x = combatAnim.pElbow * pWeight + lLowerArmBone.rotation.x * (1-pWeight);
         lShoulderBone.rotation.y = -combatAnim.pShoulder * pWeight;
       } else {
-        rUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + rUpperArmBone.rotation.x * (1-pWeight);
-        rUpperArmBone.rotation.z = (0.1) * pWeight + rUpperArmBone.rotation.z * (1-pWeight);
+        rUpperArmBone.rotation.x = armRotX + rUpperArmBone.rotation.x * (1-pWeight);
+        rUpperArmBone.rotation.z = armRotZ + rUpperArmBone.rotation.z * (1-pWeight);
         rLowerArmBone.rotation.x = combatAnim.pElbow * pWeight + rLowerArmBone.rotation.x * (1-pWeight);
         rShoulderBone.rotation.y = -combatAnim.pShoulder * pWeight;
       }
       chestBone.rotation.y += combatAnim.pChestTwist * pWeight;
-      chestBone.rotation.x += 0.25 * pWeight;
+      chestBone.rotation.x += (0.25 + combatAnim.pUpper * 0.3) * pWeight;
+    }
+    
+    // Apply body lunge to rootBone
+    rootBone.position.z = combatAnim.pLunge * (combatAnim.pWeight || 1.0);
+
+    // Dodging Logic
+    if (dodgeAnim.weight > 0) {
+      const dodgeRight = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0,1,0), facingAngle);
+      const dodgeForward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0,1,0), facingAngle);
+      charGroup.position.addScaledVector(dodgeRight, dodgeAnim.x * dodgeAnim.weight * dt * 20);
+      charGroup.position.addScaledVector(dodgeForward, dodgeAnim.z * dodgeAnim.weight * dt * 20);
+      hipsBone.position.y -= dodgeAnim.squat * 0.4;
+      chestBone.rotation.x += dodgeAnim.squat * 0.3;
     }
 
-    // Update Bag Physics
-    bagPivot.rotation.x += (bagRecoilZ - bagPivot.rotation.x) * 8 * dt;
-    bagPivot.rotation.z += (-bagRecoilX - bagPivot.rotation.z) * 8 * dt;
-    bagRecoilX *= (1.0 - 6*dt);
-    bagRecoilZ *= (1.0 - 6*dt);
+    // Update Enemy Physics / Reactions
+    if (enemyReact.weight > 0) {
+      eb.chest.rotation.y = enemyReact.chestTwist * enemyReact.weight;
+      eb.spine.rotation.x = -enemyReact.spineBend * enemyReact.weight;
+      eb.head.rotation.x = -enemyReact.spineBend * 0.5 * enemyReact.weight;
+    } else {
+      eb.chest.rotation.y = 0;
+      eb.spine.rotation.x = 0;
+      eb.head.rotation.x = 0;
+    }
+    
+    if (!window._enemyGroup) window._enemyGroup = enemyGroup; // Cache for reset
+    
+    // Apply knockdown override
+    if (enemyReact.knockdown > 0) {
+      const kd = enemyReact.knockdown;
+      enemyGroup.position.y = (-0.8) * kd; 
+      enemyGroup.rotation.x = (-Math.PI/2) * kd; 
+    } else {
+      // Small idle bobbing when not knocked down
+      enemyGroup.position.y = Math.sin(t * PI2 * 0.4) * 0.02;
+      enemyGroup.rotation.x = 0;
+    }
 
     // ── COMBAT PARTICLES UPDATE ──
     for (let i = impactParticles.length - 1; i >= 0; i--) {
