@@ -156,17 +156,6 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-6 flex flex-col gap-6"
           >
-            {/* Tagline Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 border border-[#00FF66]/40 bg-[#00FF66]/10 backdrop-blur-md w-fit text-xs font-mono font-black text-[#00FF66] shadow-[0_0_20px_rgba(0,255,102,0.2)]"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
-              <span className="tracking-widest uppercase">// D3V_UNKNOWN // SYS_01 // ONLINE</span>
-            </motion.div>
-
             {/* Main Headline with Glitch Effect */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
