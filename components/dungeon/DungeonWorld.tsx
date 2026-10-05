@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Html, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -14,6 +14,7 @@ export interface DungeonWorldEnemy extends EnemyDefinition {
   position: { x: number; y: number };
   phase: number;
   stunned: number;
+  cooldown?: number;
 }
 
 interface DungeonWorldProps {
@@ -25,6 +26,7 @@ interface DungeonWorldProps {
   attackPulse: number;
   playerHitPulse: number;
   onSelectEnemy: (id: string) => void;
+  onAttackTrigger?: (isHeavy: boolean) => void;
   mapRooms?: RoomNode[];
   activeRoom?: number;
 }
@@ -129,22 +131,70 @@ function DungeonArchitecture({ palette, floor }: { palette: typeof FLOOR_PALETTE
   );
 }
 
-function PlayerCharacter({ config, position, attackPulse, hitPulse }: { config: AvatarConfig; position: [number, number, number]; attackPulse: number; hitPulse: number }) {
+function DungeonSlashArc({ facingYaw, pulse }: { facingYaw: number; pulse: number }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    if (pulse > 0) {
+      setActive(true);
+      const t = setTimeout(() => setActive(false), 240);
+      return () => clearTimeout(t);
+    }
+  }, [pulse]);
+
+  useFrame((_, delta) => {
+    if (meshRef.current && active) {
+      meshRef.current.rotation.z -= delta * 16;
+    }
+  });
+
+  if (!active) return null;
+
+  return (
+    <group position={[Math.sin(facingYaw) * 0.7, 0.5, -Math.cos(facingYaw) * 0.7]} rotation={[0, facingYaw + Math.PI / 2, 0]}>
+      <mesh ref={meshRef} rotation={[0, 0, -0.3]}>
+        <ringGeometry args={[0.35, 1.0, 24, 1, 0, Math.PI * 0.85]} />
+        <meshBasicMaterial color="#00FF66" transparent opacity={0.92} side={THREE.DoubleSide} />
+      </mesh>
+      <pointLight color="#00FF66" intensity={4.5} distance={2.5} />
+    </group>
+  );
+}
+
+function PlayerCharacter({
+  config,
+  position,
+  attackPulse,
+  hitPulse,
+}: {
+  config: AvatarConfig;
+  position: [number, number, number];
+  attackPulse: number;
+  hitPulse: number;
+}) {
   const ref = useRef<THREE.Group>(null);
   const lastAttack = useRef(attackPulse);
+
   useFrame((_, delta) => {
     if (!ref.current) return;
     if (lastAttack.current !== attackPulse) {
-      ref.current.rotation.z = -0.22;
+      ref.current.rotation.z = -0.28;
       lastAttack.current = attackPulse;
     }
-    ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, hitPulse % 2 ? -0.14 : 0, delta * 8);
-    ref.current.position.y = THREE.MathUtils.lerp(ref.current.position.y, 0.02 + Math.sin(performance.now() * 0.003) * 0.025, delta * 5);
-    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, dungeonLookYaw.current, delta * 12);
+    ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, hitPulse % 2 ? -0.18 : 0, delta * 10);
+    ref.current.position.y = THREE.MathUtils.lerp(
+      ref.current.position.y,
+      0.02 + Math.sin(performance.now() * 0.003) * 0.025,
+      delta * 6
+    );
+    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, dungeonLookYaw.current, delta * 14);
   });
+
   return (
     <group ref={ref} position={position} scale={0.76} visible={true}>
       <AvatarModel config={config} action={attackPulse > 0 ? 'attack' : 'idle'} animate />
+      <DungeonSlashArc facingYaw={dungeonLookYaw.current} pulse={attackPulse} />
     </group>
   );
 }
@@ -187,6 +237,14 @@ function EnemyCharacter({ enemy, selected, onSelect, palette }: { enemy: Dungeon
       }}
     >
       <MonsterVisual enemy={enemy} size={size} palette={palette} />
+      {/* Threat Telegraph Ring when enemy is winding up to attack */}
+      {enemy.cooldown !== undefined && enemy.cooldown <= 4 && enemy.cooldown > 0 && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+          <ringGeometry args={[size * 1.35, size * 1.55, 32]} />
+          <meshBasicMaterial color="#EF4444" transparent opacity={0.8} />
+        </mesh>
+      )}
+
       {selected && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
           <ringGeometry args={[size * 1.25, size * 1.45, 24]} />
@@ -232,12 +290,40 @@ function roomIndexClass(room: RoomNode, activeRoom: number) {
   return 'border-white/20 bg-black/50 text-white/55';
 }
 
-export function DungeonWorld({ floor, playerConfig, playerPosition, enemies, selectedEnemy, attackPulse, playerHitPulse, onSelectEnemy, mapRooms = [], activeRoom = 0 }: DungeonWorldProps) {
+export function DungeonWorld({ floor, playerConfig, playerPosition, enemies, selectedEnemy, attackPulse, playerHitPulse, onSelectEnemy, onAttackTrigger, mapRooms = [], activeRoom = 0 }: DungeonWorldProps) {
   const palette = FLOOR_PALETTES[Math.min(floor, FLOOR_PALETTES.length - 1)];
   const player = toWorld(playerPosition);
   const boss = enemies.find((enemy) => enemy.archetype === 'boss' && enemy.hp > 0);
   const bossPosition = boss ? toWorld(boss.position) : undefined;
   const fallbackRooms = useMemo(() => Array.from({ length: 6 }, (_, index) => ({ id: `${floor}-exploration-${index}`, type: index === 5 ? 'boss' : index % 3 === 0 ? 'combat' : 'event', label: index === 5 ? 'Boss' : 'Chamber', description: '', visited: false, cleared: false, discovered: index === 0, x: index % 3, y: Math.floor(index / 3) } as RoomNode)), [floor]);
   const explorationRooms = mapRooms.length ? mapRooms : fallbackRooms.map((room, index) => ({ ...room, discovered: index <= Math.min(5, Math.max(0, Math.floor(Math.hypot(playerPosition.x - 20, playerPosition.y - 50) / 12))) }));
-  return <div className="absolute inset-0"><Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 1.45, 0], fov: 72 }} gl={{ antialias: true }}><color attach="background" args={[palette.fog]} /><fog attach="fog" args={[palette.fog, 3, 14]} /><PerspectiveCamera makeDefault position={[0, 1.45, 0]} fov={72} /><ambientLight color="#9CA3AF" intensity={0.62} /><directionalLight position={[3, 7, 4]} intensity={1.7} color="#E0F2FE" castShadow shadow-mapSize={[1024, 1024]} /><pointLight position={[0, 3.2, -4.5]} color={palette.trim} intensity={5} distance={9} /><pointLight position={[0, 1.8, 2.6]} color={palette.danger} intensity={floor >= 2 ? 1.6 : 0.45} distance={6} /><DungeonArchitecture palette={palette} floor={floor} /><CameraFollow player={player} boss={bossPosition} /><PlayerCharacter config={playerConfig} position={player} attackPulse={attackPulse} hitPulse={playerHitPulse} />{enemies.filter((enemy) => enemy.hp > 0).map((enemy) => <EnemyCharacter key={enemy.id} enemy={enemy} selected={selectedEnemy === enemy.id} onSelect={() => onSelectEnemy(enemy.id)} palette={palette} />)}<CombatBurst pulse={attackPulse} palette={palette} /><ContactShadows position={[0, 0.025, 0]} opacity={0.72} scale={12} blur={2.3} far={5} /></Canvas><DungeonMiniMap rooms={explorationRooms} activeRoom={activeRoom} floor={floor} /></div>;
+  return (
+    <div
+      className="absolute inset-0 cursor-crosshair select-none"
+      onPointerDown={(e) => {
+        if (e.button === 0) onAttackTrigger?.(false);
+        else if (e.button === 2) onAttackTrigger?.(true);
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 1.45, 0], fov: 72 }} gl={{ antialias: true }}>
+        <color attach="background" args={[palette.fog]} />
+        <fog attach="fog" args={[palette.fog, 3, 14]} />
+        <PerspectiveCamera makeDefault position={[0, 1.45, 0]} fov={72} />
+        <ambientLight color="#9CA3AF" intensity={0.62} />
+        <directionalLight position={[3, 7, 4]} intensity={1.7} color="#E0F2FE" castShadow shadow-mapSize={[1024, 1024]} />
+        <pointLight position={[0, 3.2, -4.5]} color={palette.trim} intensity={5} distance={9} />
+        <pointLight position={[0, 1.8, 2.6]} color={palette.danger} intensity={floor >= 2 ? 1.6 : 0.45} distance={6} />
+        <DungeonArchitecture palette={palette} floor={floor} />
+        <CameraFollow player={player} boss={bossPosition} />
+        <PlayerCharacter config={playerConfig} position={player} attackPulse={attackPulse} hitPulse={playerHitPulse} />
+        {enemies.filter((enemy) => enemy.hp > 0).map((enemy) => (
+          <EnemyCharacter key={enemy.id} enemy={enemy} selected={selectedEnemy === enemy.id} onSelect={() => onSelectEnemy(enemy.id)} palette={palette} />
+        ))}
+        <CombatBurst pulse={attackPulse} palette={palette} />
+        <ContactShadows position={[0, 0.025, 0]} opacity={0.72} scale={12} blur={2.3} far={5} />
+      </Canvas>
+      <DungeonMiniMap rooms={explorationRooms} activeRoom={activeRoom} floor={floor} />
+    </div>
+  );
 }

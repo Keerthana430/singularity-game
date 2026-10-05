@@ -73,15 +73,7 @@ export function BattleResultModal({
   onNewTournament,
   onTriggerEmote,
 }: BattleResultModalProps) {
-  const [selectedEmote, setSelectedEmote] = useState<string | null>(null);
-
   if (!outcome) return null;
-
-  const handleEmoteClick = (emote: VictoryEmote) => {
-    setSelectedEmote(emote.id);
-    sound.playEquip();
-    if (onTriggerEmote) onTriggerEmote(emote);
-  };
 
   return (
     <AnimatePresence>
@@ -206,42 +198,7 @@ export function BattleResultModal({
             </div>
           </div>
 
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* VICTORY EMOTES SELECTOR (On Victory)                          */}
-          {/* ───────────────────────────────────────────────────────────── */}
-          {outcome !== 'defeat' && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/60 font-bold flex items-center gap-1.5">
-                  <Sparkles size={11} className="text-amber-400" />
-                  <span>Choose Victory Emote</span>
-                </span>
-                <span className="text-[9px] font-mono text-white/40">Plays on your avatar</span>
-              </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {VICTORY_EMOTES.map((em) => {
-                  const isSelected = selectedEmote === em.id;
-                  return (
-                    <button
-                      key={em.id}
-                      onClick={() => handleEmoteClick(em)}
-                      className={`min-h-[76px] min-w-0 rounded-xl border px-2 py-2 text-center flex flex-col items-center justify-center transition-all ${
-                        isSelected
-                          ? 'border-[#00FF66] bg-[#00FF66]/20 shadow-[0_0_12px_rgba(0,255,102,0.4)] scale-105'
-                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                      }`}
-                    >
-                      <span className="text-[15px] leading-none mb-1 font-black tracking-[0.16em] text-white/90">{em.icon}</span>
-                      <span className="text-[9px] leading-tight font-mono font-bold text-white uppercase break-words">
-                        {em.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* ───────────────────────────────────────────────────────────── */}
           {/* HEALING NOTICE ON DEFEAT                                      */}

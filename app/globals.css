@@ -10,6 +10,7 @@
    RETRO-ANIME DESIGN TOKENS — Alternate 1990s Sci-Fi Future
    ─────────────────────────────────────────────────────────────────── */
 :root {
+  --nav-height:         72px;
 
   /* ── BASE: DEEP SPACE BLUES & NEBULA INDIGO ─────────────────── */
   --color-space-deep:   #101426; /* Deep cosmic space navy */
@@ -466,15 +467,21 @@ body::after {
 .game-viewport {
   position: relative;
   width: 100%;
-  height: calc(100vh - var(--nav-height));
+  height: calc(100vh - var(--nav-height, 64px));
   overflow: hidden;
   background: var(--color-void-deep);
+  isolation: isolate;
+}
+.game-viewport > * {
+  position: relative;
+  z-index: 1;
 }
 .game-viewport::after {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(2,6,4,0.78) 100%);
-  pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 65%, rgba(2,6,4,0.45) 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

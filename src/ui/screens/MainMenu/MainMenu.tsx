@@ -72,12 +72,14 @@ export function MainMenu({ onStart }: MainMenuProps) {
 const overlay: CSSProperties = {
   position: 'fixed', inset: 0,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  background: 'radial-gradient(ellipse at 50% 40%, #0a0a2a 0%, #050510 100%)',
-  zIndex: 100,
+  background: 'rgba(3, 4, 14, 0.96)',
+  backdropFilter: 'blur(28px)',
+  WebkitBackdropFilter: 'blur(28px)',
+  zIndex: 99999,
 };
 
 const gridBg: CSSProperties = {
-  position: 'absolute', inset: 0, opacity: 0.08,
+  position: 'absolute', inset: 0, opacity: 0.06,
   backgroundImage: `
     linear-gradient(rgba(0,100,255,0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0,100,255,0.5) 1px, transparent 1px)
@@ -88,9 +90,14 @@ const gridBg: CSSProperties = {
 
 const panel: CSSProperties = {
   position: 'relative',
-  padding: 'clamp(32px, 5vw, 64px)',
-  width: 'clamp(300px, 90vw, 420px)',
+  padding: '44px 36px',
+  width: 'clamp(320px, 90vw, 440px)',
   textAlign: 'center',
+  background: 'linear-gradient(180deg, rgba(14, 18, 38, 0.98) 0%, rgba(6, 8, 20, 0.99) 100%)',
+  border: '1px solid rgba(0, 255, 238, 0.4)',
+  borderRadius: '24px',
+  boxShadow: '0 0 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 255, 238, 0.25)',
+  zIndex: 100000,
 };
 
 const logoWrap: CSSProperties = { marginBottom: 40 };

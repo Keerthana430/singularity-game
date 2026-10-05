@@ -66,11 +66,11 @@ export function Navbar() {
 
             {/* Logo */}
             <div className="flex items-center gap-4">
-              <Logo showSubtitle size="sm" />
+              <Logo showSubtitle size="md" />
             </div>
 
             {/* Desktop nav tabs */}
-            <nav className="hidden lg:flex items-center gap-1 rounded-xl border border-white/10 bg-black/40 p-1 backdrop-blur-md" aria-label="Main navigation">
+            <nav className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-white/12 bg-black/60 p-1.5 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)]" aria-label="Main navigation">
               {navLinks.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -80,21 +80,21 @@ export function Navbar() {
                     aria-current={active ? 'page' : undefined}
                     onMouseEnter={() => sound.playHover()}
                     onClick={() => sound.playClick()}
-                    className={`relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-150 ${
+                    className={`relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-xs sm:text-[13px] font-bold tracking-[0.14em] uppercase transition-all duration-150 ${
                       active
-                        ? 'text-[#00FF66] bg-[#00FF66]/10 border border-[#00FF66]/50 shadow-[0_0_12px_rgba(0,255,102,0.2)]'
-                        : 'text-[#9AA8A0] hover:text-[#F0F4F1] hover:bg-white/5 border border-transparent'
+                        ? 'text-[#00FF66] bg-[#00FF66]/15 border border-[#00FF66]/50 shadow-[0_0_16px_rgba(0,255,102,0.3)]'
+                        : 'text-[#9AA8A0] hover:text-[#F0F4F1] hover:bg-white/8 border border-transparent'
                     }`}
                     style={{
                       fontFamily: 'var(--font-mono, monospace)',
                     }}
                   >
-                    <Icon size={12} className={active ? 'text-[#00FF66]' : 'text-current'} aria-hidden="true" />
+                    <Icon size={14} className={active ? 'text-[#00FF66]' : 'text-current'} aria-hidden="true" />
                     <span>{label}</span>
                     {active && (
                       <motion.div
                         layoutId="nav-energy-indicator"
-                        className="absolute bottom-0 inset-x-2 h-[2px] rounded-full bg-[#00FF66] shadow-[0_0_8px_#00FF66]"
+                        className="absolute bottom-0 inset-x-2.5 h-[2px] rounded-full bg-[#00FF66] shadow-[0_0_10px_#00FF66]"
                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                       />
                     )}
@@ -104,7 +104,7 @@ export function Navbar() {
             </nav>
 
             {/* Right: Audio toggle + Profile */}
-            <div className="hidden md:flex items-center gap-2.5">
+            <div className="hidden md:flex items-center gap-3">
               {/* Compact Audio Toggle */}
               <button
                 onClick={() => {
@@ -112,18 +112,18 @@ export function Navbar() {
                   music.toggle();
                 }}
                 onMouseEnter={() => sound.playHover()}
-                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
                   isAudioPlaying
-                    ? 'border-[#00FF66]/50 bg-[#00FF66]/15 text-[#00FF66] shadow-[0_0_12px_rgba(0,255,102,0.25)]'
-                    : 'border-white/10 bg-white/5 text-white/40 hover:text-white hover:border-white/25'
+                    ? 'border-[#00FF66]/60 bg-[#00FF66]/15 text-[#00FF66] shadow-[0_0_14px_rgba(0,255,102,0.3)]'
+                    : 'border-white/12 bg-white/5 text-white/50 hover:text-white hover:border-white/30'
                 }`}
                 title={isAudioPlaying ? 'BGM Playing (Click to mute)' : 'BGM Muted (Click to play)'}
                 aria-label={isAudioPlaying ? 'Pause BGM' : 'Play BGM'}
               >
                 {isAudioPlaying ? (
-                  <Volume2 size={15} className="text-[#00FF66]" />
+                  <Volume2 size={17} className="text-[#00FF66]" />
                 ) : (
-                  <VolumeX size={15} />
+                  <VolumeX size={17} />
                 )}
               </button>
 
@@ -155,21 +155,21 @@ export function Navbar() {
                   aria-label={`Player profile: ${currentAvatar.name}`}
                   onMouseEnter={() => sound.playHover()}
                   onClick={() => sound.playClick()}
-                  className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/12 hover:border-[#00FF66]/50 transition-all shadow-sm"
+                  className="group flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-black/70 border border-white/15 hover:border-[#00FF66]/60 transition-all shadow-md"
                   style={{ fontFamily: 'var(--font-mono, monospace)' }}
                 >
                   <div
-                    className="w-5 h-5 rounded-full flex-shrink-0 transition-transform group-hover:scale-105 border border-[#00FF66]"
+                    className="w-6 h-6 rounded-full flex-shrink-0 transition-transform group-hover:scale-105 border border-[#00FF66]"
                     style={{
                       background: `linear-gradient(135deg, ${currentAvatar.topColor}, ${currentAvatar.hairColor})`,
                     }}
                     aria-hidden="true"
                   />
                   <div className="flex flex-col leading-none text-left">
-                    <span className="text-[11px] font-bold text-[#F0F4F1] group-hover:text-[#00FF66] transition-colors uppercase tracking-wider">
+                    <span className="text-xs font-bold text-[#F0F4F1] group-hover:text-[#00FF66] transition-colors uppercase tracking-wider">
                       {currentAvatar.name}
                     </span>
-                    <span className="text-[8px] font-mono text-[#00FF66] uppercase mt-0.5 tracking-widest">
+                    <span className="text-[9px] font-mono text-[#00FF66] uppercase mt-0.5 tracking-widest">
                       [{((currentAvatar.classRole || 'OPERATIVE') as string).toUpperCase()}]
                     </span>
                   </div>

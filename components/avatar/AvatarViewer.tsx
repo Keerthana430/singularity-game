@@ -118,16 +118,16 @@ export function AvatarViewer({
         )}
       </div>
 
-      {/* Floating Camera Control HUD — top-right to avoid overlap with Auto-Equip at bottom */}
+      {/* Floating Camera Control HUD */}
       {showControls && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="absolute top-2 right-2 flex items-center gap-1.5 z-20"
+          className="absolute top-3 right-3 flex items-center gap-2 z-20"
         >
           {/* Main Control Bar */}
-          <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-black/75 backdrop-blur-md border border-[#00FF66]/20 shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-black/85 backdrop-blur-xl border border-[#00FF66]/30 shadow-[0_4px_24px_rgba(0,0,0,0.75)]">
             {/* Quick Zoom Focus Buttons */}
             {FOCUS_OPTIONS.map((opt) => {
               const isActive = focusMode === opt.id;
@@ -137,10 +137,10 @@ export function AvatarViewer({
                   onClick={() => setFocusMode(opt.id)}
                   title={`Zoom to ${opt.label}`}
                   aria-label={`Zoom to ${opt.label}`}
-                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
                     isActive
-                      ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.5)]'
-                      : 'text-white/55 hover:text-white hover:bg-white/10'
+                      ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.5)]'
+                      : 'text-white/60 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   {opt.icon}
@@ -148,16 +148,16 @@ export function AvatarViewer({
               );
             })}
 
-            <div className="w-px h-4 bg-white/15 mx-0.5" />
+            <div className="w-px h-4 bg-white/20 mx-1" />
 
             {/* Reset Camera button */}
             <button
               onClick={handleResetCamera}
               title="Reset camera focus"
               aria-label="Reset camera position"
-              className="p-1 rounded-lg text-white/45 hover:text-[#00FF66] hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-xl text-white/50 hover:text-[#00FF66] hover:bg-white/10 transition-colors"
             >
-              <RotateCcw size={12} />
+              <RotateCcw size={13} />
             </button>
 
             {/* Toggle auto-rotate */}

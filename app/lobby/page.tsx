@@ -44,6 +44,8 @@ import { sound, music } from '@/lib/audio';
 import { getSpeciesAttacks, getAttackByType, type SpeciesAttack } from '@/data/speciesAttacks';
 import { BattleResultModal, type VictoryEmote } from '@/components/arena/BattleResultModal';
 import { RoundCountdownOverlay } from '@/components/arena/RoundCountdownOverlay';
+import { useGameSettingsStore } from '@/store/gameSettingsStore';
+import { GameSettingsButton, GameSettingsModal } from '@/components/shared/GameSettingsModal';
 
 interface Combatant {
   id: string;
@@ -261,6 +263,7 @@ export default function LobbyPage() {
   };
 
   const triggerShake = () => {
+    if (!useGameSettingsStore.getState().screenShake) return;
     setScreenShake(true);
     setTimeout(() => setScreenShake(false), 450);
   };
@@ -1098,6 +1101,11 @@ export default function LobbyPage() {
                 }`}
               />
 
+              {/* Low HP Critical Heartbeat Warning Vignette */}
+              {playerFighter.hp > 0 && playerFighter.hp / playerFighter.maxHp <= 0.25 && (
+                <div className="absolute inset-0 pointer-events-none z-20 animate-pulse border-4 border-red-500/70 shadow-[inset_0_0_80px_rgba(239,68,68,0.5)]" />
+              )}
+
               {/* 3D ARENA VIEWPORT (FILLS THE ENTIRE CONTAINER) */}
               <div className="absolute inset-0 z-0">
                 <Arena3DView
@@ -1115,6 +1123,8 @@ export default function LobbyPage() {
                   vfxSpark={attackVfxSpark}
                   isCrit={isAttackCrit}
                   isDodge={isAttackDodge}
+                  overdriveActive={overdriveEnergy >= 100}
+                  bloomEnabled={useGameSettingsStore.getState().bloomEnabled}
                   floatingCombatText={floatingTexts}
                   className="w-full h-full"
                 />
@@ -1185,6 +1195,8 @@ export default function LobbyPage() {
                 <span className="font-bold text-red-400 uppercase">{opponentFighter.name}</span>
                 <span className="text-white/20">|</span>
                 <span className="text-white/60 font-bold">RND {currentRoundNumber}</span>
+                <span className="text-white/20">|</span>
+                <GameSettingsButton className="p-1 rounded-lg border-0 bg-transparent text-white/40 hover:text-cyan-400" />
               </div>
 
               {/* ─── FLOATING TOP-LEFT: Player Combat HUD ─── */}
@@ -1758,6 +1770,9 @@ export default function LobbyPage() {
           addFloatingText(`${emote.icon} ${emote.label.toUpperCase()}!`, 'player', true, emote.fxColor);
         }}
       />
+
+      {/* Global Experience & Accessibility Settings Modal */}
+      <GameSettingsModal />
     </div>
   );
 }

@@ -5,7 +5,7 @@
 // sleek obsidian and emerald neon matrix theme, dynamic combat clashes,
 // high-visibility stepping tiles, and interactive 3D dice.
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -866,6 +866,79 @@ function CombatClashVfx({
   );
 }
 
+// ─── AMBIENT STADIUM CYBER MOTES ───────────────────────────────────────────
+function LudoStadiumMotes() {
+  const points = useMemo(() => {
+    const p = new Float32Array(150 * 3);
+    for (let i = 0; i < 150; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 26;
+      p[i * 3 + 1] = Math.random() * 8 + 0.5;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 26;
+    }
+    return p;
+  }, []);
+
+  const pointsRef = useRef<THREE.Points>(null);
+  useFrame((_, delta) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y += delta * 0.02;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[points, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.04}
+        color="#D4AF37"
+        transparent
+        opacity={0.5}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
+// ─── CELEBRATORY SUPERNOVA BURST ON ROLLING A 6 ────────────────────────────
+function SixSupernovaBurst({ active }: { active: boolean }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [scale, setScale] = useState(0);
+
+  useEffect(() => {
+    if (active) setScale(1);
+    else setScale(0);
+  }, [active]);
+
+  useFrame((_, delta) => {
+    if (ringRef.current && scale > 0) {
+      ringRef.current.scale.addScalar(delta * 4.5);
+      const mat = ringRef.current.material as THREE.MeshBasicMaterial;
+      if (mat) {
+        mat.opacity = Math.max(0, mat.opacity - delta * 1.8);
+        if (mat.opacity <= 0) {
+          setScale(0);
+          mat.opacity = 0.9;
+          ringRef.current.scale.set(0.2, 0.2, 0.2);
+        }
+      }
+    }
+  });
+
+  if (!active && scale === 0) return null;
+
+  return (
+    <group position={[0, 1.2, 0]}>
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.3, 0.6, 32]} />
+        <meshBasicMaterial color="#FFD700" transparent opacity={0.9} side={THREE.DoubleSide} />
+      </mesh>
+      <pointLight color="#FFD700" intensity={8} distance={6} />
+    </group>
+  );
+}
+
 // ─── CAMERA CONTROLLER ──────────────────────────────────────────────────────
 function LudoCameraController({
   preset,
@@ -925,7 +998,6 @@ function LudoCameraController({
   );
 }
 
-// ─── MAIN EXPORTED COMPONENT ────────────────────────────────────────────────
 export interface Ludo3DColosseumProps {
   players: LudoPlayer[];
   currentTurn: PlayerColor;
@@ -938,6 +1010,7 @@ export interface Ludo3DColosseumProps {
   activeClash: CombatClash | null;
   floatingTexts: FloatingText3D[];
   activeMovement: ActiveMovement | null;
+  bloomEnabled?: boolean;
   onRollDice: () => void;
   onSelectPiece: (pieceId: number) => void;
 }
@@ -954,6 +1027,7 @@ export function Ludo3DColosseum({
   activeClash,
   floatingTexts,
   activeMovement,
+  bloomEnabled = true,
   onRollDice,
   onSelectPiece,
 }: Ludo3DColosseumProps) {
@@ -1069,6 +1143,12 @@ export function Ludo3DColosseum({
           </group>
         ))}
 
+        {/* Ambient Stadium Cyber Motes */}
+        <LudoStadiumMotes />
+
+        {/* Celebratory Supernova Burst on Rolling a 6 */}
+        <SixSupernovaBurst active={diceRoll === 6} />
+
         {/* Deep Contact Shadows on arena floor (Ambient Occlusion Grounding) */}
         <ContactShadows
           position={[0, PLATFORM_Y, 0]}
@@ -1079,14 +1159,16 @@ export function Ludo3DColosseum({
         />
 
         {/* ─── POST-PROCESSING: BLOOM FOR GLOWING COLOSSEUM TILES & YARDS ─── */}
-        <EffectComposer>
-          <Bloom
-            intensity={0.55}
-            luminanceThreshold={0.48}
-            luminanceSmoothing={0.8}
-            radius={0.7}
-          />
-        </EffectComposer>
+        {bloomEnabled && (
+          <EffectComposer>
+            <Bloom
+              intensity={0.55}
+              luminanceThreshold={0.48}
+              luminanceSmoothing={0.8}
+              radius={0.7}
+            />
+          </EffectComposer>
+        )}
       </Canvas>
     </div>
   );

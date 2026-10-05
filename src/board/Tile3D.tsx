@@ -78,19 +78,22 @@ export function Tile3D({ layout, isSnakeHead, isLadderBase }: Tile3DProps) {
         </mesh>
       )}
       
-      {/* Tile Number (Using Html to bypass Troika worker issues) */}
+      {/* Tile Number (Subtle Cyber Coordinates) */}
       <Html
         position={[0, surfaceHeight + 0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         transform
         occlude
+        zIndexRange={[100, 0]}
       >
         <div style={{
-          color: '#ffffff',
-          fontSize: `${size * 24}px`,
-          fontWeight: '900',
-          WebkitTextStroke: '1px black',
-          textShadow: '0px 2px 4px rgba(0,0,0,0.8)',
+          color: isSnakeHead ? '#ff6688' : isLadderBase ? '#39ff88' : '#80c5ff',
+          fontSize: '11px',
+          fontFamily: "'Share Tech Mono', monospace",
+          fontWeight: '700',
+          textShadow: '0 0 8px currentColor',
+          letterSpacing: '0.5px',
+          opacity: 0.85,
           pointerEvents: 'none',
           userSelect: 'none'
         }}>

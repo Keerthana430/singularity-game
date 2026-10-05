@@ -31,6 +31,8 @@ import { PRESET_AVATARS } from '@/data/presets';
 import { sound } from '@/lib/audio';
 import { useToast } from '@/components/Toast';
 import { Ludo3DView } from '@/components/ludo/Ludo3DView';
+import { useGameSettingsStore } from '@/store/gameSettingsStore';
+import { GameSettingsButton, GameSettingsModal } from '@/components/shared/GameSettingsModal';
 import {
   CombatClash,
   FloatingText3D,
@@ -772,7 +774,7 @@ export default function LudoPage() {
       <div className="game-viewport">
 
         {/* ── THE 3D CANVAS (FILLS ENTIRE VIEWPORT) ── */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-[1]">
           <Ludo3DView
             players={players}
             currentTurn={currentTurn}
@@ -785,6 +787,7 @@ export default function LudoPage() {
             activeClash={activeClash}
             floatingTexts={floatingTexts}
             activeMovement={activeMovement}
+            bloomEnabled={useGameSettingsStore.getState().bloomEnabled}
             onRollDice={handleRollDice}
             onSelectPiece={(pieceId: number) => {
               if (diceRoll !== null) {
@@ -932,6 +935,9 @@ export default function LudoPage() {
             >
               <RotateCcw size={13} />
             </button>
+
+            {/* Quick Experience / FX Settings */}
+            <GameSettingsButton className="p-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-white/50 hover:text-cyan-400 transition-all" />
           </div>
         </div>
 
@@ -1215,6 +1221,9 @@ export default function LudoPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Global Experience & Accessibility Settings Modal */}
+      <GameSettingsModal />
     </div>
   );
 }

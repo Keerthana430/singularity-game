@@ -91,34 +91,34 @@ export function InteractiveHeroStage() {
       }}
     >
       {/* Main 3D Hero Window */}
-      <div className="relative w-full aspect-[4/5] max-h-[580px] rounded-3xl p-3.5 overflow-hidden border-2 border-[#8C6239] bg-gradient-to-b from-[#18291F] via-[#101F16] to-[#0A140E] shadow-[0_16px_55px_rgba(0,0,0,0.85)] group">
+      <div className="relative w-full aspect-[4/5] max-h-[580px] rounded-3xl p-3.5 overflow-hidden border border-[#00FF66]/30 bg-gradient-to-b from-[#0A150F] via-[#050C08] to-[#020502] shadow-[0_16px_55px_rgba(0,0,0,0.85)] group">
         {/* Dynamic Glowing Border Shimmer */}
-        <div className="absolute inset-0 rounded-3xl border border-[#00FF66]/25 pointer-events-none" />
+        <div className="absolute inset-0 rounded-3xl border border-[#00FF66]/20 pointer-events-none" />
 
         {/* Top Left Status Tag */}
-        <div className="absolute top-5 left-5 z-20 flex items-center gap-2 bg-[#2B1B12]/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#8C6239] text-xs font-bold text-[#FDE68A] shadow-lg">
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-[#00FF66]/30 text-xs font-mono font-bold text-white shadow-lg">
           <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
-          <span>RIG: {currentAvatar.name.toUpperCase()}</span>
-          <span className="text-[10px] text-white/40 uppercase font-mono">[{stats.className}]</span>
+          <span className="tracking-wider">RIG: {currentAvatar.name.toUpperCase()}</span>
+          <span className="text-[10px] text-[#00FF66]/70 uppercase">[{stats.className}]</span>
         </div>
 
         {/* Top Right Customize Button */}
-        <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           <Link
             href="/studio"
             onClick={() => sound.playClick()}
-            className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#00FF66] to-[#00CC52] text-black text-xs font-black uppercase tracking-wider hover:brightness-110 transition-all shadow-[0_0_15px_rgba(0,255,102,0.4)] flex items-center gap-1.5"
+            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#00FF66] to-[#00CC52] text-black text-xs font-black uppercase tracking-wider hover:brightness-110 hover:scale-105 transition-all shadow-[0_0_15px_rgba(0,255,102,0.4)] flex items-center gap-1.5"
           >
             <span>OUTFIT STUDIO &gt;</span>
           </Link>
         </div>
 
         {/* 3D Canvas Viewport */}
-        <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#14231B] via-[#0E1A14] to-[#0A120E] relative">
+        <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#0D1C15] via-[#08120D] to-[#040806] relative">
           <AvatarViewer
             config={currentAvatar}
             className="w-full h-full"
-            showControls={true}
+            showControls={false}
             animate={true}
             action={currentAction}
           />

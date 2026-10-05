@@ -1041,22 +1041,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SITE FOOTER with Barcode matching Image 2 */}
-      <footer className="border-t border-[#00FF66]/20 bg-[#020502] py-8 text-center text-xs font-mono text-white/50">
+      {/* SITE FOOTER */}
+      <footer className="border-t border-[#00FF66]/20 bg-[#020502] py-6 text-center text-xs font-mono text-white/40">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-white">
+          <div className="flex items-center gap-2 text-white/70">
             <span className="font-bold tracking-widest text-[#00FF66]">// SINGULARITY //</span>
-            <span>SYS_VERSION: 2.0.26</span>
+            <span>NEXT-GEN 3D GAMING PLATFORM</span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-white/60">
-            <Link href="/studio" className="hover:text-[#00FF66] transition-colors">[STUDIO]</Link>
-            <Link href="/dungeon" className="hover:text-[#00FF66] transition-colors">[DUNGEON]</Link>
-            <Link href="/lobby" className="hover:text-[#00FF66] transition-colors">[ARENA]</Link>
-            <Link href="/contest" className="hover:text-[#00FF66] transition-colors">[CONTEST]</Link>
-            <Link href="/style-guide" className="hover:text-[#00FF66] transition-colors">[SYS_GUIDE]</Link>
-          </div>
-          <div className="text-[10px] text-white/40 tracking-[0.3em] font-mono">
-            |||||||||||||||||||| D3V_UNKNOWN_2026
+          <div className="text-[10px] text-white/40 tracking-[0.2em] font-mono">
+            &copy; 2026 SINGULARITY STUDIOS. ALL SYSTEMS OPERATIONAL.
           </div>
         </div>
       </footer>

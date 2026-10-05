@@ -201,11 +201,43 @@ export default function DungeonPage() {
     if (distance > data.radius) { addLog('Move closer to bring the target into range.'); return; }
     setAttackPulse((value) => value + 1);
     const crit = Math.random() * 100 < player.crit;
-    const damage = Math.max(1, Math.round((player.attack * data.damage - target.defense * 0.45) * (crit ? 1.7 : 1)));
+    const damage = Math.max(1, Math.round((player.attack * data.damage - target.defense * 0.45) * (crit ? 1.75 : 1)));
     const hitEnemies = type === 'special' || type === 'ultimate' ? enemies.map((enemy) => {
       const d = Math.hypot(enemy.position.x - position.x, enemy.position.y - position.y);
-      return d <= data.radius + 8 ? { ...enemy, hp: enemy.hp - Math.round(damage * (enemy.id === target.id ? 1 : 0.55)), stunned: type === 'ultimate' ? 1 : enemy.stunned } : enemy;
-    }) : enemies.map((enemy) => enemy.id === target.id ? { ...enemy, hp: enemy.hp - damage, stunned: type === 'heavy' ? 1 : enemy.stunned } : enemy);
+      if (d <= data.radius + 8) {
+        const kx = enemy.position.x - position.x;
+        const ky = enemy.position.y - position.y;
+        const klen = Math.hypot(kx, ky) || 1;
+        const pushDist = type === 'ultimate' ? 8 : 4;
+        return {
+          ...enemy,
+          hp: enemy.hp - Math.round(damage * (enemy.id === target.id ? 1 : 0.55)),
+          stunned: type === 'ultimate' ? 1 : enemy.stunned,
+          position: {
+            x: Math.max(14, Math.min(86, enemy.position.x + (kx / klen) * pushDist)),
+            y: Math.max(16, Math.min(84, enemy.position.y + (ky / klen) * pushDist)),
+          },
+        };
+      }
+      return enemy;
+    }) : enemies.map((enemy) => {
+      if (enemy.id === target.id) {
+        const kx = enemy.position.x - position.x;
+        const ky = enemy.position.y - position.y;
+        const klen = Math.hypot(kx, ky) || 1;
+        const pushDist = type === 'heavy' ? 7 : 3;
+        return {
+          ...enemy,
+          hp: enemy.hp - damage,
+          stunned: type === 'heavy' ? 1 : enemy.stunned,
+          position: {
+            x: Math.max(14, Math.min(86, enemy.position.x + (kx / klen) * pushDist)),
+            y: Math.max(16, Math.min(84, enemy.position.y + (ky / klen) * pushDist)),
+          },
+        };
+      }
+      return enemy;
+    });
     setEnemies(hitEnemies); setCooldowns((state) => ({ ...state, [type]: data.cd })); setPlayer((state) => ({ ...state, stamina: state.stamina - data.cost }));
     addFloat(`${crit ? 'CRIT ' : ''}-${damage}`, target.position.x, target.position.y, crit ? '#fbbf24' : 'var(--brand)'); addLog(`${data.label} hit ${target.name} for ${damage}.`);
 
@@ -250,9 +282,16 @@ export default function DungeonPage() {
   }, []);
 
   useEffect(() => {
-    const attackKeys: Record<string, 'basic' | 'heavy' | 'special' | 'ultimate'> = { '1': 'basic', '2': 'heavy', '3': 'special', '4': 'ultimate' };
+    const attackKeys: Record<string, 'basic' | 'heavy' | 'special' | 'ultimate'> = {
+      '1': 'basic', '2': 'heavy', '3': 'special', '4': 'ultimate',
+      'KeyJ': 'basic', 'KeyK': 'heavy', 'KeyL': 'special',
+    };
     const triggerAttack = (event: KeyboardEvent) => {
-      if (event.key === 'Shift' && mode === 'combat' && !isPaused) { event.preventDefault(); dodge(); return; }
+      if ((event.code === 'ShiftLeft' || event.code === 'ShiftRight' || event.code === 'Space') && mode === 'combat' && !isPaused) {
+        event.preventDefault();
+        dodge();
+        return;
+      }
       if (event.key === 'Tab' && mode === 'combat') {
         event.preventDefault();
         const alive = enemies.filter((e) => e.hp > 0);
@@ -264,7 +303,7 @@ export default function DungeonPage() {
         }
         return;
       }
-      const attack = attackKeys[event.key];
+      const attack = attackKeys[event.code] || attackKeys[event.key];
       if (!attack || mode !== 'combat' || isPaused) return;
       event.preventDefault();
       dealDamage(attack);
@@ -405,7 +444,7 @@ export default function DungeonPage() {
 
       {mode !== 'title' && mode !== 'victory' && mode !== 'dead' && <div className="max-w-7xl mx-auto px-4 sm:px-8 py-5"><div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4"><div><p className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: floorData.color }}>Floor {floor + 1} // {floorData.name}</p><h1 className="text-2xl sm:text-3xl font-black uppercase mt-1">{floorData.subtitle}</h1></div><div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-[10px] font-mono uppercase"><StatChip label="Level" value={`${player.level}`} /><StatChip label="XP" value={`${player.xp}/${xpForLevel(player.level)}`} /><StatChip label="Kills" value={`${player.kills}`} /><StatChip label="Cleared" value={`${player.roomsCleared}`} /><StatChip label="Soul Shards" value={`${player.soulShards}`} /><StatChip label="Run Time" value={`${Math.floor(runtimeSeconds / 60)}:${String(runtimeSeconds % 60).padStart(2, '0')}`} /></div></div></div>}
 
-      {mode === 'combat' && <section className="max-w-7xl mx-auto px-4 sm:px-8 grid xl:grid-cols-[1fr_320px] gap-5"><div className="rounded-2xl border border-[#00FF66]/20 bg-[#050b08] overflow-hidden"><div className="p-4 border-b border-white/10 flex items-center justify-between"><div><p className="text-[10px] font-mono uppercase tracking-widest text-[#00FF66]">Live combat room</p><h2 className="font-black uppercase mt-1">{room?.label} Chamber</h2></div><div className="flex items-center gap-2"><button onClick={usePotion} className="px-3 py-2 rounded-lg border border-white/15 text-[10px] font-black uppercase hover:border-[#00FF66]/60 flex items-center gap-1"><Heart size={13} /> Potion {player.potions}</button><button onClick={dodge} className="px-3 py-2 rounded-lg border border-white/15 text-[10px] font-black uppercase hover:border-[#00FF66]/60">Dodge {cooldowns.dodge || 'Ready'}</button></div></div><div className="relative h-[460px] sm:h-[560px] overflow-hidden bg-[#020502]"><div className="absolute inset-0 z-0"><DungeonWorld floor={floor} playerConfig={currentAvatar} playerPosition={position} enemies={enemies} selectedEnemy={selectedEnemy} attackPulse={attackPulse} playerHitPulse={playerHitPulse} onSelectEnemy={setSelectedEnemy} /></div><div className="absolute inset-5 rounded-2xl border border-[#00FF66]/15 pointer-events-none" />{floating.map((item) => <span key={item.id} className="absolute z-20 font-black text-lg animate-bounce pointer-events-none" style={{ left: `${item.x}%`, top: `${item.y}%`, color: item.color }}>{item.value}</span>)}<div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-mono uppercase text-white/50 bg-black/70 px-3 py-1 rounded-full border border-white/10 pointer-events-none">WASD to move · Click enemy or press TAB to target · 1–4 to attack · Shift to dodge</div>{boss && <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[min(540px,80%)]"><div className="flex items-center justify-between text-[10px] font-mono uppercase mb-1"><span className="text-rose-300 font-bold">{boss.name}</span><span className="text-amber-300 font-bold">Phase {boss.phase}/3</span></div><div className="h-2 rounded-full bg-black/70 border border-rose-400/40 overflow-hidden"><div className="h-full bg-rose-400 transition-all" style={{ width: meter(boss.hp, boss.maxHp) }} /></div></div>}</div><div className="p-4 border-t border-white/10 grid grid-cols-4 gap-2"><AbilityButton label="Basic" hint="Free" icon={<Swords size={15} />} ready={!cooldowns.basic} onClick={() => dealDamage('basic')} /><AbilityButton label="Heavy" hint="20 STA" icon={<Shield size={15} />} ready={!cooldowns.heavy} onClick={() => dealDamage('heavy')} /><AbilityButton label="Arc Pulse" hint="30 STA" icon={<Wand2 size={15} />} ready={!cooldowns.special} onClick={() => dealDamage('special')} /><AbilityButton label="Overdrive" hint="70 STA" icon={<Zap size={15} />} ready={!cooldowns.ultimate} onClick={() => dealDamage('ultimate')} /></div></div><aside className="space-y-5"><div className="rounded-2xl border border-white/10 bg-black/25 p-5"><h2 className="text-xs font-black uppercase tracking-widest text-[#00FF66]">Combat telemetry</h2><div className="mt-4 space-y-3"><Bar label="HP" value={player.hp} max={player.maxHp} color="#fb7185" /><Bar label="Stamina" value={player.stamina} max={player.maxStamina} /></div><div className="mt-5 grid grid-cols-2 gap-2"><MiniStat label="Attack" value={`${player.attack}`} /><MiniStat label="Defense" value={`${player.defense}`} /><MiniStat label="Critical" value={`${player.crit}%`} /><MiniStat label="Enemies" value={`${enemies.filter((item) => item.hp > 0).length}`} /></div></div><div className="rounded-2xl border border-white/10 bg-black/25 p-5"><h2 className="text-xs font-black uppercase tracking-widest text-[#00FF66]">Battle log</h2><div className="mt-3 space-y-2 max-h-64 overflow-auto">{log.map((entry, index) => <p key={`${entry}-${index}`} className="text-xs text-white/55 border-l-2 border-[#00FF66]/30 pl-3">{entry}</p>)}</div></div></aside></section>}
+      {mode === 'combat' && <section className="max-w-7xl mx-auto px-4 sm:px-8 grid xl:grid-cols-[1fr_320px] gap-5"><div className="rounded-2xl border border-[#00FF66]/20 bg-[#050b08] overflow-hidden"><div className="p-4 border-b border-white/10 flex items-center justify-between"><div><p className="text-[10px] font-mono uppercase tracking-widest text-[#00FF66]">Live combat room</p><h2 className="font-black uppercase mt-1">{room?.label} Chamber</h2></div><div className="flex items-center gap-2"><button onClick={usePotion} className="px-3 py-2 rounded-lg border border-white/15 text-[10px] font-black uppercase hover:border-[#00FF66]/60 flex items-center gap-1"><Heart size={13} /> Potion {player.potions}</button><button onClick={dodge} className="px-3 py-2 rounded-lg border border-white/15 text-[10px] font-black uppercase hover:border-[#00FF66]/60">Dodge {cooldowns.dodge || 'Ready'}</button></div></div><div className="relative h-[460px] sm:h-[560px] overflow-hidden bg-[#020502]"><div className="absolute inset-0 z-0"><DungeonWorld floor={floor} playerConfig={currentAvatar} playerPosition={position} enemies={enemies} selectedEnemy={selectedEnemy} attackPulse={attackPulse} playerHitPulse={playerHitPulse} onSelectEnemy={setSelectedEnemy} onAttackTrigger={(isHeavy) => dealDamage(isHeavy ? 'heavy' : 'basic')} /></div><div className="absolute inset-5 rounded-2xl border border-[#00FF66]/15 pointer-events-none" />{floating.map((item) => <span key={item.id} className="absolute z-20 font-black text-lg animate-bounce pointer-events-none" style={{ left: `${item.x}%`, top: `${item.y}%`, color: item.color }}>{item.value}</span>)}<div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-mono uppercase text-white/70 bg-black/85 px-4 py-1.5 rounded-full border border-[#00FF66]/30 shadow-lg pointer-events-none flex items-center gap-2"><span>WASD Move</span><span className="text-white/30">&bull;</span><span className="text-[#00FF66] font-bold">L-Click / J: Attack</span><span className="text-white/30">&bull;</span><span className="text-cyan-400 font-bold">R-Click / K: Heavy</span><span className="text-white/30">&bull;</span><span>Space / Shift: Dodge</span></div>{boss && <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[min(540px,80%)]"><div className="flex items-center justify-between text-[10px] font-mono uppercase mb-1"><span className="text-rose-300 font-bold">{boss.name}</span><span className="text-amber-300 font-bold">Phase {boss.phase}/3</span></div><div className="h-2 rounded-full bg-black/70 border border-rose-400/40 overflow-hidden"><div className="h-full bg-rose-400 transition-all" style={{ width: meter(boss.hp, boss.maxHp) }} /></div></div>}</div><div className="p-4 border-t border-white/10 grid grid-cols-4 gap-2"><AbilityButton label="Basic" hint="Free" icon={<Swords size={15} />} ready={!cooldowns.basic} onClick={() => dealDamage('basic')} /><AbilityButton label="Heavy" hint="20 STA" icon={<Shield size={15} />} ready={!cooldowns.heavy} onClick={() => dealDamage('heavy')} /><AbilityButton label="Arc Pulse" hint="30 STA" icon={<Wand2 size={15} />} ready={!cooldowns.special} onClick={() => dealDamage('special')} /><AbilityButton label="Overdrive" hint="70 STA" icon={<Zap size={15} />} ready={!cooldowns.ultimate} onClick={() => dealDamage('ultimate')} /></div></div><aside className="space-y-5"><div className="rounded-2xl border border-white/10 bg-black/25 p-5"><h2 className="text-xs font-black uppercase tracking-widest text-[#00FF66]">Combat telemetry</h2><div className="mt-4 space-y-3"><Bar label="HP" value={player.hp} max={player.maxHp} color="#fb7185" /><Bar label="Stamina" value={player.stamina} max={player.maxStamina} /></div><div className="mt-5 grid grid-cols-2 gap-2"><MiniStat label="Attack" value={`${player.attack}`} /><MiniStat label="Defense" value={`${player.defense}`} /><MiniStat label="Critical" value={`${player.crit}%`} /><MiniStat label="Enemies" value={`${enemies.filter((item) => item.hp > 0).length}`} /></div></div><div className="rounded-2xl border border-white/10 bg-black/25 p-5"><h2 className="text-xs font-black uppercase tracking-widest text-[#00FF66]">Battle log</h2><div className="mt-3 space-y-2 max-h-64 overflow-auto">{log.map((entry, index) => <p key={`${entry}-${index}`} className="text-xs text-white/55 border-l-2 border-[#00FF66]/30 pl-3">{entry}</p>)}</div></div></aside></section>}
 
       {mode === 'reward' && <section className="max-w-2xl mx-auto px-4 sm:px-8 py-12"><div className="rounded-3xl border border-[#00FF66]/25 bg-[#07120c] p-8 text-center"><div className="w-16 h-16 mx-auto rounded-2xl border border-[#00FF66]/50 flex items-center justify-center text-[#00FF66]"><Trophy size={30} /></div><p className="mt-5 text-[10px] font-mono tracking-[0.3em] uppercase text-[#00FF66]">Room cleared</p><h1 className="mt-2 text-3xl font-black uppercase">The path opens</h1>{loot ? <div className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-300/5 p-5 text-left"><div className="flex items-center justify-between"><span className="text-[10px] font-mono uppercase text-amber-300">{loot.rarity} {loot.kind}</span><Sparkles size={16} className="text-amber-300" /></div><h2 className="mt-3 text-xl font-black uppercase">{loot.name}</h2><p className="mt-2 text-sm text-white/55">{loot.description}</p><div className="mt-4 text-xs font-mono text-[#00FF66]">{loot.attack ? `+${loot.attack} attack ` : ''}{loot.defense ? `+${loot.defense} defense ` : ''}{loot.maxHp ? `+${loot.maxHp} max HP` : ''}</div><button onClick={() => applyLoot(loot)} className="mt-5 w-full neon-green-button py-3 rounded-xl font-black uppercase tracking-widest text-sm">Equip Loot</button></div> : <p className="mt-6 text-white/55">The boss left no loot. It left a key.</p>}<div className="mt-6 flex gap-3"><button onClick={() => { setMode('map'); setLoot(null); }} className="flex-1 py-3 rounded-xl border border-white/15 font-black uppercase text-xs">Return to Map</button>{room?.type === 'boss' && floor < FLOORS.length - 1 && <button onClick={descend} className="flex-1 neon-green-button py-3 rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2">Descend <ArrowRight size={14} /></button>}</div></div></section>}
 
