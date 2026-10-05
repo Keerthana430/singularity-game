@@ -2,14 +2,46 @@
 
 ## Current State
 
-- **Completed Phases:** 1, 2, 3 (Character Prototype)
+- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype)
 - **Current Stack:** Procedural `three.js` prototype (`/public/character-prototype/`)
 - **How to Run:** Open `http://localhost:3000/character-prototype/index.html`
 - **How to Test:** Check browser interactions directly.
-- **Open Risks:** 
-  - Mouse click interactions (light/heavy attack) need mapping to animations in Phase 4.
-  - Adding a second character for dueling will require state management synchronization.
-- **Next Phase:** Phase 4 (Fighting & Combat Interactions)
+- **Open Risks:** None.
+- **Next Phase:** None.
+
+---
+
+## Phase 5: Heavy Strike / Combat Polish (2026-10-05)
+- **Built:** Multi-hit punch combo (left jab, right cross) alternating state machine. Added a dummy punching bag with procedural recoil physics (damped oscillation) to visually demonstrate hit detection and impact particles. 
+- **Files created/changed:** 
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions:** 
+  - Added a boxing stance blend state when the player is actively punching or has recently punched (within 2 seconds).
+  - Used procedural rotations for the boxing stance (guard up) and strike combos.
+  - Added simple distance-based hit detection between the fist bone world position and the bag mesh.
+- **Deviations from spec:** None.
+- **Exit criteria:**
+  - Different poses/animations - PASS - Added boxing guard stance and alternating left/right punches.
+  - Visible hit detection - PASS - Added a punching bag that shakes when hit and spawns particles on contact.
+- **Known issues:** None.
+- **Deferred:** None.
+
+---
+
+## Phase 4: Light Punch (2026-10-05)
+- **Built:** Procedural light punch animation blended into the render loop, combat state management, movement commitment window, and particle effect generation on impact.
+- **Files created/changed:** 
+  - `public/character-prototype/index.html`
+- **Decisions and assumptions:** 
+  - Swapped OrbitControls from left-click to right-drag to free up left-click for combat.
+  - Used procedural rotations for wind-up, strike, and recovery phases mapped against a combatTimer.
+- **Deviations from spec:** None.
+- **Exit criteria:**
+  - Fast jab animation triggered by left-click - PASS - Blended over 0.35 seconds.
+  - Impact particle effects on strike - PASS - Generated dynamically near the right fist.
+  - Commitment window - PASS - Movement speed clamped to 0 during punch state.
+- **Known issues:** None.
+- **Deferred:** None.
 
 ---
 

@@ -26,12 +26,13 @@
 <body>
 
 <div id="hud">
-  <div class="phase">Phase 3</div>
-  <h2>Jumping &amp; Gravity</h2>
+  <div class="phase">Phase 4</div>
+  <h2>Light Punch</h2>
   <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>Space</kbd> to jump</div>
+  <div style="margin-top:4px"><kbd>Left Click</kbd> Light Punch · <kbd>Right Drag</kbd> Camera</div>
   <div style="margin-top:8px;font-size:11px;color:#9aa3cf">
-    Strict chase camera · Tank controls<br>
-    Smooth acceleration · Jump physics
+    Procedural combat animations · Impact particles<br>
+    Commitment window (no moving while punching)
   </div>
 </div>
 
@@ -70,6 +71,11 @@
   ctl.maxDistance = 20;
   ctl.maxPolarAngle = Math.PI * 0.48;
   ctl.enablePan = false;
+  ctl.mouseButtons = {
+    LEFT: null, // Free left-click for combat
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.ROTATE
+  };
 
   // Third-person follow cam config
   const CAM_FOLLOW = {
@@ -160,6 +166,37 @@
     scene.add(gridHelper);
   })();
 
+  // ─── PUNCHING BAG (DUMMY TARGET) ────────────────────────────
+  const bagGroup = new THREE.Group();
+  bagGroup.position.set(0, 0, -3); // Placed slightly in front of center
+  scene.add(bagGroup);
+
+  const bagBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.8, 0.15, 16), 
+    new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+  );
+  bagBase.position.y = 0.075;
+  bagGroup.add(bagBase);
+
+  const bagPole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 2.0, 8), 
+    new THREE.MeshStandardMaterial({ color: 0x444444 })
+  );
+  bagPole.position.y = 1.0;
+  bagGroup.add(bagPole);
+
+  const bagMat = new THREE.MeshStandardMaterial({ 
+    color: 0xff3333, roughness: 0.7, metalness: 0.1 
+  });
+  const bagMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.4, 16), bagMat);
+  const bagPivot = new THREE.Group();
+  bagPivot.position.y = 0.5; // pivot point lower down
+  bagMesh.position.y = 0.7; 
+  bagPivot.add(bagMesh);
+  bagGroup.add(bagPivot);
+  
+  let bagRecoilX = 0;
+  let bagRecoilZ = 0;
 
   // ─── PROCEDURAL CHARACTER ───────────────────────────────────
   // All body parts are built from primitives and attached to a bone hierarchy.
@@ -511,6 +548,45 @@
     keys.w = keys.a = keys.s = keys.d = keys.shift = keys.space = false;
   });
 
+  // Combat Input
+  window.addEventListener('mousedown', function(e) {
+    if (e.button === 0 && (combatState === 'IDLE' || combatTimer > 0.25) && isGrounded) { // Left click
+      if (timeSinceLastPunch > 0.8) punchCombo = 0;
+      combatState = punchCombo % 2 === 0 ? 'PUNCH_L' : 'PUNCH_R';
+      punchCombo++;
+      combatTimer = 0;
+      punchHitEffectSpawned = false;
+      timeSinceLastPunch = 0;
+    }
+  });
+
+  // ─── COMBAT PARTICLES ─────────────────────────────────────────
+  const impactParticles = [];
+  function spawnImpactParticles(worldPos) {
+    const geom = new THREE.BufferGeometry();
+    const count = 20;
+    const pos = new Float32Array(count * 3);
+    const vel = [];
+    for (let i = 0; i < count; i++) {
+      pos[i*3] = worldPos.x;
+      pos[i*3+1] = worldPos.y;
+      pos[i*3+2] = worldPos.z;
+      vel.push(new THREE.Vector3(
+        (Math.random() - 0.5) * 8,
+        (Math.random() - 0.5) * 8,
+        (Math.random() - 0.5) * 8
+      ));
+    }
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xffe64f, size: 0.15, transparent: true, opacity: 1,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const mesh = new THREE.Points(geom, mat);
+    scene.add(mesh);
+    impactParticles.push({ mesh, vel, pos, life: 1.0 });
+  }
+
 
   // ─── MOVEMENT PHYSICS ───────────────────────────────────────
   const MOVE = {
@@ -536,6 +612,13 @@
   let isGrounded = true;
   let jumpBlend = 0;            // 0 = grounded, 1 = mid-air
   let squatPhase = 0;           // for landing compression animation
+
+  // Combat state
+  let combatState = 'IDLE'; // 'IDLE', 'PUNCH_L', 'PUNCH_R'
+  let combatTimer = 0;
+  let punchHitEffectSpawned = false;
+  let punchCombo = 0; 
+  let timeSinceLastPunch = 999;
 
 
   // ─── IDLE BREATHING ANIMATION ───────────────────────────────
@@ -586,38 +669,60 @@
     const cos = Math.cos;
     const PI2 = Math.PI * 2;
 
-    // ── MOVEMENT PHYSICS (Character-Centric "Tank" Controls) ──
-    // A/D rotate the character
-    if (keys.a) facingAngle += MOVE.turnSpeed * dt;
-    if (keys.d) facingAngle -= MOVE.turnSpeed * dt;
+    // ── MOVEMENT PHYSICS (Camera-Relative) ──
+    let inputX = 0;
+    let inputZ = 0;
+    if (keys.w) inputZ -= 1;
+    if (keys.s) inputZ += 1;
+    if (keys.a) inputX -= 1;
+    if (keys.d) inputX += 1;
 
-    // W/S move forward/backward along the facing direction
-    let inputSpeed = 0;
-    if (keys.w) inputSpeed += 1;
-    if (keys.s) inputSpeed -= 1;
-
-    const targetSpeed = inputSpeed !== 0 ? (keys.shift ? MOVE.runSpeed : MOVE.walkSpeed) * inputSpeed : 0;
+    const isMoving = inputX !== 0 || inputZ !== 0;
+    const isPunching = combatState !== 'IDLE';
+    timeSinceLastPunch += dt;
+    const targetSpeed = (isMoving && !isPunching) ? (keys.shift ? MOVE.runSpeed : MOVE.walkSpeed) : 0;
 
     // Accelerate / Decelerate
-    if (inputSpeed !== 0) {
-      if (inputSpeed > 0 && speed < targetSpeed) {
-        speed = Math.min(speed + MOVE.accel * dt, targetSpeed);
-      } else if (inputSpeed < 0 && speed > targetSpeed) {
-        speed = Math.max(speed - MOVE.accel * dt, targetSpeed);
-      } else {
-        // If moving opposite to input, decelerate faster
-        speed += (targetSpeed > speed ? MOVE.accel : -MOVE.accel) * dt;
-      }
+    if (isMoving) {
+      speed = Math.min(speed + MOVE.accel * dt, targetSpeed);
     } else {
-      // Decelerate to zero
-      if (speed > 0) speed = Math.max(speed - MOVE.decel * dt, 0);
-      else if (speed < 0) speed = Math.min(speed + MOVE.decel * dt, 0);
+      speed = Math.max(speed - MOVE.decel * dt, 0);
+    }
+
+    // Determine movement direction based on camera angle
+    let turnSpeed = 0;
+    if (isMoving) {
+      // Get camera's forward and right vectors (projected flat on XZ plane)
+      const camForward = new THREE.Vector3();
+      cam.getWorldDirection(camForward);
+      camForward.y = 0;
+      camForward.normalize();
+
+      const camRight = new THREE.Vector3();
+      camRight.crossVectors(camForward, new THREE.Vector3(0, 1, 0)).normalize();
+
+      const moveDir = new THREE.Vector3()
+        .addScaledVector(camRight, inputX)
+        .addScaledVector(camForward, -inputZ)
+        .normalize();
+
+      // Desired facing angle
+      const targetAngle = Math.atan2(moveDir.x, moveDir.z);
+      
+      // Smoothly rotate character towards target angle (shortest path)
+      let diff = targetAngle - facingAngle;
+      // Normalize diff to [-PI, PI]
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      
+      turnSpeed = diff * 15.0;
+      facingAngle += turnSpeed * dt; // Turn speed factor
     }
 
     // Apply facing rotation
     charGroup.rotation.y = facingAngle;
 
-    // Calculate horizontal velocity based on facing angle
+    // Calculate horizontal velocity based on facing angle (always moves forward relative to itself)
     velocity.x = Math.sin(facingAngle) * speed;
     velocity.z = Math.cos(facingAngle) * speed;
 
@@ -628,7 +733,10 @@
     }
 
     if (!isGrounded) {
-      velocityY += MOVE.gravity * dt;
+      // Float slightly at apex (hang time)
+      const isApex = Math.abs(velocityY) < 2.0;
+      const currentGrav = isApex ? MOVE.gravity * 0.7 : MOVE.gravity;
+      velocityY += currentGrav * dt;
     }
 
     // Apply velocity to character position
@@ -701,10 +809,14 @@
     const footOpp = Math.max(0, -sin(wc)) * WALK.footLift * runFactor;
 
     // ── JUMP / FALL / SQUAT POSES ──
-    const tuckLegs = -1.2 * jumpRiseWeight + 0.2 * fallWeight + -0.5 * squatPhase;
-    const tuckKnees = 1.4 * jumpRiseWeight + 0.1 * fallWeight + 1.0 * squatPhase;
-    const armFlailZ = 0.5 * jumpRiseWeight + 1.2 * fallWeight;
-    const armFlailX = -0.3 * jumpRiseWeight - 0.8 * fallWeight;
+    // Tuck legs up, keep knees bent.
+    const tuckLegs = -1.0 * jumpRiseWeight + 0.1 * fallWeight + -0.5 * squatPhase;
+    const tuckKnees = 1.2 * jumpRiseWeight + 0.1 * fallWeight + 1.0 * squatPhase;
+    // Flail arms: slightly out during rise, up during fall
+    const armFlailZ = 0.3 * jumpRiseWeight + 0.8 * fallWeight;
+    const armFlailX = 0.2 * jumpRiseWeight - 1.2 * fallWeight;
+    // Bend elbows slightly during jump/fall so they don't snap straight
+    const elbowBend = -0.6 * jumpRiseWeight - 0.4 * fallWeight;
 
     // ── APPLY BLENDED POSE ──
     chestBone.scale.y = 1 + breathPhase * IDLE.breathAmp * idleWeight;
@@ -712,6 +824,7 @@
     chestBone.rotation.x = walkWeight * WALK.leanForward * runFactor * Math.sign(speed || 1)
       + 0.3 * squatPhase - 0.1 * fallWeight; 
     chestBone.rotation.y = walkWeight * chestTwist;
+    chestBone.rotation.z = -turnSpeed * 0.05 * walkWeight; // Lean into turns
 
     hipsBone.position.y = baseHipsY
       + sin(t * PI2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight 
@@ -740,9 +853,11 @@
       - armSwing * walkWeight + armFlailX;   
 
     lLowerArmBone.rotation.x = (-0.12 + sin(t * PI2 * 0.8) * 0.02) * idleWeight
-      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
+      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight
+      + elbowBend;
     rLowerArmBone.rotation.x = (-0.12 - sin(t * PI2 * 0.8 + 0.5) * 0.02) * idleWeight
-      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight;
+      + (-0.25 - Math.abs(armSwing) * 0.3) * walkWeight
+      + elbowBend;
 
     lUpperLegBone.rotation.x = sin(t * PI2 * IDLE.leanFreq) * 0.015 * idleWeight
       + legSwing * walkWeight + tuckLegs;     
@@ -756,6 +871,119 @@
 
     lFootBone.rotation.x = footLift * walkWeight * 0.3 - 0.3 * jumpRiseWeight + 0.2 * fallWeight;
     rFootBone.rotation.x = footOpp * walkWeight * 0.3 - 0.3 * jumpRiseWeight + 0.2 * fallWeight;
+
+    // ── COMBAT ANIMATION OVERRIDE ──
+    const isBoxingStance = (timeSinceLastPunch < 2.0) || (combatState !== 'IDLE');
+    let stanceWeight = isBoxingStance ? Math.max(0, Math.min(1.0, 2.0 - timeSinceLastPunch)) : 0;
+    if (combatState !== 'IDLE') stanceWeight = 1.0;
+
+    // Apply base boxing stance (guard up, light bounce)
+    if (stanceWeight > 0) {
+      const g = stanceWeight;
+      lUpperArmBone.rotation.x = lUpperArmBone.rotation.x * (1-g) + (-1.2) * g;
+      lUpperArmBone.rotation.z = lUpperArmBone.rotation.z * (1-g) + (0.3) * g;
+      lLowerArmBone.rotation.x = lLowerArmBone.rotation.x * (1-g) + (-1.8) * g;
+
+      rUpperArmBone.rotation.x = rUpperArmBone.rotation.x * (1-g) + (-1.2) * g;
+      rUpperArmBone.rotation.z = rUpperArmBone.rotation.z * (1-g) + (-0.3) * g;
+      rLowerArmBone.rotation.x = rLowerArmBone.rotation.x * (1-g) + (-1.8) * g;
+      
+      chestBone.rotation.y += 0.3 * g;
+      hipsBone.rotation.y -= 0.2 * g;
+      
+      // Boxing bounce
+      hipsBone.position.y += Math.abs(Math.sin(t * 12)) * 0.04 * g;
+    }
+
+    if (combatState !== 'IDLE') {
+      combatTimer += dt;
+      let pWeight = 0, pElbow = 0, pShoulder = 0, pChestTwist = 0;
+
+      const windup = 0.07;
+      const strike = 0.14;
+      const recover = 0.38;
+      
+      const isLeft = combatState === 'PUNCH_L';
+      
+      if (combatTimer < windup) { // Wind-up
+        pWeight = combatTimer / windup;
+        pElbow = -1.8; 
+        pChestTwist = isLeft ? 0.4 : -0.4;
+      } else if (combatTimer < strike) { // Strike
+        pWeight = 1.0;
+        const prog = (combatTimer - windup) / (strike - windup);
+        pElbow = -1.8 + 1.6 * prog; // Straightens out
+        pChestTwist = (isLeft ? 0.4 : -0.4) + (isLeft ? -0.9 : 0.9) * prog;
+        pShoulder = 0.6 * prog;
+        
+        if (!punchHitEffectSpawned && prog > 0.6) {
+          // Check collision with bag
+          const fistPos = new THREE.Vector3(0, -0.4, 0);
+          fistPos.applyMatrix4(isLeft ? lLowerArmBone.matrixWorld : rLowerArmBone.matrixWorld);
+          
+          const bagCenter = new THREE.Vector3();
+          bagMesh.getWorldPosition(bagCenter);
+          if (fistPos.distanceTo(bagCenter) < 1.1) {
+            spawnImpactParticles(fistPos);
+            // Push bag away from character
+            const pushDir = new THREE.Vector3().subVectors(bagCenter, charGroup.position).normalize();
+            bagRecoilX = pushDir.x * 0.8;
+            bagRecoilZ = pushDir.z * 0.8;
+          }
+          punchHitEffectSpawned = true;
+        }
+      } else if (combatTimer < recover) { // Recovery
+        const prog = (combatTimer - strike) / (recover - strike);
+        pWeight = 1.0 - Math.pow(prog, 1.5);
+        pElbow = -0.2 - 1.6 * prog; // snap back
+        pChestTwist = (isLeft ? -0.5 : 0.5) * (1.0 - prog);
+        pShoulder = 0.6 * (1.0 - prog);
+      } else {
+        combatState = 'IDLE';
+      }
+
+      if (pWeight > 0) {
+        if (isLeft) {
+          lUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + lUpperArmBone.rotation.x * (1-pWeight);
+          lUpperArmBone.rotation.z = (-0.1) * pWeight + lUpperArmBone.rotation.z * (1-pWeight);
+          lLowerArmBone.rotation.x = pElbow * pWeight + lLowerArmBone.rotation.x * (1-pWeight);
+          lShoulderBone.rotation.y = -pShoulder * pWeight;
+        } else {
+          rUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + rUpperArmBone.rotation.x * (1-pWeight);
+          rUpperArmBone.rotation.z = (0.1) * pWeight + rUpperArmBone.rotation.z * (1-pWeight);
+          rLowerArmBone.rotation.x = pElbow * pWeight + rLowerArmBone.rotation.x * (1-pWeight);
+          rShoulderBone.rotation.y = -pShoulder * pWeight;
+        }
+        chestBone.rotation.y += pChestTwist * pWeight;
+        chestBone.rotation.x += 0.25 * pWeight;
+      }
+    }
+
+    // Update Bag Physics
+    bagPivot.rotation.x += (bagRecoilZ - bagPivot.rotation.x) * 8 * dt;
+    bagPivot.rotation.z += (-bagRecoilX - bagPivot.rotation.z) * 8 * dt;
+    bagRecoilX *= (1.0 - 6*dt);
+    bagRecoilZ *= (1.0 - 6*dt);
+
+    // ── COMBAT PARTICLES UPDATE ──
+    for (let i = impactParticles.length - 1; i >= 0; i--) {
+      const p = impactParticles[i];
+      p.life -= dt * 4.0;
+      if (p.life <= 0) {
+        scene.remove(p.mesh);
+        p.mesh.geometry.dispose();
+        p.mesh.material.dispose();
+        impactParticles.splice(i, 1);
+        continue;
+      }
+      p.mesh.material.opacity = p.life;
+      for (let j = 0; j < p.vel.length; j++) {
+        p.pos[j*3] += p.vel[j].x * dt;
+        p.pos[j*3+1] += p.vel[j].y * dt;
+        p.pos[j*3+2] += p.vel[j].z * dt;
+      }
+      p.mesh.geometry.attributes.position.needsUpdate = true;
+    }
 
     // ── FLOATING DUST PARTICLES ──
     if (window._dustParticles) {
@@ -777,37 +1005,23 @@
     ring.material.opacity = 0.35 + sin(t * 1.5) * 0.15;
     innerRing.material.opacity = 0.2 + cos(t * 2.0) * 0.1;
 
-    // ── THIRD-PERSON CHASE CAMERA ──
-    // The camera is rigidly attached to the character's local coordinates.
-    // Offset is (0, Y, -Z) in the character's local space.
+    // ── THIRD-PERSON FREE ORBIT CAMERA ──
     const charPos = charGroup.position;
     
-    // Compute camera position offset based on character's rotation
-    const cosF = cos(facingAngle);
-    const sinF = sin(facingAngle);
+    // We want the controls target to smoothly track the character's chest
+    _camLookAt.set(charPos.x, charPos.y + CAM_FOLLOW.lookOffset.y, charPos.z);
     
-    // We want the camera BEHIND the character. Because Z goes forward (sin/cos mapping above),
-    // we subtract from Z.
-    const offsetX = -CAM_FOLLOW.offset.z * sinF;
-    const offsetZ = -CAM_FOLLOW.offset.z * cosF;
+    // Find how much the target moved this frame
+    const targetDelta = new THREE.Vector3().subVectors(_camLookAt, ctl.target);
     
-    _camTarget.set(
-      charPos.x + offsetX,
-      charPos.y + CAM_FOLLOW.offset.y,
-      charPos.z + offsetZ
-    );
+    // Move the target
+    ctl.target.copy(_camLookAt);
     
-    _camLookAt.set(
-      charPos.x,
-      charPos.y + CAM_FOLLOW.lookOffset.y,
-      charPos.z
-    );
-
-    // Smoothly interpolate camera position and look target
-    cam.position.lerp(_camTarget, CAM_FOLLOW.smoothPos);
+    // Move the camera by the same delta to maintain the user's orbit distance and angle
+    cam.position.add(targetDelta);
     
-    // Make camera look directly at character
-    cam.lookAt(_camLookAt);
+    // Update OrbitControls (handles damping and user mouse input)
+    ctl.update();
 
     // ── Render ──
     renderer.render(scene, cam);
