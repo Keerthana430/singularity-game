@@ -12,13 +12,12 @@
 ---
 
 ## Phase 5: Heavy Strike / Combat Polish (2026-10-05)
-- **Built:** Multi-hit punch combo (left jab, right cross) alternating state machine. Added a dummy punching bag with procedural recoil physics (damped oscillation) to visually demonstrate hit detection and impact particles. 
+- **Built:** Multi-hit punch combo (left jab, right cross) alternating state machine. Added a dummy punching bag with procedural recoil physics. 
 - **Files created/changed:** 
   - `public/character-prototype/index.html`
 - **Decisions and assumptions:** 
-  - Added a boxing stance blend state when the player is actively punching or has recently punched (within 2 seconds).
-  - Used procedural rotations for the boxing stance (guard up) and strike combos.
-  - Added simple distance-based hit detection between the fist bone world position and the bag mesh.
+  - Migrated the combat punch animation from raw procedural sine waves to GSAP timelines (`gsap.timeline`) to fix clunky arm snapping and allow smooth windup/strike/recovery blending.
+  - Accurately trigger hit detection on the exact strike frame by using `charGroup.updateMatrixWorld(true)` inside the GSAP `onUpdate` loop.
 - **Deviations from spec:** None.
 - **Exit criteria:**
   - Different poses/animations - PASS - Added boxing guard stance and alternating left/right punches.

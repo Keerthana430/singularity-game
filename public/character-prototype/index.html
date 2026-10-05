@@ -38,6 +38,7 @@
 
 <script src="/lib/three/three.min.js"></script>
 <script src="/lib/three/OrbitControls.js"></script>
+<script src="/lib/gsap.min.js"></script>
 <script>
 (function() {
   'use strict';
@@ -549,14 +550,61 @@
   });
 
   // Combat Input
+  const combatAnim = { pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0 };
+  let currentPunchTl = null;
+
   window.addEventListener('mousedown', function(e) {
-    if (e.button === 0 && (combatState === 'IDLE' || combatTimer > 0.25) && isGrounded) { // Left click
+    if (e.button === 0 && (combatState === 'IDLE' || (currentPunchTl && currentPunchTl.progress() > 0.5)) && isGrounded) { // Left click
       if (timeSinceLastPunch > 0.8) punchCombo = 0;
-      combatState = punchCombo % 2 === 0 ? 'PUNCH_L' : 'PUNCH_R';
+      const isLeft = punchCombo % 2 === 0;
+      combatState = isLeft ? 'PUNCH_L' : 'PUNCH_R';
       punchCombo++;
-      combatTimer = 0;
       punchHitEffectSpawned = false;
       timeSinceLastPunch = 0;
+
+      if (currentPunchTl) currentPunchTl.kill();
+
+      combatAnim.pWeight = 0;
+      combatAnim.pElbow = -1.8;
+      combatAnim.pChestTwist = isLeft ? 0.4 : -0.4;
+      combatAnim.pShoulder = 0;
+
+      currentPunchTl = gsap.timeline({
+        onComplete: () => {
+          combatState = 'IDLE';
+        }
+      });
+
+      // Windup
+      currentPunchTl.to(combatAnim, { pWeight: 1.0, duration: 0.08, ease: "power1.out" });
+
+      // Strike
+      currentPunchTl.to(combatAnim, {
+        pElbow: -0.2, pChestTwist: isLeft ? -0.5 : 0.5, pShoulder: 0.6,
+        duration: 0.12, ease: "power2.in",
+        onUpdate: function() {
+          if (!punchHitEffectSpawned && this.progress() > 0.6) {
+            charGroup.updateMatrixWorld(true);
+            const fistPos = new THREE.Vector3(0, -0.4, 0);
+            fistPos.applyMatrix4(isLeft ? lLowerArmBone.matrixWorld : rLowerArmBone.matrixWorld);
+            
+            const bagCenter = new THREE.Vector3();
+            bagMesh.getWorldPosition(bagCenter);
+            if (fistPos.distanceTo(bagCenter) < 1.1) {
+              spawnImpactParticles(fistPos);
+              const pushDir = new THREE.Vector3().subVectors(bagCenter, charGroup.position).normalize();
+              bagRecoilX = pushDir.x * 0.8; bagRecoilZ = pushDir.z * 0.8;
+            }
+            punchHitEffectSpawned = true;
+          }
+        }
+      });
+
+      // Recovery
+      currentPunchTl.to(combatAnim, {
+        pWeight: 0, pElbow: -1.8, pChestTwist: isLeft ? 0.4 : -0.4, pShoulder: 0,
+        duration: 0.35, ease: "power2.out"
+      });
     }
   });
 
@@ -895,68 +943,23 @@
       hipsBone.position.y += Math.abs(Math.sin(t * 12)) * 0.04 * g;
     }
 
-    if (combatState !== 'IDLE') {
-      combatTimer += dt;
-      let pWeight = 0, pElbow = 0, pShoulder = 0, pChestTwist = 0;
-
-      const windup = 0.07;
-      const strike = 0.14;
-      const recover = 0.38;
-      
+    if (combatState !== 'IDLE' && combatAnim.pWeight > 0) {
       const isLeft = combatState === 'PUNCH_L';
+      const pWeight = combatAnim.pWeight;
       
-      if (combatTimer < windup) { // Wind-up
-        pWeight = combatTimer / windup;
-        pElbow = -1.8; 
-        pChestTwist = isLeft ? 0.4 : -0.4;
-      } else if (combatTimer < strike) { // Strike
-        pWeight = 1.0;
-        const prog = (combatTimer - windup) / (strike - windup);
-        pElbow = -1.8 + 1.6 * prog; // Straightens out
-        pChestTwist = (isLeft ? 0.4 : -0.4) + (isLeft ? -0.9 : 0.9) * prog;
-        pShoulder = 0.6 * prog;
-        
-        if (!punchHitEffectSpawned && prog > 0.6) {
-          // Check collision with bag
-          const fistPos = new THREE.Vector3(0, -0.4, 0);
-          fistPos.applyMatrix4(isLeft ? lLowerArmBone.matrixWorld : rLowerArmBone.matrixWorld);
-          
-          const bagCenter = new THREE.Vector3();
-          bagMesh.getWorldPosition(bagCenter);
-          if (fistPos.distanceTo(bagCenter) < 1.1) {
-            spawnImpactParticles(fistPos);
-            // Push bag away from character
-            const pushDir = new THREE.Vector3().subVectors(bagCenter, charGroup.position).normalize();
-            bagRecoilX = pushDir.x * 0.8;
-            bagRecoilZ = pushDir.z * 0.8;
-          }
-          punchHitEffectSpawned = true;
-        }
-      } else if (combatTimer < recover) { // Recovery
-        const prog = (combatTimer - strike) / (recover - strike);
-        pWeight = 1.0 - Math.pow(prog, 1.5);
-        pElbow = -0.2 - 1.6 * prog; // snap back
-        pChestTwist = (isLeft ? -0.5 : 0.5) * (1.0 - prog);
-        pShoulder = 0.6 * (1.0 - prog);
+      if (isLeft) {
+        lUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + lUpperArmBone.rotation.x * (1-pWeight);
+        lUpperArmBone.rotation.z = (-0.1) * pWeight + lUpperArmBone.rotation.z * (1-pWeight);
+        lLowerArmBone.rotation.x = combatAnim.pElbow * pWeight + lLowerArmBone.rotation.x * (1-pWeight);
+        lShoulderBone.rotation.y = -combatAnim.pShoulder * pWeight;
       } else {
-        combatState = 'IDLE';
+        rUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + rUpperArmBone.rotation.x * (1-pWeight);
+        rUpperArmBone.rotation.z = (0.1) * pWeight + rUpperArmBone.rotation.z * (1-pWeight);
+        rLowerArmBone.rotation.x = combatAnim.pElbow * pWeight + rLowerArmBone.rotation.x * (1-pWeight);
+        rShoulderBone.rotation.y = -combatAnim.pShoulder * pWeight;
       }
-
-      if (pWeight > 0) {
-        if (isLeft) {
-          lUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + lUpperArmBone.rotation.x * (1-pWeight);
-          lUpperArmBone.rotation.z = (-0.1) * pWeight + lUpperArmBone.rotation.z * (1-pWeight);
-          lLowerArmBone.rotation.x = pElbow * pWeight + lLowerArmBone.rotation.x * (1-pWeight);
-          lShoulderBone.rotation.y = -pShoulder * pWeight;
-        } else {
-          rUpperArmBone.rotation.x = (-Math.PI/2) * pWeight + rUpperArmBone.rotation.x * (1-pWeight);
-          rUpperArmBone.rotation.z = (0.1) * pWeight + rUpperArmBone.rotation.z * (1-pWeight);
-          rLowerArmBone.rotation.x = pElbow * pWeight + rLowerArmBone.rotation.x * (1-pWeight);
-          rShoulderBone.rotation.y = -pShoulder * pWeight;
-        }
-        chestBone.rotation.y += pChestTwist * pWeight;
-        chestBone.rotation.x += 0.25 * pWeight;
-      }
+      chestBone.rotation.y += combatAnim.pChestTwist * pWeight;
+      chestBone.rotation.x += 0.25 * pWeight;
     }
 
     // Update Bag Physics
