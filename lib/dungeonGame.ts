@@ -17,6 +17,7 @@ export interface RoomNode {
   description: string;
   visited: boolean;
   cleared: boolean;
+  discovered: boolean;
   x: number;
   y: number;
 }
@@ -76,6 +77,7 @@ export function makeRoomMap(floor: number, seed = Date.now()): RoomNode[] {
     description: ROOM_DATA[type].description,
     visited: index === 0,
     cleared: false,
+    discovered: index < 2,
     x: index % 3,
     y: Math.floor(index / 3),
   }));
@@ -84,38 +86,38 @@ export function makeRoomMap(floor: number, seed = Date.now()): RoomNode[] {
 export function getEnemyDefinition(name: string, floor: number, elite = false): EnemyDefinition {
   const base = 1 + floor * 0.22;
   const presets: Record<string, Omit<EnemyDefinition, 'maxHp' | 'attack' | 'defense'>> = {
-    'Dungeon Slime': { name, archetype: 'swarm', speed: 0.08, range: 0.75, color: '#00ff66' },
-    Skeleton: { name, archetype: 'melee', speed: 0.12, range: 0.95, color: '#cbd5e1' },
-    'Cave Bat': { name, archetype: 'ranged', speed: 0.15, range: 3.1, color: '#a78bfa' },
-    'Armored Skeleton': { name, archetype: 'tank', speed: 0.08, range: 1.0, color: '#94a3b8' },
-    'Poison Spider': { name, archetype: 'ranged', speed: 0.13, range: 2.8, color: '#fb7185' },
-    'Berserker Goblin': { name, archetype: 'melee', speed: 0.18, range: 0.8, color: '#f97316' },
-    'Shadow Assassin': { name, archetype: 'assassin', speed: 0.22, range: 0.75, color: '#c084fc' },
-    Cultist: { name, archetype: 'support', speed: 0.10, range: 2.5, color: '#fbbf24' },
-    'Demon Hound': { name, archetype: 'melee', speed: 0.20, range: 0.9, color: '#f43f5e' },
-    'Void Creature': { name, archetype: 'swarm', speed: 0.14, range: 1.0, color: '#22d3ee' },
-    'Elite Knight': { name, archetype: 'tank', speed: 0.09, range: 1.05, color: '#38bdf8' },
-    'Corrupted Mage': { name, archetype: 'mage', speed: 0.10, range: 3.4, color: '#e879f9' },
-    'Abyssal Warrior': { name, archetype: 'melee', speed: 0.13, range: 1.0, color: '#f59e0b' },
-    'Soul Eater': { name, archetype: 'assassin', speed: 0.18, range: 0.8, color: '#fb7185' },
-    'Void Beast': { name, archetype: 'tank', speed: 0.07, range: 1.2, color: '#818cf8' },
-    'Echo of You': { name, archetype: 'assassin', speed: 0.20, range: 1.0, color: '#fb7185' },
-    'Core Sentinel': { name, archetype: 'ranged', speed: 0.12, range: 3.5, color: '#22d3ee' },
-    'Broken Guardian': { name, archetype: 'support', speed: 0.08, range: 3.0, color: '#c084fc' },
+    'Dungeon Slime': { name, archetype: 'swarm', speed: 0.08, range: 12, color: '#00ff66' },
+    Skeleton: { name, archetype: 'melee', speed: 0.12, range: 13, color: '#cbd5e1' },
+    'Cave Bat': { name, archetype: 'ranged', speed: 0.15, range: 32, color: '#a78bfa' },
+    'Armored Skeleton': { name, archetype: 'tank', speed: 0.08, range: 14, color: '#94a3b8' },
+    'Poison Spider': { name, archetype: 'ranged', speed: 0.13, range: 30, color: '#fb7185' },
+    'Berserker Goblin': { name, archetype: 'melee', speed: 0.18, range: 12, color: '#f97316' },
+    'Shadow Assassin': { name, archetype: 'assassin', speed: 0.22, range: 11, color: '#c084fc' },
+    Cultist: { name, archetype: 'support', speed: 0.10, range: 28, color: '#fbbf24' },
+    'Demon Hound': { name, archetype: 'melee', speed: 0.20, range: 13, color: '#f43f5e' },
+    'Void Creature': { name, archetype: 'swarm', speed: 0.14, range: 12, color: '#22d3ee' },
+    'Elite Knight': { name, archetype: 'tank', speed: 0.09, range: 15, color: '#38bdf8' },
+    'Corrupted Mage': { name, archetype: 'mage', speed: 0.10, range: 34, color: '#e879f9' },
+    'Abyssal Warrior': { name, archetype: 'melee', speed: 0.13, range: 14, color: '#f59e0b' },
+    'Soul Eater': { name, archetype: 'assassin', speed: 0.18, range: 12, color: '#fb7185' },
+    'Void Beast': { name, archetype: 'tank', speed: 0.07, range: 15, color: '#818cf8' },
+    'Echo of You': { name, archetype: 'assassin', speed: 0.20, range: 13, color: '#fb7185' },
+    'Core Sentinel': { name, archetype: 'ranged', speed: 0.12, range: 35, color: '#22d3ee' },
+    'Broken Guardian': { name, archetype: 'support', speed: 0.08, range: 30, color: '#c084fc' },
   };
   const preset = presets[name] || presets.Skeleton;
   const multiplier = elite ? 1.45 : 1;
   return {
     ...preset,
-    maxHp: Math.round((125 + floor * 56) * base * multiplier),
-    attack: Math.round((18 + floor * 7) * base * multiplier),
-    defense: Math.round((8 + floor * 3) * base * (elite ? 1.3 : 1)),
+    maxHp: Math.round((220 + floor * 85) * base * multiplier),
+    attack: Math.round((28 + floor * 10) * base * (elite ? 1.18 : 1)),
+    defense: Math.round((14 + floor * 4) * base * (elite ? 1.3 : 1)),
   };
 }
 
 export function getBossDefinition(floor: number): EnemyDefinition {
   const base = getEnemyDefinition(FLOORS[floor].boss, floor, true);
-  return { ...base, archetype: 'boss', maxHp: Math.round(base.maxHp * 2.5), attack: Math.round(base.attack * 1.3), range: 1.4, speed: 0.1 };
+  return { ...base, archetype: 'boss', maxHp: Math.round(base.maxHp * 2.5), attack: Math.round(base.attack * 1.3), range: 18, speed: 0.1 };
 }
 
 export function rollLoot(floor: number, elite = false): LootItem {

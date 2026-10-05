@@ -134,14 +134,16 @@ export const useAvatarStore = create<AvatarStore>()(
         return true;
       },
 
-      upgradeWeapon: (weaponId, _cost) => {
-        const { weaponLevels } = get();
+      upgradeWeapon: (weaponId, cost) => {
+        const { weaponLevels, coins } = get();
         const currentLevel = weaponLevels[weaponId] || 1;
+        if (currentLevel >= 5) return false;
+        if (coins < cost) return false;
         set({
-          coins: 9999999,
+          coins: Math.max(0, coins - cost),
           weaponLevels: {
             ...weaponLevels,
-            [weaponId]: currentLevel + 1,
+            [weaponId]: Math.min(5, currentLevel + 1),
           },
         });
         return true;

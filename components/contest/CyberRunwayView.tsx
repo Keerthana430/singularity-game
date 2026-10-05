@@ -29,6 +29,27 @@ const CyberRunway3D = dynamic(
 import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
 
 export function CyberRunwayView(props: CyberRunwayProps) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-full h-full bg-[#020406] flex flex-col items-center justify-center gap-4 font-mono">
+        <div className="w-14 h-14 border-4 border-[#FF007F]/20 border-t-[#FF007F] rounded-full animate-spin shadow-[0_0_25px_rgba(255,0,127,0.6)]" />
+        <div className="text-center">
+          <p className="text-sm font-black text-white tracking-widest uppercase">
+            // INITIALIZING CYBERPUNK RUNWAY...
+          </p>
+          <p className="text-xs text-[#FF007F]/70 mt-1">
+            Focusing holographic spotlights & staging haute couture
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <WebGLErrorBoundary fallbackTitle="Cyber Runway Hologram Offline">
       <CyberRunway3D {...props} />

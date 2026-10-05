@@ -6,7 +6,13 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
+import { Wind } from 'lucide-react';
 import * as THREE from 'three';
+
+function growEffect(object: THREE.Object3D, factor: number, maxScale = 2.8) {
+  const next = Math.min(object.scale.x * factor, maxScale);
+  object.scale.setScalar(next);
+}
 
 // ─── 1. Phantom Dodge Evasion Effect ────────────────────────────────────────
 
@@ -24,7 +30,7 @@ export function PhantomDodgeEffect({
 
   useFrame((_, delta) => {
     if (ringRef.current) {
-      ringRef.current.scale.multiplyScalar(1.08);
+      growEffect(ringRef.current, 1 + Math.min(delta * 4.8, 0.08));
       const mat = ringRef.current.material as THREE.MeshBasicMaterial;
       if (mat) mat.opacity = Math.max(0, mat.opacity - delta * 2.2);
     }
@@ -64,7 +70,7 @@ export function PhantomDodgeEffect({
       <group position={[0, 1.4, 0]}>
         <Html center distanceFactor={8}>
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.6)] backdrop-blur-md select-none pointer-events-none animate-in fade-in zoom-in-75 duration-200">
-            <span className="text-xs">💨</span>
+            <Wind size={13} className="text-cyan-300" aria-hidden="true" />
             <span className="text-xs font-black font-mono tracking-wider text-cyan-300 drop-shadow">
               PERFECT EVASION!
             </span>
@@ -105,12 +111,12 @@ export function CriticalHitImpactScene({
 
   useFrame((_, delta) => {
     if (shockwaveRef.current) {
-      shockwaveRef.current.scale.multiplyScalar(1.12);
+      growEffect(shockwaveRef.current, 1 + Math.min(delta * 7.2, 0.12), 3.2);
       const mat = shockwaveRef.current.material as THREE.MeshBasicMaterial;
       if (mat) mat.opacity = Math.max(0, mat.opacity - delta * 2.2);
     }
     if (flashRef.current) {
-      flashRef.current.scale.multiplyScalar(1.08);
+      growEffect(flashRef.current, 1 + Math.min(delta * 4.8, 0.08), 2.4);
       const mat = flashRef.current.material as THREE.MeshBasicMaterial;
       if (mat) mat.opacity = Math.max(0, mat.opacity - delta * 3.5);
     }
@@ -171,11 +177,11 @@ export function PhotonBladeEffect({
   useFrame((_, delta) => {
     if (mesh1Ref.current) {
       mesh1Ref.current.rotation.z += delta * (facing === 'right' ? -16 : 16);
-      mesh1Ref.current.scale.multiplyScalar(1.05);
+      growEffect(mesh1Ref.current, 1 + Math.min(delta * 3, 0.05), 2.4);
     }
     if (mesh2Ref.current) {
       mesh2Ref.current.rotation.z += delta * (facing === 'right' ? 16 : -16);
-      mesh2Ref.current.scale.multiplyScalar(1.05);
+      growEffect(mesh2Ref.current, 1 + Math.min(delta * 3, 0.05), 2.4);
     }
   });
 
@@ -486,11 +492,11 @@ export function CosmicBloomEffect({
   useFrame((_, delta) => {
     if (mandala1Ref.current) {
       mandala1Ref.current.rotation.z += delta * 4;
-      mandala1Ref.current.scale.multiplyScalar(1.03);
+      growEffect(mandala1Ref.current, 1 + Math.min(delta * 1.8, 0.03), 2.6);
     }
     if (mandala2Ref.current) {
       mandala2Ref.current.rotation.z -= delta * 5;
-      mandala2Ref.current.scale.multiplyScalar(1.025);
+      growEffect(mandala2Ref.current, 1 + Math.min(delta * 1.5, 0.025), 2.6);
     }
   });
 
@@ -571,7 +577,7 @@ export function RuneHammerEffect({
       );
     }
     if (shockRef.current) {
-      shockRef.current.scale.multiplyScalar(1.06);
+      growEffect(shockRef.current, 1 + Math.min(delta * 3.6, 0.06), 2.8);
     }
   });
 
@@ -687,8 +693,8 @@ export function TitanSmashEffect({
   const ringRef = useRef<THREE.Mesh>(null);
 
   useFrame((_, delta) => {
-    if (shockRef.current) shockRef.current.scale.multiplyScalar(1.08);
-    if (ringRef.current) ringRef.current.scale.multiplyScalar(1.06);
+    if (shockRef.current) growEffect(shockRef.current, 1 + Math.min(delta * 4.8, 0.08), 3);
+    if (ringRef.current) growEffect(ringRef.current, 1 + Math.min(delta * 3.6, 0.06), 2.8);
   });
 
   return (
@@ -745,7 +751,7 @@ export function CataclysmEffect({
     }
     if (ringRef.current) {
       ringRef.current.rotation.z -= delta * 8;
-      ringRef.current.scale.multiplyScalar(1.04);
+      growEffect(ringRef.current, 1 + Math.min(delta * 2.4, 0.04), 2.6);
     }
   });
 

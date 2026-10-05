@@ -64,13 +64,18 @@ interface Arena3DCanvasProps {
 
 // ─── 3D Visual Combat Effects ──────────────────────────────────────────────
 
+function growEffect(object: THREE.Object3D, factor: number, maxScale = 2.8) {
+  const next = Math.min(object.scale.x * factor, maxScale);
+  object.scale.setScalar(next);
+}
+
 function SlashArcEffect({ position, color, facing }: { position: [number, number, number]; color: string; facing: 'right' | 'left' }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((_, delta) => {
     if (meshRef.current) {
       meshRef.current.rotation.z += delta * (facing === 'right' ? -14 : 14);
-      meshRef.current.scale.multiplyScalar(1.04);
+      growEffect(meshRef.current, 1 + Math.min(delta * 2.4, 0.04));
     }
   });
 
@@ -86,7 +91,7 @@ function SlashArcEffect({ position, color, facing }: { position: [number, number
 }
 
 function HitSparks({ position, color = '#EF4444' }: { position: [number, number, number]; color?: string }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const meshGroupRef = useRef<THREE.Group>(null);
   const sparkCount = 8;
   const sparks = useMemo(() => {
     return Array.from({ length: sparkCount }).map(() => ({
@@ -100,24 +105,28 @@ function HitSparks({ position, color = '#EF4444' }: { position: [number, number,
   }, []);
 
   useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.children.forEach((child, i) => {
+    if (meshGroupRef.current) {
+      meshGroupRef.current.children.forEach((child, i) => {
         const s = sparks[i];
-        child.position.addScaledVector(s.dir, s.speed * delta);
-        (child as THREE.Mesh).scale.multiplyScalar(0.92);
+        if (s) {
+          child.position.addScaledVector(s.dir, s.speed * delta);
+          (child as THREE.Mesh).scale.multiplyScalar(0.92);
+        }
       });
     }
   });
 
   return (
-    <group ref={groupRef} position={position}>
+    <group position={position}>
       <pointLight color={color} intensity={6} distance={4} />
-      {sparks.map((_, i) => (
-        <mesh key={i}>
-          <sphereGeometry args={[0.07, 8, 8]} />
-          <meshBasicMaterial color={color} />
-        </mesh>
-      ))}
+      <group ref={meshGroupRef}>
+        {sparks.map((_, i) => (
+          <mesh key={i}>
+            <sphereGeometry args={[0.07, 8, 8]} />
+            <meshBasicMaterial color={color} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }
@@ -258,14 +267,14 @@ function StageEntranceBanner({ biome, roundKey }: { biome: BiomeType; roundKey?:
 
   const info = {
     grassland: {
-      badge: '⚔️ BATTLEGROUND DEPLOYED ⚔️',
+      badge: 'BATTLEGROUND DEPLOYED',
       name: 'SUNLIT ANCIENT HIGHLANDS',
       hazard: 'TERRAIN: VERDANT PLAINS • STABILITY: 100%',
       border: 'border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.4)]',
       text: 'text-emerald-400',
     },
     volcano: {
-      badge: '🌋 HAZARD CRITICAL 🌋',
+      badge: 'HAZARD CRITICAL',
       name: 'SCORCHED VOLCANIC CALDERA',
       hazard: 'TERRAIN: MOLTEN BASALT • HAZARD: INFERNAL HEAT',
       border: 'border-orange-500/70 shadow-[0_0_25px_rgba(249,115,22,0.45)]',
@@ -819,9 +828,10 @@ interface DynamicFighterProps {
   action: CombatAction;
   side: 'player' | 'opponent';
   homeX: number;
+  attackId?: string;
 }
 
-function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
+function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighterProps) {
   const groupRef = useRef<THREE.Group>(null);
   const isPlayer = side === 'player';
   const bodyProps = useMemo(() => getBodyProps(config), [config]);
@@ -832,8 +842,13 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
   const targetXRef = useRef(homeX);
   const targetYRef = useRef(standingY);
 
+  const isRangedAttack = Boolean(attackId && /plasma|arrow|bolt|burst|surge/i.test(attackId));
+  const isHeavyAttack = Boolean(attackId && /hammer|smash|tremor|eruption|cataclysm/i.test(attackId));
+  const isUltimateAttack = Boolean(attackId && /overdrive|tempest|ascension|bloom|cataclysm/i.test(attackId));
+
   useFrame((_, delta) => {
     if (!groupRef.current) return;
+    const frameDelta = Math.min(delta, 0.05);
 
     // Determine dynamic target X and Y positions based on combat action
     if (action === 'attack') {
@@ -862,12 +877,12 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
     groupRef.current.position.x = THREE.MathUtils.lerp(
       groupRef.current.position.x,
       targetXRef.current,
-      delta * 14
+      1 - Math.exp(-frameDelta * 14)
     );
     groupRef.current.position.y = THREE.MathUtils.lerp(
       groupRef.current.position.y,
       targetYRef.current,
-      delta * 12
+      1 - Math.exp(-frameDelta * 12)
     );
 
     // Dynamic rotation recoil, dodge lean, and attack surge
@@ -876,36 +891,44 @@ function DynamicFighter({ config, action, side, homeX }: DynamicFighterProps) {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.55 : 0.55,
-        delta * 18
+        1 - Math.exp(-frameDelta * 18)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, delta * 14);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, 1 - Math.exp(-frameDelta * 14));
     } else if (action === 'hit') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.35 : 0.35,
-        delta * 16
+        1 - Math.exp(-frameDelta * 16)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 1 - Math.exp(-frameDelta * 10));
     } else if (action === 'dodge') {
       // Agile backward evasion arch
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         isPlayer ? -0.42 : 0.42,
-        delta * 18
+        1 - Math.exp(-frameDelta * 18)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, delta * 14);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, 1 - Math.exp(-frameDelta * 14));
     } else if (action === 'attack') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? 0.2 : -0.2,
-        delta * 12
+        isHeavyAttack
+          ? (isPlayer ? 0.32 : -0.32)
+          : isRangedAttack
+          ? (isPlayer ? -0.08 : 0.08)
+          : isPlayer ? 0.2 : -0.2,
+        1 - Math.exp(-frameDelta * (isUltimateAttack ? 16 : 12))
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.15, delta * 10);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        isUltimateAttack ? -0.22 : isHeavyAttack ? 0.30 : isRangedAttack ? 0.04 : 0.15,
+        1 - Math.exp(-frameDelta * 10)
+      );
     } else {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
         0,
-        delta * 10
+        1 - Math.exp(-frameDelta * 10)
       );
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
     }
@@ -987,15 +1010,49 @@ export function Arena3DCanvas({
       case 'grassland':
       default:
         return {
-          bg: '#07150e',
-          fog: '#07150e',
-          ambientColor: '#a7f3d0',
+          bg: '#030A05',
+          fog: '#061009',
+          ambientColor: '#1A3D27',
           ambientInt: 1.1,
-          sunColor: '#ecfdf5',
-          sunInt: 2.2,
+          sunColor: '#FFE5C4',
+          sunInt: 2.6,
         };
     }
   }, [biome]);
+
+// ─── ORBITAL PLANET HORIZON (PLANET BELOW THE COLOSSEUM) ───────────────────
+function OrbitalPlanetBelow() {
+  const planetRef = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (planetRef.current) {
+      planetRef.current.rotation.y += delta * 0.02;
+    }
+  });
+
+  return (
+    <group position={[0, -25.2, -4]}>
+      {/* Massive curved sapphire planet below the orbital colosseum */}
+      <mesh ref={planetRef}>
+        <sphereGeometry args={[24, 48, 48]} />
+        <meshStandardMaterial
+          color="#1E3A8A"
+          roughness={0.7}
+          metalness={0.2}
+        />
+      </mesh>
+      {/* Glowing atmospheric rim halo */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[24.4, 48, 48]} />
+        <meshBasicMaterial
+          color="#38BDF8"
+          transparent
+          opacity={0.22}
+          side={THREE.BackSide}
+        />
+      </mesh>
+    </group>
+  );
+}
 
 // ─── AMBIENT COMBAT CYBER PARTICLES ─────────────────────────────────────────
 function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
@@ -1043,6 +1100,9 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
         <color attach="background" args={[lighting.bg]} />
         <fog attach="fog" args={[lighting.fog, 6, 24]} />
 
+        {/* Planet Horizon Curved Below */}
+        <OrbitalPlanetBelow />
+
         <ambientLight color={lighting.ambientColor} intensity={lighting.ambientInt} />
         <directionalLight
           position={[0, 6, 4]}
@@ -1053,6 +1113,10 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           shadow-mapSize-height={2048}
           shadow-bias={-0.0001}
         />
+
+        {/* Stadium Rim Lighting */}
+        <directionalLight position={[-4, 3, -3]} intensity={1.6} color="#FF9E3B" />
+        <directionalLight position={[4, 4, -4]} intensity={2.2} color="#38BDF8" />
 
         {/* Dynamic Dual Fighter Spotlights */}
         <spotLight
@@ -1108,6 +1172,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           action={playerAction}
           side="player"
           homeX={playerHomeX}
+          attackId={fxSource === 'player' ? attackId : undefined}
         />
 
         <DynamicFighter
@@ -1115,6 +1180,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           action={opponentAction}
           side="opponent"
           homeX={opponentHomeX}
+          attackId={fxSource === 'opponent' ? attackId : undefined}
         />
 
         {/* ─── 1. PHANTOM DODGE EVASION EFFECTS ─── */}

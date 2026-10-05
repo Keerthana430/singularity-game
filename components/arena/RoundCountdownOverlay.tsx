@@ -28,21 +28,22 @@ export function RoundCountdownOverlay({
 
     const t1 = setTimeout(() => {
       setStep('3');
-      sound.playClick();
+      sound.playCountdownBeep(3);
     }, 900);
 
     const t2 = setTimeout(() => {
       setStep('2');
-      sound.playClick();
+      sound.playCountdownBeep(2);
     }, 1700);
 
     const t3 = setTimeout(() => {
       setStep('1');
-      sound.playClick();
+      sound.playCountdownBeep(1);
     }, 2500);
 
     const t4 = setTimeout(() => {
       setStep('fight');
+      sound.playEngageHorn();
       sound.playImpact();
     }, 3300);
 

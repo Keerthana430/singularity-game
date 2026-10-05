@@ -3,6 +3,7 @@
 // Right panel: renders the appropriate controls for the active category.
 
 import React from 'react';
+import { AvatarConfig } from '@/types/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAvatarStore } from '@/store/avatarStore';
 import { ItemCard } from './ItemCard';
@@ -107,7 +108,7 @@ function FacePanel() {
     <div className="flex flex-col gap-5">
       <div>
         <p className="text-xs text-white/50 uppercase tracking-widest mb-3">Eyes</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-3.5">
           {eyeStyles.map((e) => (
             <ItemCard
               key={e.id}
@@ -120,7 +121,7 @@ function FacePanel() {
       </div>
       <div>
         <p className="text-xs text-white/50 uppercase tracking-widest mb-3">Expression</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-3.5">
           {expressionStyles.map((e) => (
             <ItemCard
               key={e.id}
@@ -135,7 +136,7 @@ function FacePanel() {
   );
 }
 
-function AccessoriesPanel() {
+function AccessoriesPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial<AvatarConfig> | null) => void }) {
   const { currentAvatar, updateAccessories } = useAvatarStore();
   const slots = [
     { key: 'head' as const, label: 'Head', items: accessories.filter((a) => ['cat-ears', 'bunny-ears', 'bow', 'halo', 'glasses', 'hat', 'cap', 'headphones', 'crown'].includes(a.id)) },
@@ -159,20 +160,25 @@ function AccessoriesPanel() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-3.5">
             {slot.items.map((item) => (
-              <ItemCard
+              <div
                 key={item.id}
-                item={item}
-                selected={currentAvatar.accessories[slot.key] === item.id}
-                onSelect={(id) => {
-                  updateAccessories({ [slot.key]: id });
-                  if (item.color) {
-                    useAvatarStore.getState().updateAvatar({ accessoryColor: item.color });
-                  }
-                }}
-                accentColor={item.color || currentAvatar.accessoryColor}
-              />
+                onMouseEnter={() => onHoverPreview?.({ accessories: { ...currentAvatar.accessories, [slot.key]: item.id } })}
+                onMouseLeave={() => onHoverPreview?.(null)}
+              >
+                <ItemCard
+                  item={item}
+                  selected={currentAvatar.accessories[slot.key] === item.id}
+                  onSelect={(id) => {
+                    updateAccessories({ [slot.key]: id });
+                    if (item.color) {
+                      useAvatarStore.getState().updateAvatar({ accessoryColor: item.color });
+                    }
+                  }}
+                  accentColor={item.color || currentAvatar.accessoryColor}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -308,63 +314,12 @@ function SpeciesPanel() {
             </div>
           </div>
         </div>
-
-        {/* 4 Sub-Class Roles */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase text-white/50 tracking-wider font-bold">
-              Sub-Class Specializations (4)
-            </span>
-            <span className="text-[9px] font-mono text-violet-300 uppercase px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/30">
-              Active: {currentAvatar.classRole || selectedSpecies.roles[0].id}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {selectedSpecies.roles.map((role) => {
-              const isRoleSelected = (currentAvatar.classRole || selectedSpecies.roles[0].id) === role.id;
-              return (
-                <button
-                  key={role.id}
-                  onClick={() => {
-                    sound.playClick();
-                    updateAvatar({ classRole: role.id });
-                  }}
-                  className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between select-none ${
-                    isRoleSelected
-                      ? 'border-violet-400 bg-violet-950/40 text-white shadow-[0_0_12px_rgba(167,139,250,0.3)]'
-                      : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-black uppercase text-white truncate">{role.name}</span>
-                      {isRoleSelected && <Check size={10} className="text-violet-400" />}
-                    </div>
-                    <span className="text-[8px] font-mono uppercase text-violet-300">[{role.id}]</span>
-                    <p className="text-[10px] text-white/50 leading-tight mt-1 line-clamp-2">{role.roleDesc}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-2 pt-1 border-t border-white/10 text-[9px] font-mono">
-                    {role.hpMod !== 0 && (
-                      <span className={role.hpMod > 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                        HP {role.hpMod > 0 ? `+${role.hpMod}` : role.hpMod}
-                      </span>
-                    )}
-                    {role.powerMod !== 0 && <span className="text-rose-400">ATK +{role.powerMod}</span>}
-                    {role.defenseMod !== 0 && <span className="text-cyan-400">DEF +{role.defenseMod}</span>}
-                    {role.magicMod !== 0 && <span className="text-violet-400">MAG +{role.magicMod}</span>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </div>
   );
 }
 
-function WeaponsPanel() {
+function WeaponsPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial<AvatarConfig> | null) => void }) {
   const { currentAvatar, updateAvatar, coins, unlockedItems, weaponLevels, unlockItem, upgradeWeapon } = useAvatarStore();
   const { add: addToast } = useToast();
   const selectedWeapon = currentAvatar.weapon || 'unarmed';
@@ -425,10 +380,12 @@ function WeaponsPanel() {
             return (
               <div
                 key={w.id}
+                onMouseEnter={() => onHoverPreview?.({ weapon: w.id })}
+                onMouseLeave={() => onHoverPreview?.(null)}
                 className={`p-3.5 rounded-2xl border transition-all flex flex-col gap-2 ${
                   isEquipped
                     ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_15px_rgba(0,255,102,0.15)]'
-                    : 'border-white/10 bg-white/5'
+                    : 'border-white/10 bg-white/5 hover:border-[#00FF66]/30 hover:bg-[#00FF66]/5'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -479,7 +436,7 @@ function WeaponsPanel() {
                         title={`Upgrade for ${upgradeCost} Coins`}
                       >
                         <Hammer size={12} />
-                        <span>Forge (+12 ATK) {upgradeCost}🪙</span>
+                        <span>Forge (+12 ATK) {upgradeCost} COINS</span>
                       </button>
                     </>
                   ) : (
@@ -487,8 +444,8 @@ function WeaponsPanel() {
                       onClick={() => handleUnlockWeapon(w)}
                       className="w-full py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-black uppercase font-mono tracking-wider transition-all flex items-center justify-center gap-1.5"
                     >
-                      <span>🔒 Unlock Weapon</span>
-                      <span className="font-extrabold">({cost} 🪙 Coins)</span>
+                      <span>Unlock Weapon</span>
+                      <span className="font-extrabold">({cost} Coins)</span>
                     </button>
                   )}
                 </div>
@@ -520,7 +477,7 @@ function ColorsPanel() {
   );
 }
 
-export function CustomizationPanel() {
+export function CustomizationPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial<AvatarConfig> | null) => void }) {
   const { activeCategory, currentAvatar, updateAvatar } = useAvatarStore();
 
   return (
@@ -540,42 +497,52 @@ export function CustomizationPanel() {
           >
             {activeCategory === 'species' && <SpeciesPanel />}
 
-            {activeCategory === 'weapons' && <WeaponsPanel />}
+            {activeCategory === 'weapons' && <WeaponsPanel onHoverPreview={onHoverPreview} />}
 
             {activeCategory === 'body' && <BodyPanel />}
 
             {activeCategory === 'face' && <FacePanel />}
 
             {activeCategory === 'hair' && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-3.5">
                 {hairStyles.map((item) => (
-                  <ItemCard
+                  <div
                     key={item.id}
-                    item={item}
-                    selected={currentAvatar.hair === item.id}
-                    onSelect={(id) => updateAvatar({ hair: id, ...(item.color ? { hairColor: item.color } : {}) })}
-                    accentColor={item.color || currentAvatar.hairColor}
-                  />
+                    onMouseEnter={() => onHoverPreview?.({ hair: item.id, ...(item.color ? { hairColor: item.color } : {}) })}
+                    onMouseLeave={() => onHoverPreview?.(null)}
+                  >
+                    <ItemCard
+                      item={item}
+                      selected={currentAvatar.hair === item.id}
+                      onSelect={(id) => updateAvatar({ hair: id, ...(item.color ? { hairColor: item.color } : {}) })}
+                      accentColor={item.color || currentAvatar.hairColor}
+                    />
+                  </div>
                 ))}
               </div>
             )}
 
             {activeCategory === 'tops' && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-3.5">
                 {tops.map((item) => (
-                  <ItemCard
+                  <div
                     key={item.id}
-                    item={item}
-                    selected={currentAvatar.top === item.id}
-                    onSelect={(id) => updateAvatar({ top: id, ...(item.color ? { topColor: item.color } : {}) })}
-                    accentColor={item.color || currentAvatar.topColor}
-                  />
+                    onMouseEnter={() => onHoverPreview?.({ top: item.id, ...(item.color ? { topColor: item.color } : {}) })}
+                    onMouseLeave={() => onHoverPreview?.(null)}
+                  >
+                    <ItemCard
+                      item={item}
+                      selected={currentAvatar.top === item.id}
+                      onSelect={(id) => updateAvatar({ top: id, ...(item.color ? { topColor: item.color } : {}) })}
+                      accentColor={item.color || currentAvatar.topColor}
+                    />
+                  </div>
                 ))}
               </div>
             )}
 
             {activeCategory === 'bottoms' && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-3.5">
                 {bottoms.map((item) => (
                   <ItemCard
                     key={item.id}
@@ -589,20 +556,25 @@ export function CustomizationPanel() {
             )}
 
             {activeCategory === 'shoes' && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-3.5">
                 {shoes.map((item) => (
-                  <ItemCard
+                  <div
                     key={item.id}
-                    item={item}
-                    selected={currentAvatar.shoes === item.id}
-                    onSelect={(id) => updateAvatar({ shoes: id, ...(item.color ? { shoeColor: item.color } : {}) })}
-                    accentColor={item.color || currentAvatar.shoeColor}
-                  />
+                    onMouseEnter={() => onHoverPreview?.({ shoes: item.id, ...(item.color ? { shoeColor: item.color } : {}) })}
+                    onMouseLeave={() => onHoverPreview?.(null)}
+                  >
+                    <ItemCard
+                      item={item}
+                      selected={currentAvatar.shoes === item.id}
+                      onSelect={(id) => updateAvatar({ shoes: id, ...(item.color ? { shoeColor: item.color } : {}) })}
+                      accentColor={item.color || currentAvatar.shoeColor}
+                    />
+                  </div>
                 ))}
               </div>
             )}
 
-            {activeCategory === 'accessories' && <AccessoriesPanel />}
+            {activeCategory === 'accessories' && <AccessoriesPanel onHoverPreview={onHoverPreview} />}
 
             {activeCategory === 'colors' && <ColorsPanel />}
           </motion.div>

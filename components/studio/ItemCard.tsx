@@ -344,9 +344,9 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
   return (
     <motion.button
       layout
-      initial={{ opacity: 0, scale: 0.88 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.04, y: -2 }}
+      whileHover={{ scale: 1.03, y: -2 }}
       whileTap={{ scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       onClick={handleClick}
@@ -354,20 +354,20 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
       onDragStartCapture={handleDragStart}
       aria-pressed={selected}
       aria-label={`${item.name} — ${rarityLabel[item.rarity]}${!isUnlocked ? ` (${cost} coins)` : ''}`}
-      className={`relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer text-left overflow-hidden ${
+      className={`relative w-full flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left overflow-hidden ${
         !isUnlocked
-          ? 'border-white/10 bg-black/50 hover:border-amber-400/40'
+          ? 'border-white/10 bg-black/60 hover:border-amber-400/50'
           : selected
-          ? 'border-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_20px_rgba(0,255,102,0.35)] ring-1 ring-[#00FF66]'
-          : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'
+          ? 'border-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_24px_rgba(0,255,102,0.35)] ring-1 ring-[#00FF66]'
+          : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
       }`}
     >
       {/* Visual Preview Area with Distinct Iconography & Signature Hue */}
       <div
-        className="w-14 h-14 rounded-xl flex flex-col items-center justify-center relative overflow-hidden transition-all shadow-inner"
+        className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all shadow-inner my-0.5"
         style={{
-          background: `radial-gradient(circle at 50% 40%, ${visual.bgGlow}40 0%, rgba(10,12,18,0.92) 85%)`,
-          border: `1px solid ${visual.bgGlow}50`,
+          background: `radial-gradient(circle at 50% 40%, ${visual.bgGlow}45 0%, rgba(10,12,18,0.95) 85%)`,
+          border: `1px solid ${visual.bgGlow}60`,
         }}
       >
         {/* Subtle Ambient Backlight Glow */}
@@ -377,13 +377,13 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
         />
 
         {/* Dynamic Distinct Item Icon */}
-        <div className="relative z-10 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110">
+        <div className="relative z-10 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-115 scale-110">
           {visual.icon}
         </div>
 
         {/* Micro Subtype Badge */}
         <span
-          className="absolute top-1 right-1 text-[7px] font-mono font-black px-1 rounded uppercase tracking-wider text-black z-10"
+          className="absolute top-1.5 right-1.5 text-[8px] font-mono font-black px-1.5 py-0.2 rounded uppercase tracking-wider text-black z-10 shadow-sm"
           style={{ backgroundColor: visual.bgGlow }}
         >
           {visual.tag}
@@ -391,17 +391,19 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
 
         {/* Color Dot indicator */}
         <div
-          className="absolute bottom-1 left-1 w-2 h-2 rounded-full border border-black/60 shadow-sm z-10"
+          className="absolute bottom-1.5 left-1.5 w-2.5 h-2.5 rounded-full border border-black/80 shadow-sm z-10"
           style={{ backgroundColor: itemColor }}
           title={`Theme: ${itemColor}`}
         />
 
         {/* Lock / Coin Overlay if not owned */}
         {!isUnlocked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xs rounded-xl p-1 text-center z-20">
-            <Lock size={13} className="text-amber-400 mb-0.5" />
-            <span className="text-[9px] font-black font-mono text-amber-300">
-              {cost} 🪙
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xs rounded-2xl p-1 text-center z-20">
+            <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mb-1">
+              <Lock size={13} className="text-amber-400" />
+            </div>
+            <span className="text-[10px] font-black font-mono text-amber-300">
+              {cost} COINS
             </span>
           </div>
         )}
@@ -411,24 +413,35 @@ export function ItemCard({ item, selected, onSelect, accentColor }: ItemCardProp
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="absolute inset-0 border-2 border-[#00FF66] rounded-xl shadow-[inset_0_0_12px_rgba(0,255,102,0.6)] pointer-events-none"
+            className="absolute inset-0 border-2 border-[#00FF66] rounded-2xl shadow-[inset_0_0_12px_rgba(0,255,102,0.6)] pointer-events-none"
           />
         )}
       </div>
 
       {/* Name */}
-      <span className="text-[10px] font-bold text-white/90 text-center leading-tight line-clamp-2 px-0.5">
+      <span className="text-xs font-bold text-white text-center leading-snug line-clamp-1 px-1 w-full truncate">
         {item.name}
       </span>
 
-      {/* Rarity & Cost indicator */}
-      <div className="flex items-center gap-1.5 text-[9px] font-mono mt-auto">
-        <div className={`w-1.5 h-1.5 rounded-full ${rarityDot[item.rarity]}`} />
-        <span className={`uppercase tracking-wide rarity-${item.rarity}`}>
-          {rarityLabel[item.rarity]}
-        </span>
-        {!isUnlocked && (
-          <span className="text-amber-400 font-bold ml-0.5">{cost}🪙</span>
+      {/* Rarity & Cost indicator (dedicated clean layout without overlapping) */}
+      <div className="w-full flex items-center justify-between px-1 text-[10px] font-mono mt-auto pt-1.5 border-t border-white/5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${rarityDot[item.rarity]}`} />
+          <span className={`uppercase font-bold tracking-wider text-[9px] truncate rarity-${item.rarity}`}>
+            {rarityLabel[item.rarity]}
+          </span>
+        </div>
+        {!isUnlocked ? (
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-[9px] shrink-0 font-mono">
+            <span>🪙</span>
+            <span>{cost}</span>
+          </div>
+        ) : (
+          selected && (
+            <span className="text-[9px] font-black text-[#00FF66] tracking-wider shrink-0 font-mono">
+              EQUIPPED
+            </span>
+          )
         )}
       </div>
     </motion.button>

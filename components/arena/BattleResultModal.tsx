@@ -32,12 +32,12 @@ export interface VictoryEmote {
 }
 
 export const VICTORY_EMOTES: VictoryEmote[] = [
-  { id: 'dance', label: 'Victory Rave', icon: '🕺', desc: 'Futuristic rave bounce', fxColor: '#00FF66' },
-  { id: 'flex', label: 'Titan Flex', icon: '💪', desc: 'Overdrive power surge', fxColor: '#F59E0B' },
-  { id: 'salute', label: 'Cyber Salute', icon: '🫡', desc: 'Vanguard tactical respect', fxColor: '#38BDF8' },
-  { id: 'crown', label: 'Crown Ascend', icon: '👑', desc: 'Summon golden holo-crown', fxColor: '#FBBF24' },
-  { id: 'starlight', label: 'Astral Spin', icon: '💫', desc: 'Glittering cosmic pirouette', fxColor: '#EC4899' },
-  { id: 'gg', label: 'Holo GG', icon: '⚡', desc: 'Project neon GG badge', fxColor: '#A855F7' },
+  { id: 'dance', label: 'Victory Rave', icon: 'RAVE', desc: 'Futuristic rave bounce', fxColor: '#00FF66' },
+  { id: 'flex', label: 'Titan Flex', icon: 'POWER', desc: 'Overdrive power surge', fxColor: '#F59E0B' },
+  { id: 'salute', label: 'Cyber Salute', icon: 'SALUTE', desc: 'Vanguard tactical respect', fxColor: '#38BDF8' },
+  { id: 'crown', label: 'Crown Ascend', icon: 'CROWN', desc: 'Summon golden holo-crown', fxColor: '#FBBF24' },
+  { id: 'starlight', label: 'Astral Spin', icon: 'STARLIGHT', desc: 'Glittering cosmic pirouette', fxColor: '#EC4899' },
+  { id: 'gg', label: 'Holo GG', icon: 'SURGE', desc: 'Project neon GG badge', fxColor: '#A855F7' },
 ];
 
 interface BattleResultModalProps {
@@ -219,21 +219,21 @@ export function BattleResultModal({
                 <span className="text-[9px] font-mono text-white/40">Plays on your avatar</span>
               </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {VICTORY_EMOTES.map((em) => {
                   const isSelected = selectedEmote === em.id;
                   return (
                     <button
                       key={em.id}
                       onClick={() => handleEmoteClick(em)}
-                      className={`p-2 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                      className={`min-h-[76px] min-w-0 rounded-xl border px-2 py-2 text-center flex flex-col items-center justify-center transition-all ${
                         isSelected
                           ? 'border-[#00FF66] bg-[#00FF66]/20 shadow-[0_0_12px_rgba(0,255,102,0.4)] scale-105'
                           : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
                       }`}
                     >
-                      <span className="text-xl mb-0.5">{em.icon}</span>
-                      <span className="text-[9px] font-mono font-bold text-white uppercase truncate max-w-full">
+                      <span className="text-[15px] leading-none mb-1 font-black tracking-[0.16em] text-white/90">{em.icon}</span>
+                      <span className="text-[9px] leading-tight font-mono font-bold text-white uppercase break-words">
                         {em.label}
                       </span>
                     </button>
@@ -265,7 +265,7 @@ export function BattleResultModal({
                   onClick={onInstantHeal}
                   className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold transition-all shrink-0"
                 >
-                  ⚡ Heal (50🪙)
+                  Heal (50 Coins)
                 </button>
               )}
             </div>

@@ -7,150 +7,101 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────────────────────────────
-   TOKEN SYSTEM — CSS Custom Properties
+   RETRO-ANIME DESIGN TOKENS — Alternate 1990s Sci-Fi Future
    ─────────────────────────────────────────────────────────────────── */
 :root {
 
-  /* ── COLOR: VOID / BACKGROUND ───────────────────────────────── */
-  --color-void:         #020604;
-  --color-void-deep:    #000000;
-  --color-void-subtle:  #050C08;
+  /* ── BASE: DEEP SPACE BLUES & NEBULA INDIGO ─────────────────── */
+  --color-space-deep:   #101426; /* Deep cosmic space navy */
+  --color-space-nebula: #181B38; /* Nebula violet-indigo */
+  --color-station-hull: #202742; /* Lived-in station exterior */
+  --color-station-cozy: #283050; /* Cozy station cabin interior */
+  --color-station-metal:#3A4368; /* Warm rounded machinery slate */
 
-  /* ── COLOR: SURFACE / GLASS ─────────────────────────────────── */
-  --surface-glass:      rgba(8, 18, 12, 0.55);
-  --surface-glass-md:   rgba(8, 18, 12, 0.75);
-  --surface-glass-hvy:  rgba(2, 8, 4, 0.90);
-  --surface-panel:      rgba(12, 24, 16, 0.80);
-  --surface-card:       rgba(6, 14, 9, 0.70);
+  /* Aliases for surface components */
+  --color-void:         #101426;
+  --color-void-deep:    #0C0F1E;
+  --surface-panel:      rgba(32, 39, 66, 0.88);
+  --surface-card:       rgba(24, 27, 56, 0.85);
+  --surface-crt:        rgba(16, 20, 38, 0.94);
+  --surface-glass:      rgba(40, 48, 80, 0.65);
+  --surface-glass-md:   rgba(32, 39, 66, 0.90);
 
-  /* ── COLOR: BRAND GREEN (platform identity only) ────────────── */
+  /* ── BRAND: SINGULARITY SIGNATURE MINT (SMALL ACCENT ONLY) ──── */
+  /* Used ONLY for logo pip, active tab indicator, and selection ring */
   --brand:              #00FF66;
   --brand-bright:       #39FF14;
   --brand-dim:          #00B347;
-  --brand-muted:        rgba(0, 255, 102, 0.15);
+  --brand-muted:        rgba(0, 255, 102, 0.16);
   --brand-subtle:       rgba(0, 255, 102, 0.08);
-  --brand-border:       rgba(0, 255, 102, 0.22);
-  --brand-border-md:    rgba(0, 255, 102, 0.45);
+  --brand-border:       rgba(0, 255, 102, 0.35);
 
-  /* ── COLOR: SEMANTIC ─────────────────────────────────────────── */
-  --color-danger:       #EF4444;
-  --color-danger-dim:   rgba(239, 68, 68, 0.18);
-  --color-warning:      #F59E0B;
-  --color-warning-dim:  rgba(245, 158, 11, 0.18);
-  --color-info:         #22D3EE;
-  --color-info-dim:     rgba(34, 211, 238, 0.18);
-  --color-rare:         #A855F7;
-  --color-rare-dim:     rgba(168, 85, 247, 0.18);
-  --color-social:       #EC4899;
-  --color-social-dim:   rgba(236, 72, 153, 0.18);
+  /* ── WARM PRACTICAL LIGHTS & VINTAGE ANIME ACCENTS ──────────── */
+  --glow-warm-amber:    #FF9E3B; /* Warm cabin lantern & cozy lighting */
+  --glow-sunset-orange: #FF6633; /* Thruster plume & brazier glow */
+  --glow-solar-gold:    #FFC700; /* Starburst gold */
+  --glow-blush-pink:    #FF6584; /* Expressive character blush & heart */
+  --glow-sky-blue:      #38BDF8; /* Canopy & atmosphere blue */
+  --glow-cosmic-purple: #A855F7; /* Aurora & warp streaks */
 
-  /* ── COLOR: TEXT ─────────────────────────────────────────────── */
-  --text-primary:    #FFFFFF;
-  --text-secondary:  rgba(255, 255, 255, 0.70);
-  --text-muted:      rgba(255, 255, 255, 0.40);
-  --text-dim:        rgba(255, 255, 255, 0.20);
-  --text-brand:      #00FF66;
-  --text-brand-dim:  #00B347;
+  /* ── SEMANTIC ALERTS (STRICTLY RESERVED) ──────────────────────── */
+  --color-danger:       #FF3B30; /* High-voltage Vermillion (Hit/Defeat/Damage) */
+  --color-danger-dim:   rgba(255, 59, 48, 0.22);
+  --color-warning:      #FF9500; /* Warm Amber (Hazards & Cautions ONLY) */
+  --color-warning-dim:  rgba(255, 149, 0, 0.22);
 
-  /* ── GLOW SCALE ──────────────────────────────────────────────── */
-  --glow-brand-subtle:  0 0 8px rgba(0, 255, 102, 0.20);
-  --glow-brand-md:      0 0 20px rgba(0, 255, 102, 0.40);
-  --glow-brand-strong:  0 0 40px rgba(0, 255, 102, 0.70);
-  --glow-danger-md:     0 0 20px rgba(239, 68, 68, 0.45);
-  --glow-info-md:       0 0 20px rgba(34, 211, 238, 0.40);
-  --glow-rare-md:       0 0 20px rgba(168, 85, 247, 0.40);
-  --glow-social-md:     0 0 20px rgba(236, 72, 153, 0.40);
-  --glow-warning-md:    0 0 20px rgba(245, 158, 11, 0.45);
+  /* ── LUDO 4 FACTIONS (DISTINCT HUES + SILHOUETTES, COLOR-BLIND SAFE) ─ */
+  --faction-cerulean:   #38BDF8; /* Hexagon Aegis 🛡️ (Sky Blue) */
+  --faction-solar:      #FFC700; /* Crown Star 👑 (Brilliant Gold) */
+  --faction-violet:     #A855F7; /* Diamond Prism 💎 (Cosmic Violet) */
+  --faction-coral:      #FF6B4A; /* Comet Crosshair 🎯 (Tangerine Coral) */
 
-  /* ── ELEVATION ───────────────────────────────────────────────── */
-  --elevation-1: 0 2px 8px rgba(0, 0, 0, 0.40);
-  --elevation-2: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 255, 102, 0.08);
-  --elevation-3: 0 8px 40px rgba(0, 0, 0, 0.65), 0 0 2px rgba(0, 255, 102, 0.12);
-  --elevation-4: 0 16px 60px rgba(0, 0, 0, 0.75), 0 0 4px rgba(0, 255, 102, 0.18);
+  /* Legacy faction variable aliases */
+  --faction-cobalt:     var(--faction-cerulean);
+  --faction-rose:       var(--faction-coral);
 
-  /* ── MOTION TOKENS ───────────────────────────────────────────── */
-  --motion-hover:       150ms;
-  --motion-hover-slow:  250ms;
-  --motion-panel:       350ms;
-  --motion-panel-slow:  500ms;
-  --motion-state:       600ms;
-  --motion-event:      1000ms;
-  --motion-major:      1500ms;
-  --ease-out:   cubic-bezier(0.0, 0.0, 0.2, 1);
-  --ease-in:    cubic-bezier(0.4, 0.0, 1.0, 1);
-  --ease-io:    cubic-bezier(0.4, 0.0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* ── TEXT HIERARCHY: WARM CEL CREAM & PARCHMENT ──────────────── */
+  --text-primary:       #FFF8EE; /* Warm cream paper / cel white */
+  --text-secondary:     #E5DACB; /* Warm station parchment */
+  --text-muted:         #8F97B0; /* Soft cosmic lavender-gray */
+  --text-dim:           #5A6482;
+  --text-brand:         #00FF66;
 
-  /* ── RADII ───────────────────────────────────────────────────── */
-  --radius-sm:   4px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
-  --radius-xl:   16px;
-  --radius-2xl:  24px;
-  --radius-pill: 9999px;
+  /* ── ELEVATION & COZY WARM GLOWS ─────────────────────────────── */
+  --shadow-warm-sm:     0 2px 8px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 158, 59, 0.15);
+  --shadow-warm-md:     0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 158, 59, 0.25);
+  --shadow-warm-lg:     0 12px 36px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 102, 51, 0.3);
+  --shadow-cosmic-glow: 0 0 25px rgba(168, 85, 247, 0.35);
 
-  /* ── SPACING (4px base) ──────────────────────────────────────── */
-  --space-1:  4px;  --space-2:  8px;  --space-3:  12px; --space-4:  16px;
-  --space-5:  20px; --space-6:  24px; --space-8:  32px; --space-10: 40px;
-  --space-12: 48px; --space-16: 64px;
+  /* ── ROUNDED, FRIENDLY GEOMETRY (ROUNDED SHAPES) ─────────────── */
+  --radius-xs:          6px;
+  --radius-sm:          10px;
+  --radius-md:          16px;
+  --radius-lg:          22px;
+  --radius-xl:          30px;
+  --radius-pill:        9999px;
+
+  /* ── PLAYFUL SQUASH-AND-STRETCH MOTION ───────────────────────── */
+  --motion-fast:        140ms;
+  --motion-base:        260ms;
+  --motion-slow:        480ms;
+  --ease-bouncy:        cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-squash:        cubic-bezier(0.25, 1.8, 0.5, 0.9);
+  --ease-anime-twos:    steps(6, end);
 
   /* ── TYPOGRAPHY ──────────────────────────────────────────────── */
-  --font-display: 'Orbitron', 'Space Grotesk', sans-serif;
-  --font-mono:    'Space Mono', 'Rajdhani', monospace;
-  --font-body:    'Inter', 'Rajdhani', sans-serif;
+  --font-display:       var(--font-display, 'Fredoka', 'Zen Maru Gothic', sans-serif);
+  --font-body:          var(--font-body, 'Zen Maru Gothic', sans-serif);
+  --font-jp:            var(--font-jp, 'Zen Maru Gothic', sans-serif);
+  --font-mono:          var(--font-mono, 'JetBrains Mono', monospace);
 
-  --text-display: clamp(2.25rem, 5vw, 4rem);
-  --text-h1:      clamp(1.75rem, 3vw, 2.5rem);
-  --text-h2:      clamp(1.25rem, 2vw, 1.75rem);
-  --text-label:   0.875rem;
-  --text-body:    0.875rem;
-  --text-caption: 0.75rem;
-  --text-xs:      0.6875rem;
-  --text-tiny:    0.625rem;
-
-  /* ── SHELL ───────────────────────────────────────────────────── */
-  --nav-height:      64px;
-  --border-glass:    rgba(255, 255, 255, 0.08);
-  --border-glass-md: rgba(255, 255, 255, 0.14);
-
-  /* ── PER-GAME ACCENT TOKENS ──────────────────────────────────── */
-  --game-arena-primary:     #00FF66;
-  --game-arena-accent:      #EF4444;
-  --game-arena-accent-dim:  rgba(239, 68, 68, 0.22);
-
-  --game-ludo-primary: #00FF66;
-  --game-ludo-red:     #EF4444;
-  --game-ludo-amber:   #F59E0B;
-  --game-ludo-cyan:    #22D3EE;
-  --game-ludo-purple:  #A855F7;
-
-  --game-snakes-primary:    #00FF66;
-  --game-snakes-accent:     #22D3EE;
-  --game-snakes-accent-dim: rgba(34, 211, 238, 0.22);
-
-  --game-contest-primary:     #00FF66;
-  --game-contest-accent:      #EC4899;
-  --game-contest-accent-dim:  rgba(236, 72, 153, 0.22);
-
-  /* ── LEGACY COMPATIBILITY ────────────────────────────────────── */
-  --bg-deep:             var(--color-void);
-  --bg-panel:            var(--surface-panel);
-  --accent-green:        var(--brand);
-  --accent-green-bright: var(--brand-bright);
-  --accent-green-dark:   var(--brand-dim);
-  --accent-cyan:         var(--color-info);
-  --glow-green:          var(--glow-brand-md);
-  --glow-green-sm:       var(--glow-brand-subtle);
-  --color-background:    var(--color-void);
-  --color-foreground:    var(--text-primary);
-  --color-muted:         rgba(255, 255, 255, 0.08);
-  --color-muted-foreground: #94A3B8;
-  --color-secondary:     rgba(255, 255, 255, 0.12);
-  --color-secondary-foreground: #FFFFFF;
-  --color-primary:       var(--brand);
-  --color-primary-foreground: #000000;
-  --color-ring:          var(--brand);
-  --border-glass-old:    var(--border-glass);
+  --text-display:       clamp(2.2rem, 5vw, 3.8rem);
+  --text-h1:            clamp(1.6rem, 3.2vw, 2.4rem);
+  --text-h2:            clamp(1.2rem, 2.2vw, 1.6rem);
+  --text-label:         0.875rem;
+  --text-body:          0.875rem;
+  --text-caption:       0.75rem;
+  --text-tiny:          0.625rem;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -638,3 +589,121 @@ body::after {
   75%  { clip: rect(25px, 9999px, 65px, 0);  transform: skew(0.5deg); }
   100% { clip: rect(65px, 9999px, 95px, 0);  transform: skew(-0.8deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RPG ADVENTURER & OUTDOORS STORYBOOK DESIGN SYSTEM (DEEP FOREST OBSIDIAN)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.rpg-wood-container {
+  background-color: #060D09;
+  background-image: 
+    radial-gradient(ellipse at 50% 30%, rgba(16, 50, 36, 0.40) 0%, transparent 75%),
+    radial-gradient(ellipse at 50% 85%, rgba(6, 32, 22, 0.35) 0%, transparent 60%),
+    repeating-linear-gradient(45deg, rgba(10, 22, 17, 0.4) 0px, rgba(10, 22, 17, 0.4) 20px, rgba(14, 30, 23, 0.4) 20px, rgba(14, 30, 23, 0.4) 40px);
+}
+
+.rpg-parchment-sheet {
+  background: linear-gradient(180deg, #10221A 0%, #0A1712 100%);
+  color: #E2F5EC;
+  border: 2px solid #1E3D2F;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+}
+
+.rpg-leather-panel {
+  background: linear-gradient(180deg, #0D1A14 0%, #07100D 100%);
+  border: 1.5px solid #1C382B;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 6px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+}
+
+.rpg-slot-box {
+  background: linear-gradient(135deg, #0F2219 0%, #08140F 100%);
+  border: 2px solid #1A382A;
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rpg-slot-box:hover {
+  border-color: #00FF66;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+.rpg-slot-box.active {
+  border-color: #00FF66;
+  background: linear-gradient(135deg, #163828 0%, #0A1C13 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.5), inset 0 0 8px rgba(0, 255, 102, 0.25);
+}
+
+.rpg-auto-equip-btn {
+  background: linear-gradient(180deg, #153426 0%, #0E241B 50%, #081711 100%);
+  color: #00FF66;
+  border: 2px solid #00FF66;
+  border-radius: 9999px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 0 4px 14px rgba(0, 255, 102, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+  transition: all 0.15s ease-out;
+}
+
+.rpg-auto-equip-btn:hover {
+  background: linear-gradient(180deg, #00FF66 0%, #00CC52 100%);
+  color: #05120B;
+  text-shadow: none;
+  box-shadow: 0 6px 20px rgba(0, 255, 102, 0.5);
+  transform: translateY(-1px);
+}
+
+.rpg-auto-equip-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.rpg-laurel-banner {
+  background: linear-gradient(180deg, #122B1E 0%, #091911 100%);
+  border: 1.5px solid #1E4633;
+  color: #00FF66;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.rpg-tab-pill {
+  color: #8CA79B;
+  font-weight: 700;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.rpg-tab-pill.active {
+  background: linear-gradient(180deg, #00FF66 0%, #00CC52 100%);
+  color: #05120B;
+  font-weight: 900;
+  box-shadow: 0 3px 12px rgba(0, 255, 102, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1.5px solid #33FF88;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-20vh);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(120vh);
+    opacity: 0;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 9s ease-in-out infinite;
+}
+

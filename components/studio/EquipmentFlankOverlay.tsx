@@ -308,10 +308,10 @@ export function EquipmentFlankOverlay({
             POSE:
           </span>
           {[
-            { id: 'idle' as const, label: 'Idle 🌿' },
-            { id: 'attack' as const, label: 'Slash ⚔️' },
-            { id: 'defend' as const, label: 'Guard 🛡️' },
-            { id: 'victory' as const, label: 'Cheer 🏆' },
+            { id: 'idle' as const, label: 'Idle' },
+            { id: 'attack' as const, label: 'Slash' },
+            { id: 'defend' as const, label: 'Guard' },
+            { id: 'victory' as const, label: 'Cheer' },
           ].map((act) => {
             const isCurrent = activeAction === act.id;
             return (

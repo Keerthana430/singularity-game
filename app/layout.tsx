@@ -1,9 +1,32 @@
 import type { Metadata } from 'next';
+import { Fredoka, Zen_Maru_Gothic, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { ToastProvider } from '@/components/Toast';
 import { DeviceNoticeBanner } from '@/components/DeviceNoticeBanner';
 import { SessionSync } from '@/components/auth/SessionSync';
+import { RetroBackground } from '@/components/retro/RetroBackground';
+import { MusicPlayerHUD } from '@/components/MusicPlayerHUD';
+
+const fredoka = Fredoka({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const zenMaruGothic = Zen_Maru_Gothic({
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-body',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'SINGULARITY — Gaming Platform',
@@ -22,15 +45,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      {/* body background + grid live in globals.css body::before / ::after */}
-      <body className="antialiased relative">
+    <html lang="en" className={`${fredoka.variable} ${zenMaruGothic.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(typeof self!=="undefined"&&!self.__next_r){self.__next_r="init-"+Math.random().toString(36).slice(2);}`,
+          }}
+        />
+      </head>
+      <body className="antialiased relative font-sans text-[#FFF8EE] bg-[#101426]">
+        <RetroBackground />
         <SessionSync />
         <ToastProvider />
         <Navbar />
         <DeviceNoticeBanner />
-        {/* z-index: 1 ensures page content stacks above body::before / ::after background layers */}
+        {/* z-index: 1 ensures page content stacks above background layers */}
         <main className="relative z-[1] min-h-screen">{children}</main>
+        <MusicPlayerHUD />
       </body>
     </html>
   );

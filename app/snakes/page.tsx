@@ -130,7 +130,7 @@ export default function SnakesAndLaddersPage() {
 
     if (LADDERS[landedTile]) {
       const topTile = LADDERS[landedTile];
-      sound.playEquip();
+      sound.playLadderClimb();
       addToast(`🪜 Ladder! #${landedTile} → #${topTile}`, 'success');
       logAction(`🪜 ${name} #${landedTile}→#${topTile}`);
 
@@ -154,7 +154,7 @@ export default function SnakesAndLaddersPage() {
 
     if (SNAKES[landedTile]) {
       const tailTile = SNAKES[landedTile];
-      sound.playSweep();
+      sound.playSnakeSlide();
       addToast(`🐍 Snake! #${landedTile} → #${tailTile}`, 'error');
       logAction(`🐍 ${name} #${landedTile}→#${tailTile}`);
 
@@ -419,6 +419,7 @@ export default function SnakesAndLaddersPage() {
             {/* Big Centered [ ROLL ] Button */}
             {isPlayerTurn ? (
               <button
+                id="snakes-roll-dice-btn"
                 onClick={handleRollDice}
                 disabled={!canPlayerRoll}
                 className="hud-action-btn px-12 py-4 text-sm sm:text-base font-black uppercase tracking-[0.25em] flex items-center gap-3 shadow-[0_0_35px_rgba(0,255,102,0.45)] hover:shadow-[0_0_60px_rgba(0,255,102,0.8)] hover:scale-105 active:scale-95 transition-all disabled:opacity-40 disabled:hover:scale-100"

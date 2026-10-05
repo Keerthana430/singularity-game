@@ -29,6 +29,27 @@ const Snakes3DCanvas = dynamic(
 import { WebGLErrorBoundary } from '@/components/shared/WebGLFallback';
 
 export function Snakes3DView(props: Snakes3DCanvasProps) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-full h-full bg-[#020502] flex flex-col items-center justify-center gap-4 font-mono">
+        <div className="w-14 h-14 border-4 border-[#00FF66]/20 border-t-[#00FF66] rounded-full animate-spin shadow-[0_0_25px_rgba(0,255,102,0.6)]" />
+        <div className="text-center">
+          <p className="text-sm font-black text-white tracking-widest uppercase">
+            // CALIBRATING 3D MOUNTAIN ARENA...
+          </p>
+          <p className="text-xs text-[#00FF66]/70 mt-1">
+            Synthesizing 40 obsidian platforms, neon cyber-ladders & bio-serpents
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <WebGLErrorBoundary fallbackTitle="Snakes Mountain Arena Offline">
       <Snakes3DCanvas {...props} />
