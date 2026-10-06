@@ -49,11 +49,12 @@ export function RpgEquipmentScreen() {
     topUpCoins,
     activeCategory,
     setActiveCategory,
+    selectedLoadout,
+    selectLoadout,
   } = useAvatarStore();
 
   const { add: addToast } = useToast();
 
-  const [selectedLoadout, setSelectedLoadout] = useState<number>(1);
   const [showBuffInfo, setShowBuffInfo] = useState(false);
   const [sparkleActive, setSparkleActive] = useState(false);
   // Default panelOpen to false so the avatar is immediately centered on load with sockets around it
@@ -205,13 +206,14 @@ export function RpgEquipmentScreen() {
 
   // Handle preset loadout switch [ 1 ] [ 2 ] [ 3 ]
   const handleLoadoutSelect = (idx: number) => {
-    setSelectedLoadout(idx);
+    selectLoadout(idx);
     sound.playClick();
-    if (savedAvatars[idx - 1]) {
-      loadAvatar(savedAvatars[idx - 1].id);
-      addToast(`Loaded Loadout #${idx}`, 'info');
+    if (idx === 1) {
+      addToast('Slot 1: Restored Our Custom Rig', 'success');
+    } else if (idx === 2) {
+      addToast('Slot 2: Loaded Valkyrie Vanguard Preset', 'info');
     } else {
-      addToast(`Loadout Slot #${idx} ready to save`, 'info');
+      addToast('Slot 3: Loaded Heavy Juggernaut Preset', 'info');
     }
   };
 
@@ -307,7 +309,7 @@ export function RpgEquipmentScreen() {
               {currentAvatar.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="absolute bottom-0 right-0 bg-[#00FF66] text-black font-black text-[9px] px-1 rounded-tl">
-              2
+              {selectedLoadout}
             </div>
           </div>
 
@@ -323,20 +325,52 @@ export function RpgEquipmentScreen() {
         </div>
 
         {/* Center: Preset Loadout Switcher [ 1 ] [ 2 ] [ 3 ] */}
-        <div className="flex items-center gap-1.5 bg-[#0D1C15]/85 border border-[#1E3E2F] rounded-full p-1 shadow-inner">
-          {[1, 2, 3].map((num) => (
-            <button
-              key={num}
-              onClick={() => handleLoadoutSelect(num)}
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                selectedLoadout === num
-                  ? 'bg-gradient-to-b from-[#00FF66] to-[#00B347] text-[#05140C] shadow-[0_0_12px_rgba(0,255,102,0.4)] scale-105 border border-[#FFF]'
-                  : 'text-[#7E9F90] hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {num}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 bg-[#0D1C15]/90 border border-[#1E3E2F] rounded-full p-1 shadow-inner">
+          <div className="flex items-center gap-1">
+            {[1, 2, 3].map((num) => {
+              const isSelected = selectedLoadout === num;
+              const tooltip =
+                num === 1
+                  ? 'Slot 1 • Our Rig (Custom Avatar)'
+                  : num === 2
+                  ? 'Slot 2 • Preset (Valkyrie Vanguard)'
+                  : 'Slot 3 • Preset (Heavy Juggernaut)';
+              return (
+                <button
+                  key={num}
+                  onClick={() => handleLoadoutSelect(num)}
+                  title={tooltip}
+                  aria-label={tooltip}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-[#00FF66] to-[#00B347] text-[#05140C] shadow-[0_0_12px_rgba(0,255,102,0.4)] scale-105 border border-[#FFF]'
+                      : 'text-[#7E9F90] hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {num}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1.5 pl-2 pr-2.5 py-0.5 border-l border-[#1E3E2F]/80 text-[10px] font-mono font-bold uppercase tracking-wider">
+            {selectedLoadout === 1 ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_6px_#00FF66]" />
+                <span className="text-[#00FF66] font-black">Our Rig</span>
+              </>
+            ) : selectedLoadout === 2 ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5C93] shadow-[0_0_6px_#FF5C93]" />
+                <span className="text-[#FF5C93] font-black">Preset 2 • Valkyrie</span>
+              </>
+            ) : (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] shadow-[0_0_6px_#F59E0B]" />
+                <span className="text-[#F59E0B] font-black">Preset 3 • Juggernaut</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Right: Gold Coins */}

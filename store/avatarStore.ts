@@ -31,7 +31,14 @@ interface AvatarStore {
   /** Healing duration in seconds calculated for the last battle */
   healingDurationSec: number;
 
+  // Loadout management: Slot 1 is Our Rig (Custom Avatar), Slots 2 and 3 are distinct presets
+  selectedLoadout: number;
+  userCustomAvatar: AvatarConfig;
+  loadoutSlots: Record<number, AvatarConfig>;
+
   // Actions
+  selectLoadout: (slotNum: number) => void;
+  resetLoadoutSlot: (slotNum: number) => void;
   updateAvatar: (partial: Partial<AvatarConfig>) => void;
   updateBody: (partial: Partial<AvatarConfig['body']>) => void;
   updateFace: (partial: Partial<AvatarConfig['face']>) => void;
@@ -91,10 +98,31 @@ const STARTER_UNLOCKED = [
 const DEFAULT_AVATAR = createDefaultAvatar();
 const INITIAL_SAVED_BUILDS = PRESET_AVATARS.map((p) => p.avatar);
 
+export const PRESET_LOADOUT_2: AvatarConfig = {
+  ...PRESET_AVATARS[1].avatar,
+  weapon: 'cyber-staff',
+  weaponColor: '#FF5C93',
+  classRole: 'mage',
+};
+
+export const PRESET_LOADOUT_3: AvatarConfig = {
+  ...PRESET_AVATARS[2].avatar,
+  weapon: 'energy-hammer',
+  weaponColor: '#F39C12',
+  classRole: 'tank',
+};
+
 export const useAvatarStore = create<AvatarStore>()(
   persist(
     (set, get) => ({
       currentAvatar: DEFAULT_AVATAR,
+      userCustomAvatar: DEFAULT_AVATAR,
+      selectedLoadout: 1,
+      loadoutSlots: {
+        1: DEFAULT_AVATAR,
+        2: PRESET_LOADOUT_2,
+        3: PRESET_LOADOUT_3,
+      },
       savedAvatars: INITIAL_SAVED_BUILDS,
       history: [DEFAULT_AVATAR],
       historyIndex: 0,
@@ -191,17 +219,113 @@ export const useAvatarStore = create<AvatarStore>()(
         });
       },
 
+      selectLoadout: (slotNum: number) => {
+        const state = get();
+        const activeSlot = state.selectedLoadout || 1;
+
+        // Current custom avatar
+        let userCustom = state.userCustomAvatar || state.currentAvatar || DEFAULT_AVATAR;
+
+        // If currently on slot 1, save current avatar edits into custom slot
+        if (activeSlot === 1) {
+          userCustom = { ...state.currentAvatar };
+        }
+
+        const currentSlots: Record<number, AvatarConfig> = {
+          1: userCustom,
+          2: state.loadoutSlots?.[2] || PRESET_LOADOUT_2,
+          3: state.loadoutSlots?.[3] || PRESET_LOADOUT_3,
+          ...state.loadoutSlots,
+        };
+
+        if (activeSlot === 1) {
+          currentSlots[1] = userCustom;
+        } else {
+          currentSlots[activeSlot] = { ...state.currentAvatar };
+        }
+
+        // Determine target avatar to activate
+        let targetAvatar: AvatarConfig;
+        if (slotNum === 1) {
+          targetAvatar = userCustom;
+        } else if (slotNum === 2) {
+          targetAvatar = currentSlots[2] || PRESET_LOADOUT_2;
+        } else {
+          targetAvatar = currentSlots[3] || PRESET_LOADOUT_3;
+        }
+
+        set({
+          selectedLoadout: slotNum,
+          userCustomAvatar: userCustom,
+          loadoutSlots: currentSlots,
+          currentAvatar: targetAvatar,
+          history: [targetAvatar],
+          historyIndex: 0,
+        });
+      },
+
+      resetLoadoutSlot: (slotNum: number) => {
+        let resetConfig: AvatarConfig;
+        if (slotNum === 1) {
+          resetConfig = createDefaultAvatar('My Avatar');
+        } else if (slotNum === 2) {
+          resetConfig = { ...PRESET_LOADOUT_2 };
+        } else {
+          resetConfig = { ...PRESET_LOADOUT_3 };
+        }
+
+        const updatedSlots = {
+          ...get().loadoutSlots,
+          [slotNum]: resetConfig,
+        };
+
+        const isCurrentSlot = (get().selectedLoadout || 1) === slotNum;
+
+        if (slotNum === 1) {
+          set({
+            userCustomAvatar: resetConfig,
+            loadoutSlots: updatedSlots,
+            ...(isCurrentSlot ? { currentAvatar: resetConfig, history: [resetConfig], historyIndex: 0 } : {}),
+          });
+        } else {
+          set({
+            loadoutSlots: updatedSlots,
+            ...(isCurrentSlot ? { currentAvatar: resetConfig, history: [resetConfig], historyIndex: 0 } : {}),
+          });
+        }
+      },
+
       updateAvatar: (partial) => {
+        const state = get();
         const updated = {
-          ...get().currentAvatar,
+          ...state.currentAvatar,
           ...partial,
           updatedAt: new Date().toISOString(),
         };
-        const { history, historyIndex } = get();
+        const { history, historyIndex, selectedLoadout } = state;
         const newHistory = history.slice(0, historyIndex + 1);
         newHistory.push(updated);
+
+        const slot = selectedLoadout || 1;
+        const currentSlots = {
+          1: state.userCustomAvatar || state.currentAvatar,
+          2: PRESET_LOADOUT_2,
+          3: PRESET_LOADOUT_3,
+          ...state.loadoutSlots,
+          [slot]: updated,
+        };
+
+        // If on Slot 1 ("Our Avatar"), keep userCustomAvatar strictly synchronized
+        let newUserCustom = state.userCustomAvatar || updated;
+        if (slot === 1) {
+          newUserCustom = updated;
+          currentSlots[1] = updated;
+        }
+
         set({
           currentAvatar: updated,
+          userCustomAvatar: newUserCustom,
+          loadoutSlots: currentSlots,
           history: newHistory.slice(-50),
           historyIndex: Math.min(newHistory.length - 1, 49),
         });
@@ -223,24 +347,40 @@ export const useAvatarStore = create<AvatarStore>()(
       },
 
       saveAvatar: () => {
-        const current = get().currentAvatar;
-        const saved = get().savedAvatars;
+        const state = get();
+        const current = state.currentAvatar;
+        const slot = state.selectedLoadout || 1;
+        const userCustom = slot === 1 ? current : (state.userCustomAvatar || current);
+        const saved = state.savedAvatars;
         const existing = saved.findIndex((a) => a.id === current.id);
         const updated = { ...current, updatedAt: new Date().toISOString() };
-        if (existing >= 0) {
-          const newSaved = [...saved];
-          newSaved[existing] = updated;
-          set({ savedAvatars: newSaved, currentAvatar: updated });
-        } else {
-          set({ savedAvatars: [...saved, updated], currentAvatar: updated });
-        }
+        const newSaved = existing >= 0 ? [...saved] : [...saved, updated];
+        if (existing >= 0) newSaved[existing] = updated;
+
+        set({
+          savedAvatars: newSaved,
+          currentAvatar: updated,
+          userCustomAvatar: userCustom,
+          loadoutSlots: {
+            ...state.loadoutSlots,
+            [slot]: updated,
+            1: userCustom,
+          },
+        });
       },
 
       loadAvatar: (id) => {
         const avatar = get().savedAvatars.find((a) => a.id === id);
         if (avatar) {
+          const slot = get().selectedLoadout || 1;
+          const updatedSlots = {
+            ...get().loadoutSlots,
+            [slot]: avatar,
+          };
           set({
             currentAvatar: avatar,
+            ...(slot === 1 ? { userCustomAvatar: avatar } : {}),
+            loadoutSlots: updatedSlots,
             history: [avatar],
             historyIndex: 0,
           });
@@ -266,6 +406,12 @@ export const useAvatarStore = create<AvatarStore>()(
         const fresh = createDefaultAvatar();
         set({
           currentAvatar: fresh,
+          userCustomAvatar: fresh,
+          selectedLoadout: 1,
+          loadoutSlots: {
+            ...get().loadoutSlots,
+            1: fresh,
+          },
           history: [fresh],
           historyIndex: 0,
         });
@@ -292,16 +438,8 @@ export const useAvatarStore = create<AvatarStore>()(
       },
 
       resetAvatar: () => {
-        const fresh = createDefaultAvatar();
-        const withId = { ...fresh, id: get().currentAvatar.id, name: get().currentAvatar.name };
-        const { history, historyIndex } = get();
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(withId);
-        set({
-          currentAvatar: withId,
-          history: newHistory.slice(-50),
-          historyIndex: Math.min(newHistory.length - 1, 49),
-        });
+        const slot = get().selectedLoadout || 1;
+        get().resetLoadoutSlot(slot);
       },
 
       undo: () => {
@@ -344,12 +482,32 @@ export const useAvatarStore = create<AvatarStore>()(
       }),
       partialize: (state) => ({
         currentAvatar: state.currentAvatar,
+        userCustomAvatar: state.userCustomAvatar,
+        loadoutSlots: state.loadoutSlots,
+        selectedLoadout: state.selectedLoadout,
         savedAvatars: state.savedAvatars,
         recentColors: state.recentColors,
         lastBattleEndTime: state.lastBattleEndTime,
         lastBattleDamagePct: state.lastBattleDamagePct,
         healingDurationSec: state.healingDurationSec,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        if (!state.userCustomAvatar) {
+          const userSaved = state.savedAvatars?.find((a) => !a.id.startsWith('preset-'));
+          state.userCustomAvatar = userSaved || state.currentAvatar || DEFAULT_AVATAR;
+        }
+        if (!state.loadoutSlots || !state.loadoutSlots[1]) {
+          state.loadoutSlots = {
+            1: state.userCustomAvatar || state.currentAvatar || DEFAULT_AVATAR,
+            2: state.loadoutSlots?.[2] || PRESET_LOADOUT_2,
+            3: state.loadoutSlots?.[3] || PRESET_LOADOUT_3,
+          };
+        }
+        if (!state.selectedLoadout) {
+          state.selectedLoadout = 1;
+        }
+      },
     }
   )
 );
