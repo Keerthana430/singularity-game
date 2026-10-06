@@ -335,18 +335,20 @@ export async function createPersistentSessionForTeam(teamId: string, role: TeamI
   const token = createSessionToken({ teamId, role, sessionId, exp: expiresAt });
 
   const result = await withDatabase(async (client) => {
-    await client.query(
+    const insertResult = await client.query(
       `
-      INSERT INTO team_sessions (team_id, session_token_hash, role, issued_at, expires_at, revoked_at, last_seen_at, client_metadata)
-      VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours', NULL, NOW(), $4::jsonb)
+      INSERT INTO team_sessions (id, team_id, session_token_hash, role, issued_at, expires_at, revoked_at, last_seen_at, client_metadata)
+      VALUES ($1, $2, $3, $4, NOW(), NOW() + INTERVAL '24 hours', NULL, NOW(), $5::jsonb)
+      RETURNING id, team_id, role, expires_at
       `,
-      [teamId, crypto.createHash('sha256').update(token).digest('hex'), role, { sessionId, role }]
+      [sessionId, teamId, crypto.createHash('sha256').update(token).digest('hex'), role, { sessionId, role }]
     );
 
+    const row = insertResult.rows[0];
     return {
       token,
-      sessionId,
-      expiresAt,
+      sessionId: row?.id || sessionId,
+      expiresAt: row ? new Date(row.expires_at).getTime() / 1000 : expiresAt,
       teamId,
       role,
     };
@@ -505,15 +507,17 @@ export async function createAdminSession(adminId: string) {
   const token = createSessionToken({ teamId: adminId, role: 'admin', sessionId, exp: expiresAt });
 
   const result = await withDatabase(async (client) => {
-    await client.query(
+    const insertResult = await client.query(
       `
-      INSERT INTO team_sessions (team_id, session_token_hash, role, issued_at, expires_at, revoked_at, last_seen_at, client_metadata)
-      VALUES ($1, $2, 'admin', NOW(), NOW() + INTERVAL '24 hours', NULL, NOW(), $3::jsonb)
+      INSERT INTO team_sessions (id, team_id, session_token_hash, role, issued_at, expires_at, revoked_at, last_seen_at, client_metadata)
+      VALUES ($1, $2, $3, 'admin', NOW(), NOW() + INTERVAL '24 hours', NULL, NOW(), $4::jsonb)
+      RETURNING id, team_id, role, expires_at
       `,
-      [adminId, crypto.createHash('sha256').update(token).digest('hex'), { sessionId, role: 'admin' }]
+      [sessionId, adminId, crypto.createHash('sha256').update(token).digest('hex'), { sessionId, role: 'admin' }]
     );
 
-    return { ok: true as const, token, sessionId, expiresAt, role: 'admin' };
+    const row = insertResult.rows[0];
+    return { ok: true as const, token, sessionId: row?.id || sessionId, expiresAt: row ? new Date(row.expires_at).getTime() / 1000 : expiresAt, role: 'admin' };
   });
 
   if (!result.ok) {
