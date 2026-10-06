@@ -109,3 +109,11 @@
 2. Use a centralized global store (zustand) holding an entities map.
 **Choice:** Option 2 (Centralized Store).
 **Consequences:** Easier to render HUDs outside the 3D scene (Canvas) without prop drilling or performance issues.
+
+## Decision 11: Strict Radius Target Lock
+**Context:** The character would previously face the enemy whenever in a 4.0 radius OR if a punch was thrown recently (5.0s window). The user wants the character to face the camera direction as soon as they step outside the radius.
+**Options:**
+1. Keep the time-based persistence for combat stance target-locking.
+2. Remove the time-based persistence and strictly use a distance check (<= 4.0).
+**Choice:** Option 2.
+**Consequences:** Moving outside the 4.0 unit visual ring instantly breaks target lock, restoring camera-relative facing logic.

@@ -88,7 +88,7 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
       strikeElbow = -2.2; strikeChest = isLeft ? -0.3 : 0.3; strikeShoulder = -0.5; strikeArmZ = 0.5;
       windupSquat = 0.8; strikeSquat = -0.3; 
       windupLean = isLeft ? 0.3 : -0.3; strikeLean = isLeft ? -0.1 : 0.1;
-      windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = -0.6; recoilDur = 0.45;
+      windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = 0.4; recoilDur = 0.45;
     } else if (attackType === 'CROSS') {
       strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; recoilDur = 0.4; strikeArmZ = -0.1;
     } else if (attackType === 'JUMP_ATTACK') {

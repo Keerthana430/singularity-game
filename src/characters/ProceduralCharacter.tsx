@@ -416,27 +416,26 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     }
 
     let lockedOn = false;
-    if (combatStanceRef.current) {
-      let enemyPos: THREE.Vector3 | null = null;
-      let minDist = 10.0;
-      const charPos = rigidBodyRef.current.translation();
-      world.bodies.forEach(b => {
-        const ud = b.userData as any;
-        if (ud && ud.isEnemy) {
-          const et = b.translation();
-          const dist = Math.hypot(charPos.x - et.x, charPos.z - et.z);
-          if (dist < minDist) {
-            minDist = dist;
-            enemyPos = new THREE.Vector3(et.x, et.y, et.z);
-          }
+    let enemyPos: THREE.Vector3 | null = null;
+    let minDist = 4.0; // Strict lock-on radius
+    const charPos = rigidBodyRef.current.translation();
+    
+    world.bodies.forEach(b => {
+      const ud = b.userData as any;
+      if (ud && ud.isEnemy && ud.playerId !== playerId) {
+        const et = b.translation();
+        const dist = Math.hypot(charPos.x - et.x, charPos.z - et.z);
+        if (dist <= minDist) {
+          minDist = dist;
+          enemyPos = new THREE.Vector3(et.x, et.y, et.z);
         }
-      });
-      
-      if (enemyPos) {
-          const ep = enemyPos as THREE.Vector3;
-          targetFacingAngle = Math.atan2(ep.x - charPos.x, ep.z - charPos.z);
-          lockedOn = true;
       }
+    });
+    
+    if (enemyPos) {
+        const ep = enemyPos as THREE.Vector3;
+        targetFacingAngle = Math.atan2(ep.x - charPos.x, ep.z - charPos.z);
+        lockedOn = true;
     }
 
     if (lockedOn || (isMoving && !isPunching)) {
@@ -494,25 +493,25 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     let nearEnemy = false;
     world.bodies.forEach(b => {
       const ud = b.userData as any;
-      if (ud && ud.isEnemy) {
+      if (ud && ud.isEnemy && ud.playerId !== playerId) {
         const et = b.translation();
         const dist = Math.hypot(translation.x - et.x, translation.z - et.z);
-        if (dist < 4.0) nearEnemy = true;
+        if (dist <= 4.0) nearEnemy = true;
       }
     });
     // Fallback if userData is on the collider's parent
     if (!nearEnemy) {
       world.colliders.forEach(c => {
         const ud = c.parent()?.userData as any;
-        if (ud && ud.isEnemy) {
+        if (ud && ud.isEnemy && ud.playerId !== playerId) {
           const et = c.translation();
           const dist = Math.hypot(translation.x - et.x, translation.z - et.z);
-          if (dist < 4.0) nearEnemy = true;
+          if (dist <= 4.0) nearEnemy = true;
         }
       });
     }
 
-    combatStanceRef.current = nearEnemy || timeSinceLastPunch.current < 5.0;
+    combatStanceRef.current = nearEnemy;
 
     // Stamina Regeneration
     if (timeSinceLastPunch.current > 1.0) {
@@ -549,6 +548,12 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     >
       <CapsuleCollider args={[0.4, 0.4]} position={[0, 0.8, 0]} />
       <primitive ref={characterRef} object={group} />
+      {inputType === 'ai' && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+          <ringGeometry args={[3.9, 4.0, 64]} />
+          <meshBasicMaterial color="#ff4444" transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      )}
     </RigidBody>
   );
 }

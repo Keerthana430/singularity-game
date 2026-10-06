@@ -9,9 +9,25 @@ pm run dev -> Open http://localhost:3000/character-test
 - **How to Test:** WASD to move, Space to jump, Left Click to punch, Right click for uppercut. Numpad1/Alt+1 on opponent for testing dummy hit reaction.
 - **Open Risks:** None.
 - **Next Phase:** AI Logic / Opponent Combat Behaviors.
+---
 
----
----
+## Phase: Combat Controls - Target Lock Radius & Uppercut Fix (2026-10-06)
+- **Built**:
+  - Implemented a strict 4.0 unit target lock-on radius. The character now only locks onto the enemy and faces them when inside this radius. When outside, the character naturally faces the camera's movement direction.
+  - Added a visual red radius ring (using `ringGeometry`) at the feet of the AI dummy to clearly indicate this 4.0 lock-on boundary.
+  - Fixed the Uppercut animation lunge. Changed `lungeDist` from `-0.6` (which caused a backward movement) to `0.4` so the character physically drives forward into the uppercut.
+- **Files created/changed**:
+  - `src/characters/ProceduralCharacter.tsx`
+  - `src/characters/useCharacterAnimation.ts`
+- **Decisions and assumptions**:
+  - Removed the 5-second post-punch target lock persistence to strictly honor the 4.0 spatial radius logic requested by the user.
+- **Exit criteria**:
+  - Character faces opponent only within radius - PASS
+  - Radius ring is visible - PASS
+  - Uppercut lunges forward - PASS
+- **Known issues**: None.
+- **Deferred**: None.
+
 
 ## Phase: Opponent Combat Foundation (2026-10-06)
 - **Built**:
