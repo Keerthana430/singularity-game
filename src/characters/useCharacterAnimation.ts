@@ -327,6 +327,16 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     // Head subtly counters the chest breathing tilt
     bones.head.rotation.x = Math.sin(t * Math.PI * 2 * 0.4) * 0.01 * idleWeight - walkWeight * WALK.headStabilize - 0.3 * squatPhaseRef.current + 0.2 * fallWeight + breathPhase * (IDLE.breathAmp * 0.5) * idleWeight;
 
+    // Facial expressions (Eyes)
+    if (bones.eyeL && bones.eyeR) {
+      // Squint in combat (scale.y -> 0.5), normal otherwise (scale.y -> 1.0)
+      bones.eyeL.scale.y = 1.0 * isw + 0.5 * sw;
+      bones.eyeR.scale.y = 1.0 * isw + 0.5 * sw;
+      // Slant inward for an angry/serious look in combat
+      bones.eyeL.rotation.z = -0.3 * sw; 
+      bones.eyeR.rotation.z = 0.3 * sw;
+    }
+
     // Default Legs (IDLE + WALK + FALLING + STANCE + STRAFE)
     // Left Leg (Lead Leg in stance)
     bones.lUpperLeg.rotation.x = lLegPitch * walkWeight + tuckLegs - 0.5 * sw;

@@ -58,13 +58,13 @@ export function buildProceduralCharacter(
   const bones: Record<string, THREE.Group | THREE.Bone> = {};
 
   const bodyMat = new THREE.MeshStandardMaterial({
-    color: colorBody, 
+    color: colorBody,
     roughness: 0.2, // Shiny metallic finish
     metalness: 0.85, // Highly metallic robot chassis
     emissive: 0x111111,
     emissiveIntensity: 0.2 // Subtle base glow
   });
-  
+
   // High emissive intensity triggers post-processing bloom
   const glowMat = new THREE.MeshStandardMaterial({
     color: colorAccent, roughness: 0.2, metalness: 0.1,
@@ -142,13 +142,15 @@ export function buildProceduralCharacter(
   headMesh.castShadow = true;
   bones.head.add(headMesh);
 
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
-  eyeL.position.set(-0.06, 0.02, 0.16);
-  bones.head.add(eyeL);
+  bones.eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
+  bones.eyeL.position.set(-0.06, 0.02, 0.16);
+  bones.eyeL.name = 'eyeL';
+  bones.head.add(bones.eyeL);
 
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
-  eyeR.position.set(0.06, 0.02, 0.16);
-  bones.head.add(eyeR);
+  bones.eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
+  bones.eyeR.position.set(0.06, 0.02, 0.16);
+  bones.eyeR.name = 'eyeR';
+  bones.head.add(bones.eyeR);
 
   // Left Arm
   bones.lShoulder = new THREE.Group();
@@ -161,7 +163,7 @@ export function buildProceduralCharacter(
   bones.lUpperArm.name = 'lUpperArm';
   bones.lShoulder.add(bones.lUpperArm);
   bones.lShoulder.add(lArmObj.shoulderMesh);
-  
+
   bones.lLowerArm = lArmObj.lowerBone;
   bones.lLowerArm.name = 'lLowerArm';
 
@@ -186,7 +188,7 @@ export function buildProceduralCharacter(
   bones.rUpperArm.name = 'rUpperArm';
   bones.rShoulder.add(bones.rUpperArm);
   bones.rShoulder.add(rArmObj.shoulderMesh);
-  
+
   bones.rLowerArm = rArmObj.lowerBone;
   bones.rLowerArm.name = 'rLowerArm';
 
