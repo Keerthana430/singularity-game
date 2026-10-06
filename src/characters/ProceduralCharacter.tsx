@@ -25,6 +25,7 @@ export function ProceduralCharacter() {
   const velocityRef = useRef(new THREE.Vector3());
   const speedRef = useRef(0);
   const facingAngleRef = useRef(0);
+  const moveDirRef = useRef(new THREE.Vector3(0, 0, 1));
   const dodgeDirRef = useRef(new THREE.Vector3());
   const combatStanceRef = useRef(false);
   const lastKeyTime = useRef<Record<string, number>>({ w: 0, a: 0, s: 0, d: 0 });
@@ -295,6 +296,8 @@ export function ProceduralCharacter() {
         .addScaledVector(camForward, -inputZ)
         .normalize();
 
+      moveDirRef.current.copy(moveDir);
+
       const targetAngle = Math.atan2(moveDir.x, moveDir.z);
       
       let diff = targetAngle - facingAngleRef.current;
@@ -334,8 +337,8 @@ export function ProceduralCharacter() {
     characterRef.current.rotation.y = facingAngleRef.current;
 
     const currentVel = rigidBodyRef.current.linvel();
-    let desiredVelocityX = Math.sin(facingAngleRef.current) * speedRef.current;
-    let desiredVelocityZ = Math.cos(facingAngleRef.current) * speedRef.current;
+    let desiredVelocityX = moveDirRef.current.x * speedRef.current;
+    let desiredVelocityZ = moveDirRef.current.z * speedRef.current;
     
     // Add dodge velocity if active
     if (combatState === 'DODGING') {
