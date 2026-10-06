@@ -450,7 +450,11 @@ export async function finalizeMatchResult(request: FinalizeMatchResultRequest) {
     }
   });
 
-  return finalizationStatus;
+  if (!finalizationStatus.ok) {
+    return { ok: false as const, error: finalizationStatus.error };
+  }
+
+  return finalizationStatus.data;
 }
 
 export function getLeaderboardFinalizationSemantics() {

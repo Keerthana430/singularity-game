@@ -22,6 +22,16 @@ export async function createMatchFromQueue(request: CreateMatchFromQueueRequest)
     await client.query('BEGIN');
 
     try {
+      const lockResult = await client.query(
+        `SELECT pg_try_advisory_xact_lock(hashtext('matchmaker:' || $1)) AS locked`,
+        [gameType]
+      );
+
+      if (!lockResult.rows[0]?.locked) {
+        await client.query('COMMIT');
+        return { ok: true as const, created: false, reason: 'Concurrent matchmaking worker in progress.' };
+      }
+
       const candidateRows = await client.query(
         `
         SELECT id, team_id, game_type, status, created_at, matched_at, match_id
@@ -29,7 +39,7 @@ export async function createMatchFromQueue(request: CreateMatchFromQueueRequest)
         WHERE game_type = $1 AND status = 'queued'
         ORDER BY created_at ASC
         LIMIT $2
-        FOR UPDATE SKIP LOCKED
+        FOR UPDATE
         `,
         [gameType, maxPlayers]
       );
