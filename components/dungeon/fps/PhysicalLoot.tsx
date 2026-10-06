@@ -54,12 +54,12 @@ function SingleLootItem({ drop }: { drop: PhysicalLootDrop }) {
     <group position={drop.position}>
       {/* Floating Rotating Crystalline Mesh */}
       <group ref={meshRef}>
-        <mesh castShadow>
+        <mesh>
           <octahedronGeometry args={[0.26, 0]} />
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={2.2}
+            emissiveIntensity={2.4}
             roughness={0.2}
             metalness={0.8}
           />
@@ -83,14 +83,11 @@ function SingleLootItem({ drop }: { drop: PhysicalLootDrop }) {
         <meshBasicMaterial color={color} transparent opacity={0.4} />
       </mesh>
 
-      {/* Point Light */}
-      <pointLight color={color} intensity={3.5} distance={4} decay={2} position={[0, 0.6, 0]} />
-
-      {/* In-World Nameplate with remaining despawn countdown */}
+      {/* In-World Nameplate with remaining despawn countdown (Clean, No GPU blur filter) */}
       <Html position={[0, 1.2, 0]} center distanceFactor={8} occlude={false}>
         <div className="pointer-events-none flex flex-col items-center select-none font-mono">
           <div
-            className={`flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase backdrop-blur-md border border-white/20 bg-black/80 text-white shadow-lg whitespace-nowrap ${
+            className={`flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[9px] font-bold uppercase border border-white/20 bg-black/90 text-white shadow-lg whitespace-nowrap ${
               isExpiringSoon ? 'border-amber-400 text-amber-300 animate-pulse' : ''
             }`}
             style={{ borderColor: isExpiringSoon ? '#F59E0B' : `${color}88` }}

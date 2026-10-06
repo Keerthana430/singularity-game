@@ -38,33 +38,6 @@ export function FPSArena3D({ floor, palette }: FPSArena3DProps) {
     }
   });
 
-  // Floating ambient cyber energy motes
-  const motes = useMemo(() => {
-    return Array.from({ length: 48 }, (_, i) => ({
-      x: ((i * 37) % 22) - 11,
-      y: ((i * 19) % 45) / 10 + 0.6,
-      z: ((i * 53) % 22) - 11,
-      size: 0.04 + (i % 3) * 0.02,
-      color: i % 2 === 0 ? palette.trim : accentColor,
-    }));
-  }, [palette.trim, accentColor]);
-
-  // Checkered floor plate coordinates (10x10 modular floor tiles across 40m x 40m)
-  const floorTiles = useMemo(() => {
-    const tiles: { x: number; z: number; isAlt: boolean }[] = [];
-    const size = 4.0;
-    for (let x = -5; x < 5; x++) {
-      for (let z = -5; z < 5; z++) {
-        tiles.push({
-          x: x * size + size / 2,
-          z: z * size + size / 2,
-          isAlt: (x + z) % 2 === 0,
-        });
-      }
-    }
-    return tiles;
-  }, []);
-
   return (
     <group>
       {/* ─── 1. OVERHEAD CEILING DOME & SKY CANOPY ──────────────────────── */}
@@ -83,61 +56,37 @@ export function FPSArena3D({ floor, palette }: FPSArena3DProps) {
         <meshBasicMaterial color={palette.trim} transparent opacity={0.12} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* ─── 2. TEXTURED HIGH-CONTRAST ARENA FLOOR ─────────────────────── */}
-      {/* Heavy Sub-Foundation Slab */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
-        <planeGeometry args={[46, 46]} />
-        <meshStandardMaterial color="#0F172A" roughness={0.9} metalness={0.2} />
+      {/* ─── 2. AUTHENTIC DUNGEON STONE GROUND (NO WIREFRAME GRID) ───────── */}
+      {/* Main Dungeon Slate Stone Foundation */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <planeGeometry args={[44, 44]} />
+        <meshStandardMaterial
+          color="#151A22"
+          roughness={0.88}
+          metalness={0.15}
+        />
       </mesh>
 
-      {/* Modular Checkered Slate Tiles */}
-      {floorTiles.map((tile, i) => (
-        <mesh
-          key={i}
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[tile.x, 0.005, tile.z]}
-          receiveShadow
-        >
-          <planeGeometry args={[3.85, 3.85]} />
-          <meshStandardMaterial
-            color={tile.isAlt ? floorBaseColor : '#25374C'}
-            roughness={0.42}
-            metalness={0.65}
-          />
-        </mesh>
-      ))}
-
-      {/* Floor Grout Grid Lines (Clean Neon Inlays) */}
-      <gridHelper args={[40, 40, palette.trim, '#334D66']} position={[0, 0.015, 0]} />
-
-      {/* Perimeter Safety Curb (Warning border) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <ringGeometry args={[19.4, 20.2, 48]} />
-        <meshStandardMaterial color="#F59E0B" roughness={0.3} metalness={0.8} />
+      {/* Paved Flagstone Outer Border Trim */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+        <ringGeometry args={[19.2, 20.4, 48]} />
+        <meshStandardMaterial color="#0F1318" roughness={0.92} metalness={0.08} />
       </mesh>
 
-      {/* Glowing Energy Pathways Crossing the Arena */}
-      {[-5.5, 5.5].map((x) => (
-        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.025, 0]}>
-          <planeGeometry args={[0.14, 38]} />
-          <meshBasicMaterial color={palette.trim} transparent opacity={0.8} />
-        </mesh>
-      ))}
-      {[-4.5, 4.5].map((z) => (
-        <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, z]}>
-          <planeGeometry args={[38, 0.14]} />
-          <meshBasicMaterial color={accentColor} transparent opacity={0.8} />
-        </mesh>
-      ))}
-
-      {/* Diagonal Conduits Leading to Portals */}
-      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]} position={[0, 0.022, 0]}>
-        <planeGeometry args={[0.1, 46]} />
-        <meshBasicMaterial color={palette.trim} transparent opacity={0.45} />
+      {/* Subtle Inner Dungeon Pavement Slab */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]}>
+        <planeGeometry args={[38.4, 38.4]} />
+        <meshStandardMaterial
+          color="#18202A"
+          roughness={0.85}
+          metalness={0.12}
+        />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, -Math.PI / 4]} position={[0, 0.022, 0]}>
-        <planeGeometry args={[0.1, 46]} />
-        <meshBasicMaterial color={accentColor} transparent opacity={0.45} />
+
+      {/* Dark Chiseled Flagstone Perimeter Curb */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[14.8, 15.1, 40]} />
+        <meshStandardMaterial color="#0A0D12" roughness={0.95} metalness={0.05} />
       </mesh>
 
 
@@ -193,9 +142,6 @@ export function FPSArena3D({ floor, palette }: FPSArena3DProps) {
             <meshBasicMaterial color={accentColor} />
           </mesh>
         </group>
-
-        {/* Dais Spotlight */}
-        <pointLight position={[0, 2.5, 0]} color={palette.trim} intensity={4.5} distance={10} decay={2} />
       </group>
 
       {/* ─── 4. 8 TACTICAL COVER PILLARS (EXPANDED DUNGEON) ─────────── */}
@@ -265,13 +211,10 @@ export function FPSArena3D({ floor, palette }: FPSArena3DProps) {
           </mesh>
 
           {/* Pillar Crown Capital */}
-          <mesh position={[0, 4.85, 0]} castShadow>
+          <mesh position={[0, 4.85, 0]}>
             <boxGeometry args={[1.9, 0.4, 1.9]} />
             <meshStandardMaterial color="#2E4459" metalness={0.9} roughness={0.3} />
           </mesh>
-
-          {/* Pillar Uplight */}
-          <pointLight position={[0, 2.5, 0]} color={accentColor} intensity={3.2} distance={6} decay={2} />
         </group>
       ))}
 
@@ -358,19 +301,9 @@ export function FPSArena3D({ floor, palette }: FPSArena3DProps) {
           {/* Glowing Lens */}
           <mesh position={[0, -0.26, 0]}>
             <circleGeometry args={[0.5, 12]} />
-            <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={3} />
+            <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={2.5} />
           </mesh>
-          {/* Directed Flood Light */}
-          <pointLight color="#E2E8F0" intensity={3.5} distance={14} decay={1.8} position={[0, -0.5, 0]} />
         </group>
-      ))}
-
-      {/* ─── 7. FLOATING AMBIENT CYBER MOTES ─────────────────────────────── */}
-      {motes.map((m, i) => (
-        <mesh key={`mote-${i}`} position={[m.x, m.y, m.z]}>
-          <sphereGeometry args={[m.size, 6, 6]} />
-          <meshBasicMaterial color={m.color} transparent opacity={0.65} />
-        </mesh>
       ))}
     </group>
   );
@@ -425,7 +358,7 @@ function WallSection({
       {/* Vertical Structural Buttress Columns (6 on each wall) */}
       {[-15, -9, -3.5, 3.5, 9, 15].map((bx) => (
         <group key={`buttress-${bx}`} position={[bx, 0, 0.45]}>
-          <mesh castShadow receiveShadow>
+          <mesh>
             <boxGeometry args={[0.7, 7.8, 0.35]} />
             <meshStandardMaterial color="#334B61" roughness={0.4} metalness={0.75} />
           </mesh>
@@ -437,12 +370,11 @@ function WallSection({
         </group>
       ))}
 
-
       {/* Arched Cyber Portal Gate in Wall Center */}
       {hasGate && (
         <group position={[0, -1.0, 0.5]}>
           {/* Gate Outer Arch Frame */}
-          <mesh position={[0, 0.8, 0]} castShadow>
+          <mesh position={[0, 0.8, 0]}>
             <boxGeometry args={[4.4, 4.4, 0.35]} />
             <meshStandardMaterial color="#1E2F40" roughness={0.35} metalness={0.85} />
           </mesh>
@@ -469,9 +401,6 @@ function WallSection({
             <ringGeometry args={[1.35, 1.45, 6]} />
             <meshBasicMaterial color={accentColor} transparent opacity={0.6} />
           </mesh>
-
-          {/* Portal Overhead Sconce Beacon */}
-          <pointLight position={[0, 2.6, 0.6]} color={trimColor} intensity={4.5} distance={7} decay={2} />
         </group>
       )}
     </group>

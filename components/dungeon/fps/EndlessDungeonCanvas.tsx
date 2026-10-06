@@ -167,8 +167,13 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
   const enemiesRef = useRef<FPSEnemyEntity[]>([]);
   enemiesRef.current = enemies;
 
-  const [projectiles, setProjectiles] = useState<FPSProjectile[]>([]);
-  const [floatingTexts, setFloatingTexts] = useState<FloatingDamage[]>([]);
+  // Projectiles stored in Ref: 0 React re-renders while bullets fly
+  const projectilesRef = useRef<FPSProjectile[]>([]);
+
+  // 2D Screen-Space Floating Damage Numbers (100% stable, 0 Drei removeChild crashes)
+  const [floatingTexts, setFloatingTexts] = useState<
+    { id: number; offsetX: number; offsetY: number; damage: number; isCrit: boolean; isPlayerHurt: boolean }[]
+  >([]);
   const floatIdRef = useRef(0);
 
   const [muzzleFlashTime, setMuzzleFlashTime] = useState(0);
@@ -204,13 +209,15 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
     }
   }, []);
 
-  // Floating damage numbers
+  // Floating damage numbers (Screen Space)
   const spawnFloatingDamage = useCallback(
-    (pos: [number, number, number], damage: number, isCrit: boolean, isPlayer = false) => {
+    (_pos: [number, number, number], damage: number, isCrit: boolean, isPlayer = false) => {
       const id = ++floatIdRef.current;
+      const offsetX = (Math.random() - 0.5) * 80;
+      const offsetY = -25 - Math.random() * 35;
       setFloatingTexts((prev) => [
-        ...prev,
-        { id, worldPosition: [pos[0], pos[1] + 0.6, pos[2]], damage, isCrit, isPlayerHurt: isPlayer },
+        ...(prev.length > 5 ? prev.slice(-5) : prev),
+        { id, offsetX, offsetY, damage, isCrit, isPlayerHurt: isPlayer },
       ]);
       window.setTimeout(() => {
         setFloatingTexts((prev) => prev.filter((item) => item.id !== id));
@@ -344,6 +351,9 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
         const dmg = Math.round(baseDmg * damageBuffMultiplier);
 
         const targetId = closestHit.enemyId;
+        let slainEnemy: FPSEnemyEntity | null = null;
+        let slainDrop: PhysicalLootDrop | null = null;
+
         setEnemies((prev) =>
           prev.map((e) => {
             if (e.id !== targetId || e.hp <= 0) return e;
@@ -367,7 +377,6 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
             if (newHp <= 0) {
               sound.playImpact();
               const isElite = e.archetype === 'elite' || e.archetype === 'boss';
-              // Max 30% drop rate from slain monsters
               const shouldDrop = Math.random() < 0.30;
               let drop: PhysicalLootDrop | null = null;
               if (shouldDrop) {
@@ -379,7 +388,8 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
                   dropTime: performance.now(),
                 };
               }
-              onEnemyKilled(e, drop);
+              slainEnemy = e;
+              slainDrop = drop;
             }
 
             return {
@@ -390,6 +400,11 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
             };
           })
         );
+
+        // Dispatch parent event outside of the React state updater
+        if (slainEnemy) {
+          onEnemyKilled(slainEnemy, slainDrop);
+        }
       }
     }
 
@@ -488,32 +503,23 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
   }, [executeShot]);
 
   return (
-    <div className="absolute inset-0 z-10">
+    <div className="absolute inset-0 z-10 overflow-hidden">
       <Canvas
-        shadows
-        dpr={[1, 1.5]}
+        dpr={1}
         camera={{ position: [0, 1.35, 6.5], fov: settings.fov || 75 }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={[palette.fog]} />
         <fog attach="fog" args={[palette.fog, 6, 26]} />
         <PerspectiveCamera makeDefault position={[0, 1.35, 6.5]} fov={settings.fov || 75} />
         <ScopeCameraController isScoped={isScoped} baseFov={settings.fov || 75} />
 
-        {/* ─── VIBRANT CINEMATIC LIGHTING (BANISHES ALL BLACKNESS!) ─────────── */}
+        {/* ─── VIBRANT CINEMATIC LIGHTING (BUTTERY SMOOTH 60FPS) ─────────── */}
         <ambientLight color="#E2E8F0" intensity={1.15} />
         <hemisphereLight args={[palette.accent || '#38BDF8', '#1E293B', 0.65]} />
-        <directionalLight
-          position={[12, 22, 10]}
-          intensity={2.8}
-          color="#F8FAFC"
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-        />
-        {/* Arena Center Fill & Trim Lighting */}
-        <pointLight position={[0, 5.5, 0]} color="#FFFFFF" intensity={4.5} distance={18} decay={1.8} />
-        <pointLight position={[-8, 6, -8]} color={palette.trim} intensity={4.0} distance={16} decay={2} />
-        <pointLight position={[8, 6, 8]} color={palette.accent || '#38BDF8'} intensity={4.0} distance={16} decay={2} />
+        <directionalLight position={[12, 22, 10]} intensity={2.6} color="#F8FAFC" />
+        {/* Soft Arena Central Point Light (1 Single Light in Whole Scene) */}
+        <pointLight position={[0, 5.5, 0]} color="#FFFFFF" intensity={3.5} distance={18} decay={1.8} />
 
         {/* Rich Textured Sci-Fi Arena Architecture */}
         <FPSArena3D floor={evalState.tierIndex} palette={palette} />
@@ -559,37 +565,8 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
             <FPSEnemy key={enemy.id} enemy={enemy} />
           ))}
 
-        {/* Projectiles */}
-        {projectiles.map((proj) => (
-          <group key={proj.id} position={proj.position}>
-            <mesh>
-              <sphereGeometry args={[proj.radius, 8, 8]} />
-              <meshBasicMaterial color={proj.color} />
-            </mesh>
-            <pointLight color={proj.color} intensity={2.5} distance={3.5} />
-          </group>
-        ))}
-
-        {/* Floating Damage Text */}
-        {floatingTexts.map((f) => (
-          <Html key={f.id} position={f.worldPosition} center distanceFactor={9}>
-            <div
-              className={`font-mono text-sm font-black select-none pointer-events-none animate-bounce ${
-                f.isCrit
-                  ? 'text-amber-300 text-lg shadow-[0_0_12px_#F59E0B]'
-                  : f.isPlayerHurt
-                  ? 'text-rose-400'
-                  : 'text-[#00FF66]'
-              }`}
-            >
-              {f.isCrit ? 'CRIT ' : ''}
-              {f.damage}
-            </div>
-          </Html>
-        ))}
-
-        {/* Soft Contact Shadows */}
-        <ContactShadows position={[0, 0.01, 0]} opacity={0.65} scale={24} blur={2.2} far={6} />
+        {/* High Performance 3D Projectiles Pool (0 React Re-renders while flying) */}
+        <ProjectilesRenderer projectilesRef={projectilesRef} />
 
         {/* High Performance Endless Survival Logic Manager (AI in-place, Wall Collision) */}
         <EndlessSceneLogicManager
@@ -597,8 +574,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           kills={kills}
           enemies={enemies}
           setEnemies={setEnemies}
-          projectiles={projectiles}
-          setProjectiles={setProjectiles}
+          projectilesRef={projectilesRef}
           lootDrops={lootDrops}
           extractionState={extractionState}
           isHoldingKeyERef={isHoldingKeyERef}
@@ -620,7 +596,66 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           onExtract={onExtract}
         />
       </Canvas>
+
+      {/* ─── 2D SCREEN-SPACE FLOATING DAMAGE OVERLAY (100% STABLE, 0 DREI CRASHES) ─── */}
+      <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center">
+        {floatingTexts.map((f) => (
+          <div
+            key={f.id}
+            className={`absolute font-mono select-none animate-bounce font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] ${
+              f.isCrit
+                ? 'text-amber-300 text-2xl scale-110 drop-shadow-[0_0_10px_#F59E0B]'
+                : f.isPlayerHurt
+                ? 'text-rose-400 text-lg'
+                : 'text-[#00FF66] text-xl drop-shadow-[0_0_8px_#00FF66]'
+            }`}
+            style={{
+              transform: `translate(${f.offsetX}px, ${f.offsetY}px)`,
+            }}
+          >
+            {f.isCrit ? 'CRIT ' : ''}
+            {f.isPlayerHurt ? `-${f.damage}` : `+${f.damage}`}
+          </div>
+        ))}
+      </div>
     </div>
+  );
+}
+
+// ─── 3D PROJECTILES RENDERER (DIRECT MATRIX UPDATES, 0 REACT RE-RENDERS) ─────
+function ProjectilesRenderer({
+  projectilesRef,
+}: {
+  projectilesRef: React.MutableRefObject<FPSProjectile[]>;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const projs = projectilesRef.current;
+    const meshes = groupRef.current.children as THREE.Mesh[];
+    for (let i = 0; i < meshes.length; i++) {
+      const mesh = meshes[i];
+      if (i < projs.length) {
+        mesh.visible = true;
+        mesh.position.set(projs[i].position[0], projs[i].position[1], projs[i].position[2]);
+        const mat = mesh.material as THREE.MeshBasicMaterial;
+        mat.color.set(projs[i].color);
+      } else {
+        mesh.visible = false;
+      }
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {Array.from({ length: 24 }).map((_, i) => (
+        <mesh key={i} visible={false}>
+          <sphereGeometry args={[0.18, 6, 6]} />
+          <meshBasicMaterial color="#EF4444" />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
@@ -672,7 +707,6 @@ function ExtractionPad3D({
             <cylinderGeometry args={[0.9, 1.3, 12, 16]} />
             <meshBasicMaterial color="#22D3EE" transparent opacity={isChanneling ? 0.45 : 0.25} />
           </mesh>
-          <pointLight color="#22D3EE" intensity={isChanneling ? 7 : 4} distance={9} position={[0, 1.5, 0]} />
 
           <Html position={[0, 2.6, 0]} center distanceFactor={8} occlude={false}>
             <div className="pointer-events-none flex flex-col items-center select-none font-mono whitespace-nowrap">
@@ -695,8 +729,7 @@ function EndlessSceneLogicManager({
   kills,
   enemies,
   setEnemies,
-  projectiles,
-  setProjectiles,
+  projectilesRef,
   lootDrops,
   extractionState,
   isHoldingKeyERef,
@@ -712,8 +745,7 @@ function EndlessSceneLogicManager({
   kills: number;
   enemies: FPSEnemyEntity[];
   setEnemies: React.Dispatch<React.SetStateAction<FPSEnemyEntity[]>>;
-  projectiles: FPSProjectile[];
-  setProjectiles: React.Dispatch<React.SetStateAction<FPSProjectile[]>>;
+  projectilesRef: React.MutableRefObject<FPSProjectile[]>;
   lootDrops: PhysicalLootDrop[];
   extractionState: ExtractionState;
   isHoldingKeyERef: React.MutableRefObject<boolean>;
@@ -854,19 +886,16 @@ function EndlessSceneLogicManager({
             if (!isBlocked) {
               const projDir = new THREE.Vector3(dx, 0, dz).normalize();
               const projSpeed = enemy.archetype === 'elite' ? 12 : 9.0;
-              setProjectiles((p) => [
-                ...p,
-                {
-                  id: `proj-${Date.now()}-${Math.random()}`,
-                  position: [ex, ey + 1.2, ez],
-                  velocity: [projDir.x * projSpeed, 0, projDir.z * projSpeed],
-                  damage: Math.round(enemy.attack * dmgMultiplier),
-                  color: enemy.color,
-                  radius: enemy.archetype === 'elite' ? 0.25 : 0.16,
-                  life: 3.5,
-                  isHostile: true,
-                },
-              ]);
+              projectilesRef.current.push({
+                id: `proj-${Date.now()}-${Math.random()}`,
+                position: [ex, ey + 1.2, ez],
+                velocity: [projDir.x * projSpeed, 0, projDir.z * projSpeed],
+                damage: Math.round(enemy.attack * dmgMultiplier),
+                color: enemy.color,
+                radius: enemy.archetype === 'elite' ? 0.25 : 0.16,
+                life: 3.5,
+                isHostile: true,
+              });
               sound.playLaser();
             }
           }
@@ -890,10 +919,10 @@ function EndlessSceneLogicManager({
       enemy.hitFlashTimer = nextHitFlash;
     }
 
-    // ─── 5. PROJECTILES PHYSICS WITH SOLID COVER & WALL OCCLUSION ─────
-    setProjectiles((prev) => {
+    // ─── 5. PROJECTILES PHYSICS WITH SOLID COVER & WALL OCCLUSION (0 REACT RENDERS) ─────
+    if (projectilesRef.current.length > 0) {
       const nextList: FPSProjectile[] = [];
-      for (const proj of prev) {
+      for (const proj of projectilesRef.current) {
         const nextPos: [number, number, number] = [
           proj.position[0] + proj.velocity[0] * delta,
           proj.position[1] + proj.velocity[1] * delta,
@@ -938,8 +967,8 @@ function EndlessSceneLogicManager({
 
         nextList.push({ ...proj, position: nextPos, life: nextLife });
       }
-      return nextList;
-    });
+      projectilesRef.current = nextList;
+    }
   });
 
   return null;

@@ -101,16 +101,16 @@ export function DungeonTitleScreen({
       </header>
 
       {/* ─── 3. MAIN CINEMATIC TITLE & ACTION SECTION ────────────────────── */}
-      <main className="relative z-20 flex h-[calc(100vh-140px)] flex-col justify-center px-6 sm:px-16 lg:px-24 max-w-4xl pointer-events-auto">
-        <div className="space-y-6">
+      <main className="relative z-20 flex h-[calc(100vh-140px)] flex-col justify-center items-center text-center px-6 mx-auto max-w-4xl pointer-events-auto">
+        <div className="space-y-6 flex flex-col items-center">
           {/* Tagline */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#00FF66]/30 bg-[#00FF66]/10 px-3.5 py-1 text-[11px] font-black tracking-[0.25em] uppercase text-[#00FF66] backdrop-blur-md shadow-[0_0_20px_rgba(0,255,102,0.2)]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#00FF66]/30 bg-[#00FF66]/10 px-4 py-1.5 text-[11px] font-black tracking-[0.25em] uppercase text-[#00FF66] backdrop-blur-md shadow-[0_0_20px_rgba(0,255,102,0.2)]">
             <Crosshair size={13} className="text-[#00FF66]" />
             <span>SECTOR ZERO // ENDLESS COMBAT PROTOCOL</span>
           </div>
 
           {/* Main Title Typography */}
-          <div className="space-y-1">
+          <div className="space-y-1 text-center">
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.9)]">
               SINGULARITY
             </h1>
@@ -120,13 +120,13 @@ export function DungeonTitleScreen({
           </div>
 
           {/* Clean One-Liner (No Clutter!) */}
-          <p className="max-w-xl text-sm sm:text-base text-white/70 font-sans font-medium leading-relaxed drop-shadow-md">
+          <p className="max-w-xl text-sm sm:text-base text-white/70 font-sans font-medium leading-relaxed drop-shadow-md text-center">
             Step inside the ancient subterranean cyber ruins in a continuous, high-octane FPS survival run.
             Scavenge weapons from fallen hostiles, manage your 5-slot hotbar, and survive the endless swarm.
           </p>
 
           {/* Action Button Row */}
-          <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             {/* Primary Magnetic CTA */}
             <button
               onClick={() => {
@@ -170,37 +170,7 @@ export function DungeonTitleScreen({
         </div>
       </main>
 
-      {/* ─── 4. BOTTOM TELEMETRY DOCK ────────────────────────────────────── */}
-      <footer className="absolute bottom-0 inset-x-0 z-20 flex items-center justify-between border-t border-white/10 bg-black/60 px-6 sm:px-10 py-3 backdrop-blur-xl pointer-events-auto">
-        <div className="flex items-center gap-6 text-xs text-white/60">
-          <div className="flex items-center gap-2">
-            <Timer size={14} className="text-[#00FF66]" />
-            <span>BEST SURVIVAL:</span>
-            <span className="font-bold text-white tracking-wider">{formattedBestTime}</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <Target size={14} className="text-amber-400" />
-            <span>HIGH SCORE:</span>
-            <span className="font-bold text-amber-400 tracking-wider">
-              {bestScore.toLocaleString()} PTS
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-2">
-            <Skull size={14} className="text-rose-400" />
-            <span>HOSTILES PURGED:</span>
-            <span className="font-bold text-white tracking-wider">{totalKills}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-[11px] text-white/40">
-          <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00FF66]" />
-            V3.2 ENDLESS ENGINE ONLINE
-          </span>
-        </div>
-      </footer>
-
-      {/* ─── 5. HOLOGRAPHIC TACTICAL CODEX MODAL (SLIDE-OVER / DIALOG) ───── */}
+      {/* ─── 4. HOLOGRAPHIC TACTICAL CODEX MODAL (SLIDE-OVER / DIALOG) ───── */}
       {showCodex && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 sm:p-6 backdrop-blur-xl">
           <div className="relative flex flex-col h-[85vh] max-h-[720px] w-full max-w-4xl rounded-3xl border border-[#00FF66]/30 bg-[#06120b]/95 p-6 sm:p-8 text-white shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden">
