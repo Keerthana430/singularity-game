@@ -15,7 +15,7 @@ export interface DirectorEvaluation {
   threatProgress: number; // 0 to 1 progress within tier
 }
 
-export function evaluateDirector(survivalSeconds: number, kills: number): DirectorEvaluation {
+export function evaluateDirector(survivalSeconds: number, kills: number, sector: number = 1): DirectorEvaluation {
   let tierIndex = 0;
   for (let i = THREAT_TIERS.length - 1; i >= 0; i--) {
     if (survivalSeconds >= THREAT_TIERS[i].minSeconds) {
@@ -34,12 +34,18 @@ export function evaluateDirector(survivalSeconds: number, kills: number): Direct
     threatProgress = Math.min(1, Math.max(0, elapsed / range));
   }
 
+  // Progressive sector / descent multiplier:
+  // Each descent increases difficulty (+25% HP, +20% damage per sector descended)
+  const sectorBonus = Math.max(0, (sector || 1) - 1);
+  const sectorHealthScale = 1 + sectorBonus * 0.25;
+  const sectorDamageScale = 1 + sectorBonus * 0.20;
+
   const killScaling = kills * 0.008;
-  const healthMultiplier = currentTier.enemyHealthMultiplier + killScaling;
-  const damageMultiplier = currentTier.enemyDamageMultiplier + (survivalSeconds / 450) * 0.15;
-  const spawnInterval = Math.max(3.0, currentTier.spawnRateSeconds - kills * 0.04);
-  const eliteChance = Math.min(0.5, currentTier.eliteChance + kills * 0.004);
-  const maxActiveEnemies = tierIndex === 0 ? 2 : Math.min(6, 2 + tierIndex);
+  const healthMultiplier = (currentTier.enemyHealthMultiplier + killScaling) * sectorHealthScale;
+  const damageMultiplier = (currentTier.enemyDamageMultiplier + (survivalSeconds / 450) * 0.15) * sectorDamageScale;
+  const spawnInterval = Math.max(2.2, (currentTier.spawnRateSeconds - kills * 0.04) * Math.max(0.65, 1 - sectorBonus * 0.1));
+  const eliteChance = Math.min(0.65, currentTier.eliteChance + kills * 0.004 + sectorBonus * 0.08);
+  const maxActiveEnemies = tierIndex === 0 && sectorBonus === 0 ? 2 : Math.min(7, 2 + tierIndex + Math.min(2, sectorBonus));
 
   return {
     currentTier,
@@ -67,12 +73,13 @@ export function generateSurvivalEnemy(
   id: string,
   survivalSeconds: number,
   kills: number,
-  playerPos: [number, number, number]
+  playerPos: [number, number, number],
+  sector: number = 1
 ): FPSEnemyEntity {
-  const evalState = evaluateDirector(survivalSeconds, kills);
+  const evalState = evaluateDirector(survivalSeconds, kills, sector);
   const isElite = Math.random() < evalState.eliteChance;
 
-  // Choose a spawn portal that is far away from player (at least 12m)
+  // Choose a spawn portal that is far away from player (at least 10m)
   let bestPortal = SPAWN_PORTALS[0];
   let bestDist = 0;
   for (const portal of SPAWN_PORTALS) {
@@ -83,17 +90,20 @@ export function generateSurvivalEnemy(
     }
   }
 
-  // Tier 0 is purely gentle Slimes to teach mechanics
+  const sectorBonus = Math.max(0, (sector || 1) - 1);
+
+  // Dynamic archetypes with deeper sector variety
   let archetypes: ('slime' | 'skeleton' | 'golem' | 'elite')[] = ['slime'];
-  if (evalState.tierIndex === 1) archetypes = ['slime', 'slime', 'skeleton'];
+  if (evalState.tierIndex === 0 && sectorBonus > 0) archetypes = ['slime', 'skeleton'];
+  if (evalState.tierIndex === 1) archetypes = sectorBonus > 0 ? ['slime', 'skeleton', 'golem'] : ['slime', 'slime', 'skeleton'];
   if (evalState.tierIndex === 2) archetypes = ['slime', 'skeleton', 'golem'];
   if (evalState.tierIndex >= 3) archetypes = ['skeleton', 'golem', 'elite'];
   if (isElite) archetypes = ['elite'];
 
   const archetype = isElite ? 'elite' : archetypes[Math.floor(Math.random() * archetypes.length)];
 
-  let baseHp = 45;
-  let baseAtk = 8;
+  let baseHp = 60;
+  let baseAtk = 32;
   let baseSpeed = 3.2;
   let baseRange = 2.0;
   let color = '#22C55E';
@@ -102,40 +112,44 @@ export function generateSurvivalEnemy(
 
   if (archetype === 'slime') {
     name = isElite ? 'Apex King Slime' : 'Green Slime';
-    baseHp = 45;
-    baseAtk = 8;
+    baseHp = 60;
+    baseAtk = 32;
     baseSpeed = 3.2;
     baseRange = 2.0;
     color = '#22C55E';
     isRanged = false;
   } else if (archetype === 'skeleton') {
     name = isElite ? 'Dead-Eye Skeleton' : 'Skeleton Archer';
-    baseHp = 70;
-    baseAtk = 14;
+    baseHp = 105;
+    baseAtk = 65;
     baseSpeed = 2.8;
     baseRange = 8.0;
     color = '#E2E8F0';
     isRanged = true;
   } else if (archetype === 'golem') {
-    name = isElite ? 'Colossus Golem' : 'Rune Stone Golem';
-    baseHp = 180;
-    baseAtk = 24;
+    name = isElite ? 'Ancient Colossus Golem' : 'Rune Stone Golem';
+    baseHp = 440;
+    baseAtk = 135;
     baseSpeed = 2.2;
-    baseRange = 2.6;
+    baseRange = 2.8;
     color = '#F59E0B';
     isRanged = false;
   } else if (archetype === 'elite') {
     name = 'Void Lich Necromancer';
-    baseHp = 260;
-    baseAtk = 30;
+    baseHp = 580;
+    baseAtk = 165;
     baseSpeed = 3.0;
-    baseRange = 8.0;
+    baseRange = 8.5;
     color = '#EF4444';
     isRanged = true;
   }
 
   const finalHp = Math.round(baseHp * evalState.healthMultiplier);
-  const finalShield = isElite ? Math.round(180 * evalState.healthMultiplier) : 0;
+  const finalShield = isElite
+    ? Math.round(320 * evalState.healthMultiplier)
+    : archetype === 'golem'
+    ? Math.round(160 * evalState.healthMultiplier)
+    : 0;
   const finalAtk = Math.round(baseAtk * evalState.damageMultiplier);
 
   // Slight random offset from portal center
@@ -154,7 +168,7 @@ export function generateSurvivalEnemy(
     shield: finalShield,
     maxShield: finalShield,
     attack: finalAtk,
-    defense: 25,
+    defense: archetype === 'golem' ? 45 : archetype === 'elite' ? 35 : 25,
     speed: baseSpeed,
     range: baseRange,
     color,

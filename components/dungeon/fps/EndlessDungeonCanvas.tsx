@@ -125,6 +125,7 @@ interface EndlessDungeonCanvasProps {
   onSelectSlotIndex: (index: number) => void;
   onUseActiveItem: () => void;
   onCentralPortalPickup?: (weaponId: WeaponId) => void;
+  currentSector?: number;
 }
 
 
@@ -146,6 +147,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
     isScoped = false,
     waveCountdown,
     isHordeEnraged = false,
+    currentSector = 1,
     onToggleScope,
     onPlayerDamage,
     onEnemyKilled,
@@ -161,7 +163,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
     onCentralPortalPickup,
   } = props;
 
-  const evalState = useMemo(() => evaluateDirector(survivalSeconds, kills), [survivalSeconds, kills]);
+  const evalState = useMemo(() => evaluateDirector(survivalSeconds, kills, currentSector), [survivalSeconds, kills, currentSector]);
   const palette = TIER_PALETTES[Math.min(evalState.tierIndex, TIER_PALETTES.length - 1)];
 
   // FPS State: Living enemies list (only updated on spawn, death, or damage)
@@ -350,11 +352,11 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
 
         const headPos = new THREE.Vector3(
           enemy.position[0],
-          enemy.position[1] + (enemy.archetype === 'boss' ? 2.4 : 1.45),
+          enemy.position[1] + (enemy.archetype === 'boss' ? 2.4 : enemy.archetype === 'golem' ? 2.1 : enemy.archetype === 'elite' ? 1.8 : 1.45),
           enemy.position[2]
         );
 
-        const headRadius = enemy.archetype === 'boss' ? 0.65 : 0.38;
+        const headRadius = enemy.archetype === 'boss' ? 0.65 : enemy.archetype === 'golem' ? 0.45 : 0.38;
         const toHead = headPos.clone().sub(camPos);
         const headProj = toHead.dot(rayDir);
         if (headProj > 0) {
@@ -366,7 +368,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           }
         }
 
-        const bodyRadius = enemy.archetype === 'boss' ? 1.4 : enemy.archetype === 'brute' ? 0.95 : 0.65;
+        const bodyRadius = enemy.archetype === 'boss' ? 1.4 : (enemy.archetype === 'brute' || enemy.archetype === 'golem') ? 0.95 : 0.65;
         const bodyPos = new THREE.Vector3(enemy.position[0], enemy.position[1] + 0.8, enemy.position[2]);
         const toBody = bodyPos.clone().sub(camPos);
         const bodyProj = toBody.dot(rayDir);
@@ -626,6 +628,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           isDead={isDead}
           isHordeEnraged={isHordeEnraged}
           portalDropReady={portalDropReady}
+          currentSector={currentSector}
           onCentralPortalPickup={handleCentralPortalPickup}
           onPlayerDamage={(amount) => {
             onPlayerDamage(amount);
@@ -863,6 +866,7 @@ function EndlessSceneLogicManager({
   isDead,
   isHordeEnraged = false,
   portalDropReady = false,
+  currentSector = 1,
   onCentralPortalPickup,
   onPlayerDamage,
   onNearbyLootChange,
@@ -881,6 +885,7 @@ function EndlessSceneLogicManager({
   isDead: boolean;
   isHordeEnraged?: boolean;
   portalDropReady?: boolean;
+  currentSector?: number;
   onCentralPortalPickup?: () => void;
   onPlayerDamage: (amt: number) => void;
   onNearbyLootChange: (loot: PhysicalLootDrop | null) => void;
@@ -892,7 +897,7 @@ function EndlessSceneLogicManager({
   const lastChannelPctRef = useRef(-1);
   const lastLootIdRef = useRef<string | null>(null);
 
-  const evalState = useMemo(() => evaluateDirector(survivalSeconds, kills), [survivalSeconds, kills]);
+  const evalState = useMemo(() => evaluateDirector(survivalSeconds, kills, currentSector), [survivalSeconds, kills, currentSector]);
 
   useFrame((_, delta) => {
     if (isPaused || isDead) return;
@@ -911,7 +916,8 @@ function EndlessSceneLogicManager({
         `surv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         survivalSeconds,
         kills,
-        [playerPos.x, 0, playerPos.z]
+        [playerPos.x, 0, playerPos.z],
+        currentSector
       );
       setEnemies((prev) => [...prev.filter((e) => e.hp > 0), newEnemy]);
       sound.playLaser();
