@@ -121,7 +121,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
         
         const ray = new rapier.Ray(rayOrigin, rayDir);
         // Shortened raycast so they must physically touch to hit
-        const hit = world.castRay(ray, 0.85, true);
+        const hit = world.castRay(ray, 0.55, true);
 
         if (hit) {
           const collider = hit.collider;
@@ -226,6 +226,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
         keys.current.e = true;
         if (combatState === 'IDLE' || combatState === 'BLOCKING') {
           setCombatState('BLOCKING');
+          timeSinceLastPunch.current = 0;
         }
       }
       if (k === 'h' && combatState !== 'HURT' && combatState !== 'KNOCKDOWN') {
@@ -241,6 +242,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
       if (k === 'c' && combatState === 'IDLE') {
         // Pseudo state for celebrate so we don't punch
         setCombatState('CELEBRATING');
+        timeSinceLastPunch.current = 0;
         triggerCelebrate(() => setCombatState('IDLE'));
       }
       if (k === 't' && combatState === 'IDLE') {
@@ -265,7 +267,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
             const rayOrigin = new rapier.Vector3(trans.x + dirX * 0.5, trans.y + 0.8, trans.z + dirZ * 0.5);
             const rayDir = new rapier.Vector3(dirX, 0, dirZ);
             const ray = new rapier.Ray(rayOrigin, rayDir);
-            const hit = world.castRay(ray, 1.2, true);
+            const hit = world.castRay(ray, 0.55, true);
             if (hit) {
               const collider = hit.collider;
               const userData = collider.parent()?.userData as any;
@@ -532,8 +534,8 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     }
 
     // Determine combat stance (arms raised)
-    // Active when near an enemy OR during/shortly after attacks
-    combatStanceRef.current = lockedOn || (timeSinceLastPunch.current < 3.0) || combatState !== 'IDLE';
+    // Active only during/shortly after attacks or combat actions, not just proximity.
+    combatStanceRef.current = (timeSinceLastPunch.current < 4.0) || combatState !== 'IDLE';
 
     // Stamina Regeneration
     if (timeSinceLastPunch.current > 1.0) {

@@ -168,7 +168,7 @@ export function useAIController(
       keysRef.current.w = true;
     } else if (aiState.current.action === 'BACK_AWAY' && dist < 4.0) {
       // Prevent AI from backing out of the camera frame / arena bounds
-      if (distFromCenter < 3.5) {
+      if (distFromCenter < 2.2) {
         keysRef.current.s = true;
       }
     }

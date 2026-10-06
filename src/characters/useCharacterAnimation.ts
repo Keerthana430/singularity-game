@@ -44,10 +44,10 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
   const baseHipsYRef = useRef(0.95); // Base Y from generation
   
   // Combat animation state objects
-  const combatAnimRef = useRef({ pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2, pSquat: 0, pLean: 0 });
+  const combatAnimRef = useRef({ pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2, pSquat: 0, pLean: 0, pChestX: 0, pHeadX: 0 });
   const dodgeAnimRef = useRef({ weight: 0, x: 0, z: 0, squat: 0, rollX: 0, rollZ: 0 });
   const hitAnimRef = useRef({ weight: 0, pitch: 0, twist: 0 });
-  const knockdownAnimRef = useRef({ weight: 0, pitch: 0, hipsY: 0, knees: 0, armsSpread: 0 });
+  const knockdownAnimRef = useRef({ weight: 0, pitch: 0, hipsY: 0, knees: 0, armsSpread: 0, headPitch: 0, legsSpread: 0 });
   const blockAnimRef = useRef({ weight: 0 });
   
   const prevGroundedRef = useRef(true);
@@ -170,14 +170,18 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
     const kAnim = knockdownAnimRef.current;
     gsap.killTweensOf(kAnim);
     kAnim.weight = 0;
+    kAnim.headPitch = 0;
+    kAnim.legsSpread = 0;
     
     const tl = gsap.timeline({ onComplete });
-    // 1. Stagger back (head snaps back, arms fly up)
-    tl.to(kAnim, { weight: 1.0, pitch: -0.8, hipsY: -0.3, knees: 0.5, armsSpread: 1.2, duration: 0.2, ease: "power2.out" });
-    // 2. Heavy crash to ground
-    tl.to(kAnim, { pitch: -1.5, hipsY: -0.95, knees: 0.1, armsSpread: 1.8, duration: 0.25, ease: "power1.in" });
+    // Phase 17/19: Fall on back
+    // 1. Stagger back (hips lift, head snaps back, arms fly up)
+    tl.to(kAnim, { weight: 1.0, pitch: -0.6, hipsY: 0.1, knees: 0.5, armsSpread: 1.2, headPitch: -0.9, legsSpread: 0, duration: 0.25, ease: "power2.out" });
+    // 2. Heavy crash to ground (pitch -1.45, hipsY -0.77, arms flung out, head hits floor +0.25)
+    tl.to(kAnim, { pitch: -1.45, hipsY: -0.77, knees: 0.25, armsSpread: 2.0, headPitch: +0.25, legsSpread: 0.4, duration: 0.20, ease: "power1.in" });
     // 3. Settling bounce
-    tl.to(kAnim, { pitch: -1.55, hipsY: -0.98, armsSpread: 1.5, duration: 0.3, ease: "power2.out" });
+    tl.to(kAnim, { pitch: -1.50, hipsY: -0.80, armsSpread: 1.6, headPitch: +0.1, legsSpread: 0.2, duration: 0.15, ease: "power2.out" });
+    tl.to(kAnim, { pitch: -1.45, hipsY: -0.77, armsSpread: 1.8, headPitch: +0.25, legsSpread: 0.3, duration: 0.25, ease: "power2.inOut" });
     // Stays down!
   };
 
@@ -191,15 +195,20 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
 
   const triggerCelebrate = (onComplete: () => void) => {
     activeArmOverrideRef.current = 'BOTH';
-    const cAnim = combatAnimRef.current; // Reuse combat anim for arms
+    const cAnim = combatAnimRef.current; 
     gsap.killTweensOf(cAnim);
     cAnim.pWeight = 0;
     cAnim.pElbow = 0; cAnim.pChestTwist = 0; cAnim.pShoulder = 0; cAnim.pHook = 0; cAnim.pUpper = 0; cAnim.pLunge = 0; cAnim.pArmZ = 0;
+    cAnim.pChestX = 0; cAnim.pHeadX = 0;
     
+    // Phase 22 Victory Pose: Arms up in V, chest -0.15, head -0.2 (looking up)
     const tl = gsap.timeline({ onComplete });
-    tl.to(cAnim, { pWeight: 1.0, pShoulder: -2.5, pElbow: -0.2, pArmZ: -0.5, pLunge: -0.2, duration: 0.3, ease: "back.out(1.5)" });
-    tl.to(cAnim, { pLunge: 0, duration: 0.2, yoyo: true, repeat: 3 }, "-=0.1"); // Pump fist
-    tl.to(cAnim, { pWeight: 0, duration: 0.5, ease: "power2.inOut" });
+    tl.to(cAnim, { pWeight: 1.0, pShoulder: -2.7, pElbow: -0.4, pArmZ: -0.5, pChestX: -0.15, pHeadX: -0.2, duration: 0.3, ease: "back.out(1.5)" });
+    
+    // Pump fist indefinitely until rematch (we'll just repeat it 100 times for now, or onComplete won't fire)
+    // We'll repeat it 5 times and then ease out so the player can continue walking.
+    tl.to(cAnim, { pElbow: -0.7, pSquat: 0.1, duration: 0.3, yoyo: true, repeat: 9 }, "-=0.1"); 
+    tl.to(cAnim, { pWeight: 0, pChestX: 0, pHeadX: 0, duration: 0.5, ease: "power2.inOut" });
   };
 
   const nextTauntHandIsLeftRef = useRef(true);
@@ -455,6 +464,9 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
         bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + cAnim.pElbow * cw;
         bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + cAnim.pElbow * cw;
       }
+      
+      bones.chest.rotation.x = bones.chest.rotation.x * iw + cAnim.pChestX * cw;
+      bones.head.rotation.x = bones.head.rotation.x * iw + cAnim.pHeadX * cw;
     }
 
     // Apply Dodge Override (Phase 7: Roll/Evade)
@@ -473,13 +485,18 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
       bones.hips.position.y += kAnim.hipsY * kAnim.weight;
       bones.hips.rotation.x += kAnim.pitch * kAnim.weight;
       
-      bones.lUpperLeg.rotation.x = -kAnim.pitch * kAnim.weight;
-      bones.rUpperLeg.rotation.x = -kAnim.pitch * kAnim.weight;
+      bones.lUpperLeg.rotation.x = -kAnim.pitch * kAnim.weight - 0.2 * kAnim.weight;
+      bones.rUpperLeg.rotation.x = -kAnim.pitch * kAnim.weight - 0.1 * kAnim.weight;
+      bones.lUpperLeg.rotation.z -= kAnim.legsSpread * kAnim.weight;
+      bones.rUpperLeg.rotation.z += kAnim.legsSpread * kAnim.weight;
+      
       bones.lLowerLeg.rotation.x += kAnim.knees * kAnim.weight;
       bones.rLowerLeg.rotation.x += kAnim.knees * kAnim.weight;
       
       bones.lUpperArm.rotation.z += kAnim.armsSpread * kAnim.weight;
       bones.rUpperArm.rotation.z -= kAnim.armsSpread * kAnim.weight;
+      
+      bones.head.rotation.x += kAnim.headPitch * kAnim.weight;
       bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * (1 - kAnim.weight);
       bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * (1 - kAnim.weight);
     }
