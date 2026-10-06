@@ -163,16 +163,18 @@ export function ProceduralCharacter() {
         if (combatState === 'IDLE') {
           if (timeSinceLastPunch.current > 0.8) punchCombo.current = 0;
           
-          let attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' = 'JAB';
+          let attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' | 'SPIN_ATTACK' = 'JAB';
           let isLeft = true;
           
           if (!isGrounded) {
             attackType = 'JUMP_ATTACK';
             isLeft = false;
           } else if (e.button === 2) { 
-            attackType = (keys.current.w || keys.current.s) ? 'UPPERCUT' : 'HOOK';
+            // Right click: Heavy attack (Uppercut)
+            attackType = 'UPPERCUT';
             isLeft = false;
           } else { 
+            // Left click: Standard attacks
             if (keys.current.a || keys.current.d) {
               attackType = 'HOOK';
               isLeft = punchCombo.current % 2 === 0;
@@ -180,19 +182,13 @@ export function ProceduralCharacter() {
               attackType = 'UPPERCUT';
               isLeft = punchCombo.current % 2 === 0;
             } else {
-              if (punchCombo.current === 0) {
+              // Alternate JAB and CROSS without escalating to SPIN_ATTACK
+              if (punchCombo.current % 2 === 0) {
                  attackType = 'JAB';
                  isLeft = true;
-              } else if (punchCombo.current === 1) {
+              } else {
                  attackType = 'CROSS';
                  isLeft = false;
-              } else if (punchCombo.current === 2) {
-                 attackType = 'HOOK';
-                 isLeft = true;
-              } else {
-                 attackType = 'SPIN_ATTACK'; 
-                 isLeft = false;
-                 punchCombo.current = -1; 
               }
             }
           }
