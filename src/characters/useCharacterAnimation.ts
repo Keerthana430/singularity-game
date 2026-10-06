@@ -163,6 +163,31 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     tl.to(kAnim, { weight: 0, pitch: 0, hipsY: 0, knees: 0, duration: 0.4, ease: "power2.inOut" });
   };
 
+  const triggerCelebrate = (onComplete: () => void) => {
+    const cAnim = combatAnimRef.current; // Reuse combat anim for arms
+    gsap.killTweensOf(cAnim);
+    cAnim.pWeight = 0;
+    cAnim.pElbow = 0; cAnim.pChestTwist = 0; cAnim.pShoulder = 0; cAnim.pHook = 0; cAnim.pUpper = 0; cAnim.pLunge = 0; cAnim.pArmZ = 0;
+    
+    const tl = gsap.timeline({ onComplete });
+    tl.to(cAnim, { pWeight: 1.0, pShoulder: -2.5, pElbow: -0.2, pArmZ: -0.5, pLunge: -0.2, duration: 0.3, ease: "back.out(1.5)" });
+    tl.to(cAnim, { pLunge: 0, duration: 0.2, yoyo: true, repeat: 3 }, "-=0.1"); // Pump fist
+    tl.to(cAnim, { pWeight: 0, duration: 0.5, ease: "power2.inOut" });
+  };
+
+  const triggerTaunt = (onComplete: () => void) => {
+    const cAnim = combatAnimRef.current;
+    gsap.killTweensOf(cAnim);
+    cAnim.pWeight = 0;
+    cAnim.pElbow = 0; cAnim.pChestTwist = 0; cAnim.pShoulder = 0; cAnim.pHook = 0; cAnim.pUpper = 0; cAnim.pLunge = 0; cAnim.pArmZ = 0;
+    
+    const tl = gsap.timeline({ onComplete });
+    // "Bring it on" gesture
+    tl.to(cAnim, { pWeight: 1.0, pShoulder: -1.0, pElbow: -1.5, pArmZ: 0.5, pChestTwist: 0.3, duration: 0.4, ease: "power2.out" });
+    tl.to(cAnim, { pElbow: -0.8, duration: 0.2, yoyo: true, repeat: 4 }, "+=0.1"); // Beckon
+    tl.to(cAnim, { pWeight: 0, pChestTwist: 0, duration: 0.5, ease: "power2.inOut" });
+  };
+
   useFrame((state, dt) => {
     if (!bones.root) return;
     
@@ -419,5 +444,5 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     }
   });
 
-  return { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp };
+  return { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt };
 }

@@ -29,7 +29,7 @@ export function ProceduralCharacter() {
   const combatStanceRef = useRef(false);
   const lastKeyTime = useRef<Record<string, number>>({ w: 0, a: 0, s: 0, d: 0 });
 
-  const { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef);
+  const { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef);
 
   let punchCombo = useRef(0);
   let timeSinceLastPunch = useRef(999);
@@ -81,6 +81,15 @@ export function ProceduralCharacter() {
           setCombatState('IDLE');
         });
       }
+      if (k === 'c' && combatState === 'IDLE') {
+        // Pseudo state for celebrate so we don't punch
+        setCombatState('HURT');
+        triggerCelebrate(() => setCombatState('IDLE'));
+      }
+      if (k === 't' && combatState === 'IDLE') {
+        setCombatState('HURT');
+        triggerTaunt(() => setCombatState('IDLE'));
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
@@ -102,7 +111,7 @@ export function ProceduralCharacter() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [combatState, setCombatState, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp]);
+  }, [combatState, setCombatState, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt]);
 
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
