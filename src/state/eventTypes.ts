@@ -8,4 +8,6 @@ export type GameEvent =
   | { type: 'LANDED_ON_LADDER'; playerId: PlayerId; from: TileNumber; to: TileNumber }
   | { type: 'TURN_ENDED'; nextPlayerId: PlayerId }
   | { type: 'GAME_WON'; playerId: PlayerId }
-  | { type: 'OVERSHOOT'; playerId: PlayerId; attempted: TileNumber; stayAt: TileNumber };
+  | { type: 'OVERSHOOT'; playerId: PlayerId; attempted: TileNumber; stayAt: TileNumber }
+  | { type: 'DUEL_INITIATED'; attackerId: PlayerId; defenderId: PlayerId }
+  | { type: 'DUEL_RESOLVED'; winnerId: PlayerId; loserId: PlayerId };

@@ -36,12 +36,19 @@ describe('Rules Engine - Soak Test', () => {
         const currentPlayerId = state.players[state.currentPlayerIndex].id;
         let result = gameReducer(state, { type: 'ROLL_DICE', playerId: currentPlayerId });
         state = result.newState;
-        
         // Assert state is valid
         for (const p of state.players) {
           expect(p.position).toBeGreaterThanOrEqual(1);
           expect(p.position).toBeLessThanOrEqual(state.boardConfig.size);
           expect(isNaN(p.position)).toBe(false);
+        }
+
+        // If a duel was initiated, randomly resolve it
+        if (state.turnPhase === 'dueling' && state.activeDuel) {
+          const { attackerId, defenderId } = state.activeDuel;
+          const winnerId = Math.random() > 0.5 ? attackerId : defenderId;
+          result = gameReducer(state, { type: 'RESOLVE_DUEL', winnerId });
+          state = result.newState;
         }
 
         turns++;

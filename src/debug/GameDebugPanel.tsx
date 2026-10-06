@@ -63,9 +63,24 @@ export function GameDebugPanel() {
         <section className="pt-4 border-t border-[#00FF66]/30">
           <button 
             onClick={() => dispatch({ type: 'START_GAME', playerNames: ['P1', 'P2'] })}
-            className="w-full py-1 border border-[#00FF66] hover:bg-[#00FF66] hover:text-black transition-colors"
+            className="w-full py-1 border border-[#00FF66] hover:bg-[#00FF66] hover:text-black transition-colors mb-2"
           >
             Reset Game State
+          </button>
+          <button 
+            onClick={() => {
+              if (p1 && p2) {
+                // Force a duel by pretending P1 rolled onto P2's tile
+                useGameStore.setState(s => ({
+                  ...s,
+                  turnPhase: 'dueling',
+                  activeDuel: { attackerId: p1.id, defenderId: p2.id, tile: p2.position }
+                }));
+              }
+            }}
+            className="w-full py-1 border border-[#00FF66] hover:bg-[#00FF66] hover:text-black transition-colors"
+          >
+            Force Duel (P1 vs P2)
           </button>
         </section>
         

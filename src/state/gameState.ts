@@ -1,12 +1,19 @@
 import { PlayerId, TileNumber, PlayerColor } from '../shared';
 
-export type TurnPhase = 'waiting' | 'rolling' | 'moving' | 'snake-event' | 'ladder-event' | 'finished';
+export type TurnPhase = 'waiting' | 'rolling' | 'moving' | 'snake-event' | 'ladder-event' | 'dueling' | 'finished';
+
+export interface DuelState {
+  attackerId: PlayerId;
+  defenderId: PlayerId;
+  tile: TileNumber;
+}
 
 export interface PlayerState {
   id: PlayerId;
   name: string;
   position: TileNumber;
   color: PlayerColor;
+  isAi?: boolean;
 }
 
 export interface GameRules {
@@ -32,4 +39,5 @@ export interface GameState {
   turnNumber: number;
   rngState: number;
   commandLog: unknown[]; // To be typed precisely later
+  activeDuel?: DuelState;
 }

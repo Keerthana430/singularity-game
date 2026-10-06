@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 export interface CharacterRig {
   group: THREE.Group;
-  bones: Record<string, THREE.Group | THREE.Bone>;
+  bones: Record<string, THREE.Object3D>;
   materials: Record<string, THREE.Material>;
 }
 
@@ -55,7 +55,7 @@ export function buildProceduralCharacter(
   colorDark: number = 0x2b1c4a // Deep Purple/Blue for contrasting parts (Noisy Boy vibes)
 ): CharacterRig {
   const group = new THREE.Group();
-  const bones: Record<string, THREE.Group | THREE.Bone> = {};
+  const bones: Record<string, THREE.Object3D> = {};
 
   const bodyMat = new THREE.MeshStandardMaterial({
     color: colorBody,

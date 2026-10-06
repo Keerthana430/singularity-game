@@ -21,12 +21,14 @@ const PHASE_LABELS: Record<TurnPhase, string> = {
   'moving':       'Moving…',
   'snake-event':  '🐍 Snake!',
   'ladder-event': '🪜 Ladder!',
+  'dueling':      '⚔️ DUEL!',
   'finished':     '🏆 Game Over',
 };
 
 const CAPTION_EVENTS: Partial<Record<TurnPhase, string>> = {
   'snake-event':  '⚠ SNAKE!',
   'ladder-event': '✦ LADDER!',
+  'dueling':      'FIGHT!',
 };
 
 const CAPTION_COLORS: Partial<Record<TurnPhase, string>> = {

@@ -6,10 +6,12 @@ import { Physics, RigidBody } from '@react-three/rapier';
 import { Suspense } from 'react';
 import { ProceduralCharacter } from '@/src/characters/ProceduralCharacter';
 import { StaticDummy } from '@/src/characters/StaticDummy';
+import { CombatHUD } from '@/src/ui/CombatHUD';
 
 export default function CharacterTestPage() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0f172a' }}>
+      <CombatHUD />
       <Canvas shadows camera={{ position: [0, 2, 5], fov: 50 }}>
         <color attach="background" args={['#0f172a']} />
         
@@ -40,7 +42,7 @@ export default function CharacterTestPage() {
             <ProceduralCharacter />
             
             {/* Target Dummy */}
-            <StaticDummy position={[0, 0.6, -3]} />
+            <ProceduralCharacter playerId="opponent1" inputType="ai" position={[0, 0, -3]} />
           </Physics>
         </Suspense>
 

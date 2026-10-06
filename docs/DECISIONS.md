@@ -101,3 +101,11 @@
 **Context:** The duel system (ADR-014) added complexity that was not desired by the user. They requested its complete removal.
 **Decision:** Remove all duel-related UI, game state, keyboard listeners, combat variables, and logic loop from the game. 
 **Consequences:** Players now overlap/coexist peacefully when landing on the same tile, returning to the standard Snakes & Ladders behavior. ADR-014 is revoked.
+
+## Decision 10: Combat Health & Stamina System (Zustand)
+**Context:** Need to manage health and stamina for multiple combat entities (Player and AI opponent dummy) to prepare for full AI combat.
+**Options:**
+1. Keep local hp state in ProceduralCharacter and rely on prop callbacks for HUD.
+2. Use a centralized global store (zustand) holding an entities map.
+**Choice:** Option 2 (Centralized Store).
+**Consequences:** Easier to render HUDs outside the 3D scene (Canvas) without prop drilling or performance issues.

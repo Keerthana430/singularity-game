@@ -13,6 +13,7 @@ import { animatePath } from '../movement/pathAnimator';
 import { globalSequencer } from '../animation';
 import { generateTerracedLayout } from '../board/layout';
 import { TileNumber } from '../shared';
+import { DuelArena } from './DuelArena';
 
 import { useQualityTier } from './useQualityTier';
 
@@ -116,21 +117,51 @@ export function GameRenderer() {
       });
     };
 
+    const onDuelResolved = async (e: GameEvent) => {
+      if (e.type !== 'DUEL_RESOLVED') return;
+      
+      const winner = useGameStore.getState().players.find(p => p.id === e.winnerId);
+      const loser = useGameStore.getState().players.find(p => p.id === e.loserId);
+      
+      if (winner && pawnRefs.current[winner.id]) {
+        const targetPos = getPos(winner.position);
+        animatePath(pawnRefs.current[winner.id], [targetPos], 1.0).then(() => {
+          setVisualPositions(prev => ({ ...prev, [winner.id]: targetPos }));
+        });
+      }
+      
+      if (loser && pawnRefs.current[loser.id]) {
+        const targetPos = getPos(loser.position);
+        animatePath(pawnRefs.current[loser.id], [targetPos], 1.0).then(() => {
+          setVisualPositions(prev => ({ ...prev, [loser.id]: targetPos }));
+        });
+      }
+    };
+
     eventBus.on('DICE_ROLLED', onDiceRolled);
     eventBus.on('PLAYER_MOVE_START', onPlayerMoveStart);
     eventBus.on('LANDED_ON_SNAKE', onLandedOnSnake);
     eventBus.on('LANDED_ON_LADDER', onLandedOnLadder);
+    eventBus.on('DUEL_RESOLVED', onDuelResolved);
 
     return () => {
       eventBus.off('DICE_ROLLED', onDiceRolled);
       eventBus.off('PLAYER_MOVE_START', onPlayerMoveStart);
       eventBus.off('LANDED_ON_SNAKE', onLandedOnSnake);
       eventBus.off('LANDED_ON_LADDER', onLandedOnLadder);
+      eventBus.off('DUEL_RESOLVED', onDuelResolved);
     };
   }, [boardConfig.size, layout]);
 
   const activePlayer = players[currentPlayerIndex];
-  const targetCameraPos = activePlayer ? (visualPositions[activePlayer.id] || getPos(1)) : undefined;
+  const turnPhase = useGameStore(state => state.turnPhase);
+  
+  let targetCameraPos = activePlayer ? (visualPositions[activePlayer.id] || getPos(1)) : undefined;
+  
+  // Point camera at duel arena when dueling
+  if (turnPhase === 'dueling') {
+    targetCameraPos = new Vector3(0, -97, 6); 
+  }
 
   useFrame((state, delta) => {
     globalSequencer.update(delta);
@@ -177,6 +208,7 @@ export function GameRenderer() {
       })}
 
       <Dice3D ref={diceRef} />
+      <DuelArena />
       <CameraController targetPosition={targetCameraPos} />
     </group>
   );

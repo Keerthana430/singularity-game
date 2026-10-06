@@ -98,6 +98,19 @@ export function gameReducer(
         return { newState, events };
       }
 
+      // Check for collisions (Duel trigger)
+      const occupant = newState.players.find(p => p.id !== currentPlayer.id && p.position === finalTile);
+      if (occupant) {
+        newState.turnPhase = 'dueling';
+        newState.activeDuel = {
+          attackerId: currentPlayer.id,
+          defenderId: occupant.id,
+          tile: finalTile
+        };
+        events.push({ type: 'DUEL_INITIATED', attackerId: currentPlayer.id, defenderId: occupant.id });
+        return { newState, events };
+      }
+
       // If we got here, the turn is ending (unless extra turn on 6)
       if (newState.boardConfig.rules.extraTurnOnSix && diceResult === 6) {
         newState.turnPhase = 'waiting';
@@ -105,6 +118,38 @@ export function gameReducer(
         advanceTurn();
       }
 
+      return { newState, events };
+    }
+
+    case 'RESOLVE_DUEL': {
+      if (newState.turnPhase !== 'dueling' || !newState.activeDuel) {
+        return { newState, events };
+      }
+
+      const { attackerId, defenderId, tile } = newState.activeDuel;
+      const isAttackerWinner = command.winnerId === attackerId;
+      const loserId = isAttackerWinner ? defenderId : attackerId;
+      
+      const winnerPlayer = newState.players.find(p => p.id === command.winnerId)!;
+      const loserPlayer = newState.players.find(p => p.id === loserId)!;
+      
+      // Winner advances 1 tile (immune to snakes)
+      let newWinnerTile = Math.min(newState.boardConfig.size, winnerPlayer.position + 1);
+      
+      // Loser retreats 1 tile
+      let newLoserTile = Math.max(1, loserPlayer.position - 1);
+
+      // We explicitly DO NOT trigger snakes/ladders on these bonus movements based on user instructions:
+      // "if the winner moves 1 time there is a snake the snake is not bite him"
+      winnerPlayer.position = newWinnerTile;
+      loserPlayer.position = newLoserTile;
+
+      newState.turnPhase = 'waiting';
+      newState.activeDuel = undefined;
+      
+      events.push({ type: 'DUEL_RESOLVED', winnerId: command.winnerId, loserId });
+      advanceTurn();
+      
       return { newState, events };
     }
 
@@ -119,6 +164,7 @@ export function gameReducer(
         name,
         position: 1,
         color: colors[idx],
+        isAi: name.toLowerCase().includes('ai') || name.toLowerCase().includes('bot')
       }));
       
       newState.boardConfig = createStandardBoard();

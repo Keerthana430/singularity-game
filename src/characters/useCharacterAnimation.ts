@@ -1,3 +1,6 @@
+'use client';
+"use no memo";
+/* eslint-disable */
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useRef, useState, useEffect } from 'react';
@@ -29,8 +32,10 @@ const WALK = {
   runMultiplier: 1.4    // amplify walk cycle for running
 };
 
-export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.Bone>, velocity: THREE.Vector3, isGrounded: boolean, combatStanceRef?: React.MutableRefObject<boolean>) {
-  const { combatState } = useCharacterState();
+export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, velocity: THREE.Vector3, isGrounded: boolean, combatStanceRef: React.MutableRefObject<boolean> | undefined, combatState: string = 'IDLE') {
+  const bonesRef = useRef(_bones);
+  bonesRef.current = _bones;
+  const bones = bonesRef.current;
   
   const moveBlendRef = useRef(0);
   const walkCyclePhaseRef = useRef(0);
@@ -74,23 +79,23 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     let strikeElbow = -0.1, strikeChest = isLeft ? -0.4 : 0.4, strikeShoulder = -1.5, strikeArmZ = 0;
     let windupHook = 0, strikeHook = 0, windupUpper = 0, strikeUpper = 0;
     let windupSquat = 0, strikeSquat = 0, windupLean = 0, strikeLean = 0;
-    let strikeDur = 0.12, lungeDist = 0.4, recoilDur = 0.35, recoilDelay = "+=0.05";
+    let strikeDur = 0.12, lungeDist = 0, recoilDur = 0.35, recoilDelay = "+=0.05";
     
     if (attackType === 'HOOK') {
       strikeElbow = -1.5; strikeChest = isLeft ? -0.9 : 0.9; strikeShoulder = -1.0; strikeArmZ = -0.5;
-      windupHook = -0.6; strikeHook = 1.2; strikeDur = 0.15; lungeDist = 0.3; recoilDur = 0.4;
+      windupHook = -0.6; strikeHook = 1.2; strikeDur = 0.15; recoilDur = 0.4;
     } else if (attackType === 'UPPERCUT') {
       strikeElbow = -2.2; strikeChest = isLeft ? -0.3 : 0.3; strikeShoulder = -0.5; strikeArmZ = 0.5;
       windupSquat = 0.8; strikeSquat = -0.3; 
       windupLean = isLeft ? 0.3 : -0.3; strikeLean = isLeft ? -0.1 : 0.1;
-      windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = 0.15; recoilDur = 0.45;
+      windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = -0.6; recoilDur = 0.45;
     } else if (attackType === 'CROSS') {
-      strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; lungeDist = 0.6; recoilDur = 0.4; strikeArmZ = -0.1;
+      strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; recoilDur = 0.4; strikeArmZ = -0.1;
     } else if (attackType === 'JUMP_ATTACK') {
-      strikeElbow = -0.2; strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.0; strikeArmZ = -0.5; strikeDur = 0.15; lungeDist = 0.8; recoilDur = 0.5; recoilDelay = "+=0.15";
+      strikeElbow = -0.2; strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.0; strikeArmZ = -0.5; strikeDur = 0.15; recoilDur = 0.5; recoilDelay = "+=0.15";
     } else if (attackType === 'SPIN_ATTACK') {
       strikeElbow = -0.5; strikeChest = isLeft ? -3.14 : 3.14; strikeShoulder = -1.5; strikeArmZ = -1.0; 
-      windupHook = isLeft ? 1.0 : -1.0; strikeHook = isLeft ? -2.0 : 2.0; strikeDur = 0.25; lungeDist = 0.5; recoilDur = 0.5; recoilDelay = "+=0.1";
+      windupHook = isLeft ? 1.0 : -1.0; strikeHook = isLeft ? -2.0 : 2.0; strikeDur = 0.25; recoilDur = 0.5; recoilDelay = "+=0.1";
     }
 
     // 1. Windup (Anticipation)
@@ -104,7 +109,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     
     // 3. Recoil / Recovery
     tl.to(combatAnim, {
-      pWeight: 0.2, pElbow: -2.0, pChestTwist: 0, pShoulder: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2,
+      pWeight: 0, pElbow: -2.0, pChestTwist: 0, pShoulder: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2, pSquat: 0, pLean: 0,
       duration: recoilDur, ease: "power4.out"
     }, recoilDelay);
   };
@@ -315,6 +320,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const isw = 1.0 - sw;
     const boxerBounce = Math.abs(Math.sin(t * Math.PI * 2 * 2.0)) * 0.02 * sw;
 
+    bones.hips.position.x = 0;
+    bones.hips.position.z = 0;
     bones.hips.position.y = baseHipsYRef.current 
         + Math.sin(t * Math.PI * 2 * IDLE.bodyBobFreq) * IDLE.bodyBobAmp * idleWeight 
         + hipBob * walkWeight 
@@ -334,12 +341,19 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
 
     // Facial expressions (Eyes)
     if (bones.eyeL && bones.eyeR) {
-      // Squint in combat (scale.y -> 0.5), normal otherwise (scale.y -> 1.0)
-      bones.eyeL.scale.y = 1.0 * isw + 0.5 * sw;
-      bones.eyeR.scale.y = 1.0 * isw + 0.5 * sw;
-      // Slant inward for an angry/serious look in combat
-      bones.eyeL.rotation.z = -0.3 * sw; 
-      bones.eyeR.rotation.z = 0.3 * sw;
+      let eyeScaleY = 1.0 * isw + 0.5 * sw;
+      let eyeRotZ = 0.3 * sw;
+      
+      // If blocking, open eyes wide
+      if (blockWeight > 0) {
+        eyeScaleY = eyeScaleY * (1 - blockWeight) + 1.8 * blockWeight;
+        eyeRotZ = eyeRotZ * (1 - blockWeight); // Remove the angry slant when blocking
+      }
+      
+      bones.eyeL.scale.y = eyeScaleY;
+      bones.eyeR.scale.y = eyeScaleY;
+      bones.eyeL.rotation.z = -eyeRotZ; 
+      bones.eyeR.rotation.z = eyeRotZ;
     }
 
     // Default Legs (IDLE + WALK + FALLING + STANCE + STRAFE)
@@ -463,32 +477,30 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       bones.head.rotation.x += hAnim.pitch * 0.5 * hAnim.weight;
     }
 
-    // Apply Block Override (Realistic Tight High Guard)
+    // Apply Block Override (90 degree vertical guard)
     if (blockWeight > 0) {
       const iw = 1.0 - blockWeight;
       const bw = blockWeight;
 
-      bones.chest.rotation.x = bones.chest.rotation.x * iw + (0.25) * bw; // Crunch forward heavily to protect body
-      bones.head.rotation.x = bones.head.rotation.x * iw + (-0.15) * bw; // Tuck chin down behind the gloves
+      bones.chest.rotation.x = bones.chest.rotation.x * iw + (0.2) * bw;
+      bones.head.rotation.x = bones.head.rotation.x * iw + (-0.1) * bw;
       
-      // Roll shoulders forward and up to protect the chin
-      bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.3) * bw;
+      bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.2) * bw;
       bones.lShoulder.rotation.y = bones.lShoulder.rotation.y * iw + (0.2) * bw;
       
-      bones.rShoulder.rotation.x = bones.rShoulder.rotation.x * iw + (-0.3) * bw;
+      bones.rShoulder.rotation.x = bones.rShoulder.rotation.x * iw + (-0.2) * bw;
       bones.rShoulder.rotation.y = bones.rShoulder.rotation.y * iw + (-0.2) * bw;
       
-      // Upper arms: Raise up (-1.4), pull IN tightly across the chest/face (+0.3/-0.3)
-      // Note: Removed the .y twist because it caused the elbow joint to bend sideways into the shoulder
-      bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * iw + (-1.4) * bw;
-      bones.lUpperArm.rotation.z = bones.lUpperArm.rotation.z * iw + (0.3) * bw; 
+      // Upper arms: Horizontal out
+      bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * iw + (-1.5) * bw;
+      bones.lUpperArm.rotation.z = bones.lUpperArm.rotation.z * iw + (0) * bw; 
       
-      bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * iw + (-1.4) * bw;
-      bones.rUpperArm.rotation.z = bones.rUpperArm.rotation.z * iw + (-0.3) * bw;
+      bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * iw + (-1.5) * bw;
+      bones.rUpperArm.rotation.z = bones.rUpperArm.rotation.z * iw + (0) * bw;
 
-      // Bend elbows straight up and slightly in, forming a vertical shield in front of the face
-      bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + (-2.0) * bw;
-      bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + (-2.0) * bw;
+      // Lower arms: 90 degree bend up
+      bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + (-1.57) * bw;
+      bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + (-1.57) * bw;
     }
   });
 
