@@ -442,6 +442,9 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       // Bend elbows straight up and slightly in, forming a vertical shield in front of the face
       bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + (-2.0) * bw;
       bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + (-2.0) * bw;
+    }
+  });
+
   const triggerAutoCombo = (onComplete: () => void) => {
     // We can chain the animations manually using delayed calls or a master timeline.
     // Since triggerPunch handles its own mini-timeline, it's easier to just call it sequentially.
