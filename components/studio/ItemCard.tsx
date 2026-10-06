@@ -28,6 +28,9 @@ import {
   CircleDot,
   Hexagon,
   Coins,
+  Target,
+  Swords,
+  Crosshair,
 } from 'lucide-react';
 import { AvatarItem, Rarity } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
@@ -51,240 +54,198 @@ const rarityDot: Record<Rarity, string> = {
 // Item-specific distinctive iconography & badges
 function getItemVisual(item: AvatarItem, itemColor: string) {
   const id = item.id.toLowerCase();
+  const cat = item.category?.toLowerCase();
 
-  // ── Tops & Outfits ──
-  if (id === 'lolita-dress') {
+  // ── 1. Eyes ──
+  if (cat === 'eyes' || id.includes('eye') || id.includes('wink') || ['sparkle', 'anime', 'wide', 'narrow'].includes(id)) {
+    if (id === 'sparkle') {
+      return {
+        icon: <Star size={24} className="stroke-[2.2]" style={{ color: '#FBBF24', fill: '#FBBF2433' }} />,
+        tag: 'STAR',
+        bgGlow: '#F59E0B',
+      };
+    }
+    if (id === 'heart') {
+      return {
+        icon: <Heart size={24} className="stroke-[2.2]" style={{ color: '#EC4899', fill: '#EC489933' }} />,
+        tag: 'HEART',
+        bgGlow: '#EC4899',
+      };
+    }
+    if (id === 'wink') {
+      return {
+        icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#06B6D4' }} />,
+        tag: 'WINK',
+        bgGlow: '#06B6D4',
+      };
+    }
+    if (id === 'anime') {
+      return {
+        icon: <Sparkles size={24} className="stroke-[2.2]" style={{ color: '#C084FC', fill: '#C084FC33' }} />,
+        tag: 'ANIME',
+        bgGlow: '#8B5CF6',
+      };
+    }
+    if (id === 'wide') {
+      return {
+        icon: <Eye size={24} className="stroke-[2.2]" style={{ color: '#10B981' }} />,
+        tag: 'WIDE',
+        bgGlow: '#10B981',
+      };
+    }
+    if (id === 'cyber') {
+      return {
+        icon: <Zap size={24} className="stroke-[2.2]" style={{ color: '#00FF66' }} />,
+        tag: 'NEON',
+        bgGlow: '#00FF66',
+      };
+    }
+    if (id === 'narrow') {
+      return {
+        icon: <Target size={24} className="stroke-[2.2]" style={{ color: '#F97316' }} />,
+        tag: 'FOCUS',
+        bgGlow: '#EA580C',
+      };
+    }
     return {
-      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'LOLITA',
-      bgGlow: '#FF7EB6',
-    };
-  }
-  if (id === 'maid-dress') {
-    return {
-      icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: '#FFFFFF' }} />,
-      tag: 'MAID',
-      bgGlow: '#E2E8F0',
-    };
-  }
-  if (id === 'magical-dress') {
-    return {
-      icon: <Star size={22} className="stroke-[2.2]" style={{ color: '#C084FC' }} />,
-      tag: 'MAGICAL',
-      bgGlow: '#8B5CF6',
-    };
-  }
-  if (id === 'sundress') {
-    return {
-      icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
-      tag: 'SUMMER',
-      bgGlow: '#FBBF24',
-    };
-  }
-  if (id === 'princess-gown') {
-    return {
-      icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
-      tag: 'GOWN',
-      bgGlow: '#EC4899',
-    };
-  }
-  if (id === 'cyber-dress') {
-    return {
-      icon: <Zap size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />,
-      tag: 'CYBER',
-      bgGlow: '#06B6D4',
-    };
-  }
-  if (id === 'hoodie-dress') {
-    return {
-      icon: <Feather size={22} className="stroke-[2.2]" style={{ color: '#818CF8' }} />,
-      tag: 'COZY',
-      bgGlow: '#6366F1',
-    };
-  }
-  if (id === 'armor') {
-    return {
-      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />,
-      tag: 'ARMOR',
-      bgGlow: '#475569',
-    };
-  }
-  if (id === 'futuristic-suit') {
-    return {
-      icon: <Bot size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />,
-      tag: 'MECHA',
-      bgGlow: '#00FF66',
-    };
-  }
-  if (id === 'hoodie') {
-    return {
-      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#CBD5E1' }} />,
-      tag: 'STREET',
-      bgGlow: '#334155',
-    };
-  }
-  if (id === 'jacket') {
-    return {
-      icon: <Layers size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
-      tag: 'JACKET',
-      bgGlow: '#78350F',
-    };
-  }
-  if (id === 'shirt') {
-    return {
-      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#F8FAFC' }} />,
-      tag: 'FORMAL',
-      bgGlow: '#94A3B8',
-    };
-  }
-  if (id === 'tshirt') {
-    return {
-      icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#60A5FA' }} />,
-      tag: 'CASUAL',
-      bgGlow: '#3B82F6',
-    };
-  }
-  if (id === 'tank') {
-    return {
-      icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#FB7185' }} />,
-      tag: 'SPORT',
-      bgGlow: '#E11D48',
-    };
-  }
-  if (id === 'crop') {
-    return {
-      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
-      tag: 'CROP',
-      bgGlow: '#D946EF',
+      icon: <Eye size={24} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />,
+      tag: 'CLASSIC',
+      bgGlow: '#0284C7',
     };
   }
 
-  // ── Bottoms ──
-  if (id.includes('skirt') || id === 'tutu') {
+  // ── 2. Expressions ──
+  if (cat === 'expression') {
+    if (id === 'blushing') {
+      return {
+        icon: <Heart size={24} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
+        tag: 'BLUSH',
+        bgGlow: '#F472B6',
+      };
+    }
+    if (id === 'uwu') {
+      return {
+        icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#C084FC' }} />,
+        tag: ':3',
+        bgGlow: '#A855F7',
+      };
+    }
+    if (id === 'happy') {
+      return {
+        icon: <Sun size={24} className="stroke-[2.2]" style={{ color: '#FBBF24' }} />,
+        tag: 'HAPPY',
+        bgGlow: '#F59E0B',
+      };
+    }
+    if (id === 'pout') {
+      return {
+        icon: <Shield size={24} className="stroke-[2.2]" style={{ color: '#FB7185' }} />,
+        tag: 'POUT',
+        bgGlow: '#E11D48',
+      };
+    }
+    if (id === 'cool') {
+      return {
+        icon: <Glasses size={24} className="stroke-[2.2]" style={{ color: '#F97316' }} />,
+        tag: 'SMUG',
+        bgGlow: '#EA580C',
+      };
+    }
+    if (id === 'fierce') {
+      return {
+        icon: <Swords size={24} className="stroke-[2.2]" style={{ color: '#EF4444' }} />,
+        tag: 'BATTLE',
+        bgGlow: '#DC2626',
+      };
+    }
+    if (id === 'serious') {
+      return {
+        icon: <Target size={24} className="stroke-[2.2]" style={{ color: '#818CF8' }} />,
+        tag: 'STOIC',
+        bgGlow: '#6366F1',
+      };
+    }
     return {
-      icon: <Scissors size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'SKIRT',
-      bgGlow: itemColor,
-    };
-  }
-  if (id === 'jeans' || id === 'shorts' || id === 'cargo' || id === 'joggers' || id === 'leggings') {
-    return {
-      icon: <Layers size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'PANTS',
-      bgGlow: itemColor,
-    };
-  }
-  if (id === 'armor-pants') {
-    return {
-      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />,
-      tag: 'GREAVES',
-      bgGlow: '#475569',
-    };
-  }
-
-  // ── Shoes ──
-  if (item.category === 'shoes') {
-    return {
-      icon: <Footprints size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: id.toUpperCase().slice(0, 7),
-      bgGlow: itemColor,
-    };
-  }
-
-  // ── Accessories ──
-  if (id === 'cat-ears' || id === 'bunny-ears') {
-    return {
-      icon: <Smile size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />,
-      tag: 'EARS',
-      bgGlow: '#FF5C93',
-    };
-  }
-  if (id === 'bow') {
-    return {
-      icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#FF2D78' }} />,
-      tag: 'BOW',
-      bgGlow: '#FF2D78',
-    };
-  }
-  if (id === 'halo') {
-    return {
-      icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#FFD700' }} />,
-      tag: 'HOLY',
-      bgGlow: '#FFD700',
-    };
-  }
-  if (id === 'glasses') {
-    return {
-      icon: <Glasses size={22} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />,
-      tag: 'OPTIC',
-      bgGlow: '#38BDF8',
-    };
-  }
-  if (id === 'crown') {
-    return {
-      icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />,
-      tag: 'ROYAL',
-      bgGlow: '#F59E0B',
-    };
-  }
-  if (id === 'headphones') {
-    return {
-      icon: <Headphones size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />,
-      tag: 'AUDIO',
-      bgGlow: '#06B6D4',
-    };
-  }
-  if (id === 'mask' || id === 'visor') {
-    return {
-      icon: <Eye size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />,
-      tag: 'VISOR',
-      bgGlow: '#00FF66',
-    };
-  }
-  if (id.includes('wing')) {
-    return {
-      icon: <Feather size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'WINGS',
-      bgGlow: itemColor,
-    };
-  }
-  if (id === 'jetpack') {
-    return {
-      icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#F97316' }} />,
-      tag: 'THRUST',
-      bgGlow: '#F97316',
-    };
-  }
-  if (id.includes('pauldron') || id.includes('shoulder')) {
-    return {
-      icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#EAB308' }} />,
-      tag: 'GUARD',
-      bgGlow: '#EAB308',
+      icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />,
+      tag: 'CALM',
+      bgGlow: '#64748B',
     };
   }
 
-  // ── Hair ──
-  if (item.category === 'hair') {
-    return {
-      icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'HAIR',
-      bgGlow: itemColor,
-    };
+  // ── 3. Face Shapes ──
+  if (cat === 'face') {
+    if (id === 'heart') return { icon: <Heart size={24} className="stroke-[2.2]" style={{ color: '#EC4899' }} />, tag: 'HEART', bgGlow: '#EC4899' };
+    if (id === 'square') return { icon: <Shield size={24} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />, tag: 'SQUARE', bgGlow: '#F59E0B' };
+    if (id === 'oval') return { icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#C084FC' }} />, tag: 'OVAL', bgGlow: '#C084FC' };
+    return { icon: <CircleDot size={24} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />, tag: 'ROUND', bgGlow: '#38BDF8' };
   }
 
-  // ── Face ──
-  if (item.category === 'face' || id.includes('eye') || id.includes('wink')) {
-    return {
-      icon: <Eye size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-      tag: 'EYES',
-      bgGlow: itemColor,
-    };
+  // ── 4. Hair ──
+  if (cat === 'hair') {
+    if (id === 'twintails') return { icon: <Sparkles size={24} className="stroke-[2.2]" style={{ color: '#FF69B4' }} />, tag: 'TWIN', bgGlow: '#FF69B4' };
+    if (id === 'twin-buns') return { icon: <CircleDot size={24} className="stroke-[2.2]" style={{ color: '#A855F7' }} />, tag: 'BUNS', bgGlow: '#A855F7' };
+    if (id === 'hime-cut') return { icon: <Crown size={24} className="stroke-[2.2]" style={{ color: '#E2E8F0' }} />, tag: 'HIME', bgGlow: '#475569' };
+    if (id === 'fluffy-short') return { icon: <Feather size={24} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />, tag: 'AHOGE', bgGlow: '#F59E0B' };
+    if (id === 'spiky') return { icon: <Zap size={24} className="stroke-[2.2]" style={{ color: '#00FF66' }} />, tag: 'SPIKY', bgGlow: '#00FF66' };
+    if (id === 'curly') return { icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#B45309' }} />, tag: 'CURLY', bgGlow: '#B45309' };
+    if (id === 'ponytail') return { icon: <Scissors size={24} className="stroke-[2.2]" style={{ color: '#DC2626' }} />, tag: 'PONY', bgGlow: '#DC2626' };
+    if (id === 'anime') return { icon: <Sparkles size={24} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />, tag: 'HERO', bgGlow: '#38BDF8' };
+    if (id === 'futuristic') return { icon: <Bot size={24} className="stroke-[2.2]" style={{ color: '#EC4899' }} />, tag: 'HOLO', bgGlow: '#EC4899' };
+    if (id === 'bob') return { icon: <Scissors size={24} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />, tag: 'BOB', bgGlow: '#64748B' };
+    if (id === 'mohawk') return { icon: <Flame size={24} className="stroke-[2.2]" style={{ color: '#84CC16' }} />, tag: 'MOHAWK', bgGlow: '#65A30D' };
+    if (id === 'bald') return { icon: <Smile size={24} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />, tag: 'CLEAN', bgGlow: '#475569' };
+    return { icon: <Scissors size={24} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'HAIR', bgGlow: itemColor };
+  }
+
+  // ── 5. Tops & Outfits ──
+  if (id === 'lolita-dress') return { icon: <Heart size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'LOLITA', bgGlow: '#FF7EB6' };
+  if (id === 'maid-dress') return { icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: '#FFFFFF' }} />, tag: 'MAID', bgGlow: '#E2E8F0' };
+  if (id === 'magical-dress') return { icon: <Star size={22} className="stroke-[2.2]" style={{ color: '#C084FC' }} />, tag: 'MAGICAL', bgGlow: '#8B5CF6' };
+  if (id === 'sundress') return { icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />, tag: 'SUMMER', bgGlow: '#FBBF24' };
+  if (id === 'princess-gown') return { icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />, tag: 'GOWN', bgGlow: '#EC4899' };
+  if (id === 'cyber-dress') return { icon: <Zap size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />, tag: 'CYBER', bgGlow: '#06B6D4' };
+  if (id === 'hoodie-dress') return { icon: <Feather size={22} className="stroke-[2.2]" style={{ color: '#818CF8' }} />, tag: 'COZY', bgGlow: '#6366F1' };
+  if (id === 'armor') return { icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />, tag: 'ARMOR', bgGlow: '#475569' };
+  if (id === 'futuristic-suit') return { icon: <Bot size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />, tag: 'MECHA', bgGlow: '#00FF66' };
+  if (id === 'hoodie') return { icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#CBD5E1' }} />, tag: 'STREET', bgGlow: '#334155' };
+  if (id === 'jacket') return { icon: <Layers size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />, tag: 'JACKET', bgGlow: '#78350F' };
+  if (id === 'shirt') return { icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#F8FAFC' }} />, tag: 'FORMAL', bgGlow: '#94A3B8' };
+  if (id === 'tshirt') return { icon: <Shirt size={22} className="stroke-[2.2]" style={{ color: '#60A5FA' }} />, tag: 'CASUAL', bgGlow: '#3B82F6' };
+  if (id === 'tank') return { icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#FB7185' }} />, tag: 'SPORT', bgGlow: '#E11D48' };
+  if (id === 'crop') return { icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />, tag: 'CROP', bgGlow: '#D946EF' };
+
+  // ── 6. Bottoms ──
+  if (id.includes('skirt') || id === 'tutu') return { icon: <Scissors size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'SKIRT', bgGlow: itemColor };
+  if (id === 'jeans' || id === 'shorts' || id === 'cargo' || id === 'joggers' || id === 'leggings') return { icon: <Layers size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'PANTS', bgGlow: itemColor };
+  if (id === 'armor-pants') return { icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#94A3B8' }} />, tag: 'GREAVES', bgGlow: '#475569' };
+
+  // ── 7. Shoes ──
+  if (cat === 'shoes') return { icon: <Footprints size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: id.toUpperCase().slice(0, 7), bgGlow: itemColor };
+
+  // ── 8. Accessories ──
+  if (id === 'cat-ears' || id === 'bunny-ears') return { icon: <Smile size={22} className="stroke-[2.2]" style={{ color: '#F472B6' }} />, tag: 'EARS', bgGlow: '#FF5C93' };
+  if (id === 'bow') return { icon: <Heart size={22} className="stroke-[2.2]" style={{ color: '#FF2D78' }} />, tag: 'BOW', bgGlow: '#FF2D78' };
+  if (id === 'halo') return { icon: <Sun size={22} className="stroke-[2.2]" style={{ color: '#FFD700' }} />, tag: 'HOLY', bgGlow: '#FFD700' };
+  if (id === 'glasses') return { icon: <Glasses size={22} className="stroke-[2.2]" style={{ color: '#38BDF8' }} />, tag: 'OPTIC', bgGlow: '#38BDF8' };
+  if (id === 'crown') return { icon: <Crown size={22} className="stroke-[2.2]" style={{ color: '#F59E0B' }} />, tag: 'ROYAL', bgGlow: '#F59E0B' };
+  if (id === 'headphones') return { icon: <Headphones size={22} className="stroke-[2.2]" style={{ color: '#22D3EE' }} />, tag: 'AUDIO', bgGlow: '#06B6D4' };
+  if (id === 'mask' || id === 'visor') return { icon: <Eye size={22} className="stroke-[2.2]" style={{ color: '#00FF66' }} />, tag: 'VISOR', bgGlow: '#00FF66' };
+  if (id.includes('wing')) return { icon: <Feather size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'WINGS', bgGlow: itemColor };
+  if (id === 'jetpack') return { icon: <Flame size={22} className="stroke-[2.2]" style={{ color: '#F97316' }} />, tag: 'THRUST', bgGlow: '#F97316' };
+  if (id.includes('pauldron') || id.includes('shoulder')) return { icon: <Shield size={22} className="stroke-[2.2]" style={{ color: '#EAB308' }} />, tag: 'GUARD', bgGlow: '#EAB308' };
+
+  // ── 9. Weapons ──
+  if (cat === 'weapons') {
+    if (id.includes('sword') || id.includes('blade')) return { icon: <Swords size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'BLADE', bgGlow: itemColor };
+    if (id.includes('gun') || id.includes('blaster')) return { icon: <Crosshair size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'GUN', bgGlow: itemColor };
+    if (id.includes('staff')) return { icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'STAFF', bgGlow: itemColor };
+    return { icon: <Swords size={22} className="stroke-[2.2]" style={{ color: itemColor }} />, tag: 'WEAPON', bgGlow: itemColor };
   }
 
   // Default fallback
   return {
-    icon: <CircleDot size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
-    tag: 'ITEM',
+    icon: <Sparkles size={22} className="stroke-[2.2]" style={{ color: itemColor }} />,
+    tag: cat ? cat.toUpperCase().slice(0, 5) : 'GEAR',
     bgGlow: itemColor,
   };
 }

@@ -23,37 +23,10 @@ import { useToast } from '@/components/Toast';
 import { sound } from '@/lib/audio';
 import { Zap, Shield, Flame, Wind, Sparkles, Swords, Check, Dices, Coins, Hammer } from 'lucide-react';
 
-const BODY_TYPES = [
-  { id: 'slim', label: 'Slim', desc: 'Lean build' },
-  { id: 'regular', label: 'Regular', desc: 'Balanced' },
-  { id: 'broad', label: 'Broad', desc: 'Powerful' },
-  { id: 'chibi', label: 'Chibi', desc: 'Cute & small' },
-] as const;
-
 function BodyPanel() {
   const { currentAvatar, updateBody } = useAvatarStore();
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="text-xs text-white/50 uppercase tracking-widest mb-3">Body Type</p>
-        <div className="grid grid-cols-2 gap-2">
-          {BODY_TYPES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => updateBody({ type: t.id })}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                currentAvatar.body.type === t.id
-                  ? 'border-[#00FF66]/60 bg-[#00FF66]/15 text-white shadow-[0_0_10px_rgba(0,255,102,0.2)]'
-                  : 'border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80'
-              }`}
-            >
-              <p className="text-xs font-bold tracking-wide">{t.label}</p>
-              <p className="text-[10px] text-white/40 mt-0.5">{t.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Sliders */}
       {([
         { key: 'height', label: 'Height', min: 0.7, max: 1.3, step: 0.01 },
@@ -141,7 +114,6 @@ function AccessoriesPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial
   const slots = [
     { key: 'head' as const, label: 'Head', items: accessories.filter((a) => ['cat-ears', 'bunny-ears', 'bow', 'halo', 'glasses', 'hat', 'cap', 'headphones', 'crown'].includes(a.id)) },
     { key: 'face' as const, label: 'Face', items: accessories.filter((a) => ['ribbon-choker', 'mask', 'visor'].includes(a.id)) },
-    { key: 'back' as const, label: 'Back', items: accessories.filter((a) => ['angel-wings', 'fairy-wings', 'backpack', 'wings', 'jetpack'].includes(a.id)) },
     { key: 'shoulder' as const, label: 'Shoulder', items: accessories.filter((a) => ['shoulder-pads', 'pauldrons'].includes(a.id)) },
   ];
 

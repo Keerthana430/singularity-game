@@ -1,10 +1,9 @@
 'use client';
 // components/studio/RpgEquipmentScreen.tsx
-// Modern Mobile/Indie RPG Character Build & Outfitting Screen
+// Modern RPG Character Build & Outfitting Screen with Dual-Flank Holographic Gear Sockets
 // Theme: Deep Forest Obsidian Slate & Moss Emerald (unified with 3D canvas)
 
 import React, { useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -14,36 +13,17 @@ import {
   Swords,
   Shield,
   Zap,
-  Flame,
-  Wind,
   Coins,
-  Crown,
-  Info,
   Check,
-  RotateCcw,
-  BookOpen,
-  Map,
-  Compass,
-  Archive,
-  Shirt,
+  Crown,
   Footprints,
-  Feather,
   Eye,
   Sliders,
   Palette,
-  Package,
-  Gem,
-  Scroll,
-  Leaf,
-  HardHat,
-  Backpack,
-  Hammer,
-  Star,
   Layers,
-  Box,
-  Wrench,
+  Info,
 } from 'lucide-react';
-import { AvatarConfig, StudioCategory, AvatarItem } from '@/types/avatar';
+import { AvatarConfig, StudioCategory } from '@/types/avatar';
 import { useAvatarStore } from '@/store/avatarStore';
 import { AvatarViewer } from '@/components/avatar/AvatarViewer';
 import { calculateAvatarStats } from '@/lib/statsCalculator';
@@ -54,6 +34,7 @@ import { bottoms } from '@/data/bottoms';
 import { shoes } from '@/data/shoes';
 import { weapons } from '@/data/weapons';
 import { accessories } from '@/data/accessories';
+import { SPECIES_LIST } from '@/data/species';
 import { sound } from '@/lib/audio';
 import { useToast } from '@/components/Toast';
 
@@ -61,7 +42,6 @@ export function RpgEquipmentScreen() {
   const {
     currentAvatar,
     updateAvatar,
-    randomizeAvatar,
     saveAvatar,
     savedAvatars,
     loadAvatar,
@@ -76,8 +56,8 @@ export function RpgEquipmentScreen() {
   const [selectedLoadout, setSelectedLoadout] = useState<number>(1);
   const [showBuffInfo, setShowBuffInfo] = useState(false);
   const [sparkleActive, setSparkleActive] = useState(false);
-  const [activeTab, setActiveTab] = useState<'equipment' | 'skills' | 'traits' | 'costume' | 'vault'>('equipment');
-  const [panelOpen, setPanelOpen] = useState(true);
+  // Default panelOpen to false so the avatar is immediately centered on load with sockets around it
+  const [panelOpen, setPanelOpen] = useState(false);
 
   // Hover-preview: temporarily show an item on the avatar without equipping it
   const [hoverPreview, setHoverPreview] = useState<Partial<AvatarConfig> | null>(null);
@@ -94,7 +74,7 @@ export function RpgEquipmentScreen() {
   // Calculate live RPG combat stats
   const stats = useMemo(() => calculateAvatarStats(currentAvatar), [currentAvatar]);
 
-  // Derived 10-stat matrix from Reference Image 2
+  // Derived combat power
   const combatPower = useMemo(() => {
     return Math.round(
       stats.maxHp * 0.5 +
@@ -106,14 +86,7 @@ export function RpgEquipmentScreen() {
     );
   }, [stats]);
 
-  const atkSpeed = (20 + stats.agility * 0.18).toFixed(1);
-  const hpRegen = Math.round(stats.maxHp * 0.008 + (stats.species.id === 'fairy' ? 8 : 2));
-  const skillDmg = Math.round(stats.magic * 0.22);
-  const critDmg = 120 + Math.round(stats.power * 0.25);
-  const cooldownReduction = Math.min(35, Math.round(stats.agility * 0.12));
-  const moveSpeed = (4.5 + stats.agility * 0.025).toFixed(1);
-
-  // Helper to resolve readable item names for equipment slots
+  // Helper to resolve readable item names and rarity for equipment slots
   const getSlotDetails = (cat: string, id?: string) => {
     if (!id || id === 'none' || id === 'unarmed') return { name: 'Empty', rarity: 'common' };
     switch (cat) {
@@ -129,6 +102,10 @@ export function RpgEquipmentScreen() {
         const item = tops.find((t) => t.id === id);
         return { name: item?.name || id, rarity: item?.rarity || 'common' };
       }
+      case 'bottom': {
+        const item = bottoms.find((b) => b.id === id);
+        return { name: item?.name || id, rarity: item?.rarity || 'common' };
+      }
       case 'shoes': {
         const item = shoes.find((s) => s.id === id);
         return { name: item?.name || id, rarity: item?.rarity || 'common' };
@@ -137,45 +114,87 @@ export function RpgEquipmentScreen() {
         const item = accessories.find((a) => a.id === id);
         return { name: item?.name || id, rarity: item?.rarity || 'common' };
       }
-      case 'back': {
-        const item = accessories.find((a) => a.id === id);
-        return { name: item?.name || id, rarity: item?.rarity || 'common' };
+      case 'species': {
+        const sp = SPECIES_LIST.find((s) => s.id === id);
+        return { name: sp?.name || id, rarity: 'rare' };
       }
       default:
         return { name: id, rarity: 'common' };
     }
   };
 
+  const getRarityColor = (rarity?: string) => {
+    switch (rarity) {
+      case 'mythic':
+        return '#00FF66';
+      case 'legendary':
+        return '#F59E0B';
+      case 'epic':
+        return '#A855F7';
+      case 'rare':
+        return '#38BDF8';
+      case 'uncommon':
+        return '#34D399';
+      default:
+        return '#64748B';
+    }
+  };
+
+  const categoryMeta: Record<StudioCategory, { title: string; subtitle: string; icon: React.ReactNode }> = {
+    weapons: { title: 'Weapon Armament', subtitle: 'Offensive Battle Gear', icon: <Swords size={18} /> },
+    hair: { title: 'Head & Coiffure', subtitle: 'Headgear & Hairstyles', icon: <Crown size={18} /> },
+    tops: { title: 'Chest Armor', subtitle: 'Torso Plating & Robes', icon: <Shield size={18} /> },
+    bottoms: { title: 'Legs & Greaves', subtitle: 'Pants, Kilts & Armor', icon: <Layers size={18} /> },
+    shoes: { title: 'Boots & Footwear', subtitle: 'Treads, Sabatons & Kicks', icon: <Footprints size={18} /> },
+    accessories: { title: 'Face & Optics', subtitle: 'Visors & Accessories', icon: <Eye size={18} /> },
+    face: { title: 'Face & Optics', subtitle: 'Visors, Masks & Eyewear', icon: <Eye size={18} /> },
+    species: { title: 'Species Core', subtitle: 'Genetics & Innate Heritage', icon: <Zap size={18} /> },
+    body: { title: 'Body Matrix', subtitle: 'Height, Silhouette & Frame', icon: <Sliders size={18} /> },
+    colors: { title: 'Dyes & Shaders', subtitle: 'Chromatic Matrix & Aura', icon: <Palette size={18} /> },
+  };
+
   const weaponDetails = getSlotDetails('weapon', currentAvatar.weapon);
   const headDetails = getSlotDetails('hair', currentAvatar.hair);
   const chestDetails = getSlotDetails('top', currentAvatar.top);
+  const legsDetails = getSlotDetails('bottom', currentAvatar.bottom);
   const bootsDetails = getSlotDetails('shoes', currentAvatar.shoes);
   const faceDetails = getSlotDetails('face', currentAvatar.accessories?.face);
-  const backDetails = getSlotDetails('back', currentAvatar.accessories?.back);
+  const speciesDetails = getSlotDetails('species', currentAvatar.species);
+
+  // Left Flank (Combat & Upper Armor)
+  const leftSlots = [
+    { cat: 'weapons' as StudioCategory, label: 'WEAPON', item: weaponDetails, icon: <Swords size={22} />, color: '#00FF66' },
+    { cat: 'hair' as StudioCategory, label: 'HEAD / HAIR', item: headDetails, icon: <Crown size={22} />, color: '#38BDF8' },
+    { cat: 'tops' as StudioCategory, label: 'CHEST ARMOR', item: chestDetails, icon: <Shield size={22} />, color: '#10B981' },
+    { cat: 'bottoms' as StudioCategory, label: 'LEGS / GREAVES', item: legsDetails, icon: <Layers size={22} />, color: '#A855F7' },
+  ];
+
+  // Right Flank (Mobility, Core & Aesthetics - No Backpack)
+  const rightSlots = [
+    { cat: 'face' as StudioCategory, label: 'FACE / VISOR', item: faceDetails, icon: <Eye size={22} />, color: '#6366F1' },
+    { cat: 'shoes' as StudioCategory, label: 'BOOTS', item: bootsDetails, icon: <Footprints size={22} />, color: '#EC4899' },
+    { cat: 'species' as StudioCategory, label: 'SPECIES CORE', item: speciesDetails, icon: <Zap size={22} />, color: '#14B8A6' },
+    { cat: 'colors' as StudioCategory, label: 'DYES / AURA', item: { name: 'Chromatic Matrix', rarity: 'mythic' }, icon: <Palette size={22} />, color: '#F59E0B' },
+  ];
 
   // Handle clicking an equipment slot
   const handleSlotClick = (category: StudioCategory) => {
     setActiveCategory(category);
+    setPanelOpen(true);
     sound.playClick();
   };
 
-  // Handle Auto-Equip
+  // Handle Auto-Equip (no backpack)
   const handleAutoEquip = () => {
     const randomWeapon = weapons[Math.floor(Math.random() * (weapons.length - 1))];
     const bestTops = ['armor', 'futuristic-suit', 'jacket', 'hoodie'];
     const randomTop = bestTops[Math.floor(Math.random() * bestTops.length)];
     const randomShoe = shoes[Math.floor(Math.random() * shoes.length)];
-    const backAccessories = ['backpack', 'wings', 'fairy-wings', 'angel-wings'];
-    const randomBack = backAccessories[Math.floor(Math.random() * backAccessories.length)];
 
     updateAvatar({
       weapon: randomWeapon.id,
       top: randomTop,
       shoes: randomShoe.id,
-      accessories: {
-        ...currentAvatar.accessories,
-        back: randomBack,
-      },
     });
 
     setSparkleActive(true);
@@ -196,23 +215,97 @@ export function RpgEquipmentScreen() {
     }
   };
 
+  // Reusable RPG Gear Socket Renderer
+  const renderGearSlot = (
+    slot: {
+      cat: StudioCategory;
+      label: string;
+      item: { name: string; rarity: string };
+      icon: React.ReactNode;
+      color: string;
+    },
+    align: 'left' | 'right'
+  ) => {
+    const isActive = activeCategory === slot.cat && panelOpen;
+    const rarityColor = getRarityColor(slot.item.rarity);
+
+    return (
+      <motion.button
+        key={slot.label}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={() => handleSlotClick(slot.cat)}
+        className={`group relative flex items-center gap-2.5 p-1.5 rounded-2xl transition-all ${
+          align === 'right' ? 'flex-row-reverse text-right' : 'text-left'
+        } ${
+          isActive
+            ? 'bg-[#00FF66]/15 border-2 border-[#00FF66] shadow-[0_0_20px_rgba(0,255,102,0.4)]'
+            : 'bg-[#07130E]/85 border border-[#1E3E2F] hover:border-[#00FF66]/60 hover:bg-[#0D1C15]/95 shadow-[0_6px_24px_rgba(0,0,0,0.6)]'
+        } backdrop-blur-md`}
+      >
+        {/* Holographic Socket Disc Frame */}
+        <div
+          className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform overflow-hidden"
+          style={{
+            background: isActive
+              ? 'radial-gradient(circle, rgba(0,255,102,0.25) 0%, rgba(7,19,14,0.95) 75%)'
+              : 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(7,19,14,0.95) 75%)',
+            border: `2px solid ${isActive ? '#00FF66' : rarityColor}`,
+            boxShadow: isActive
+              ? '0 0 16px rgba(0,255,102,0.5), inset 0 0 12px rgba(0,255,102,0.3)'
+              : `0 0 10px ${rarityColor}30`,
+          }}
+        >
+          {/* Subtle Scanline Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity" />
+
+          {/* Slot Icon */}
+          <div
+            className="transition-colors drop-shadow-md"
+            style={{ color: isActive ? '#00FF66' : slot.color }}
+          >
+            {slot.icon}
+          </div>
+
+          {/* Small Corner Rarity Dot */}
+          <div
+            className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full border border-black/80 shadow-sm"
+            style={{ backgroundColor: rarityColor }}
+            title={`Rarity: ${slot.item.rarity}`}
+          />
+        </div>
+
+        {/* Sleek Minimal Label Under/Beside Socket on Hover or Active */}
+        <div className={`hidden md:flex flex-col ${align === 'right' ? 'items-end' : 'items-start'} max-w-[110px]`}>
+          <span
+            className="text-[9px] font-mono font-black tracking-widest uppercase transition-colors"
+            style={{ color: isActive ? '#00FF66' : '#7E9F90' }}
+          >
+            {slot.label}
+          </span>
+          <span className="text-[11px] font-bold text-white/90 truncate group-hover:text-[#00FF66] transition-colors">
+            {slot.item.name}
+          </span>
+        </div>
+      </motion.button>
+    );
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden rpg-wood-container flex flex-col select-none text-[#E2F5EC] font-sans pt-16">
       {/* Subtle diamond hatch pattern overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(#00FF6610_1px,transparent_1px)] [background-size:20px_20px]" />
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* 1. TOP STATUS & CURRENCY BAR (REF IMAGE 2 TOP)                */}
+      {/* 1. TOP STATUS & CURRENCY BAR                                  */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <header className="relative z-30 px-3 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-2 max-w-5xl mx-auto w-full">
         {/* Left: Player Avatar Badge + Power */}
         <div className="flex items-center gap-2.5 bg-[#0D1C15]/95 border-2 border-[#1E3E2F] rounded-full pl-1.5 pr-4 py-1 shadow-lg">
-          {/* Circular avatar mini-frame */}
           <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-[#00FF66] bg-[#07130E] shrink-0">
             <div className="w-full h-full flex items-center justify-center font-black text-xs text-[#00FF66]">
               {currentAvatar.name.slice(0, 2).toUpperCase()}
             </div>
-            {/* Level mini-badge */}
             <div className="absolute bottom-0 right-0 bg-[#00FF66] text-black font-black text-[9px] px-1 rounded-tl">
               2
             </div>
@@ -246,7 +339,7 @@ export function RpgEquipmentScreen() {
           ))}
         </div>
 
-        {/* Right: Gold Coins only */}
+        {/* Right: Gold Coins */}
         <div className="flex items-center gap-2">
           <div
             onClick={topUpCoins}
@@ -263,112 +356,107 @@ export function RpgEquipmentScreen() {
         </div>
       </header>
 
-      {/* ============================================================= */}
-      {/* 2. MAIN STAGE - LEFT EQUIPMENT PANEL + RIGHT 3D AVATAR        */}
-      {/* ============================================================= */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* 2. MAIN STAGE: LEFT DRAWER + CENTERED 3D AVATAR HERO STAGE    */}
+      {/* ═════════════════════════════════════════════════════════════ */}
       <div className="relative flex-1 min-h-0 flex overflow-hidden w-full">
 
-        {/* -- LEFT: Equipment / Customization Panel (collapsible) -- */}
+        {/* ── LEFT: Item Customization Drawer (No Redundant Horizontal Tabs) ── */}
         <AnimatePresence initial={false}>
           {panelOpen && (
             <motion.div
               key="equip-panel"
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 440, opacity: 1 }}
+              animate={{ width: 400, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
               className="relative z-20 shrink-0 flex flex-col bg-[#050C08]/98 border-r border-[#1E3E2F] shadow-[4px_0_24px_rgba(0,0,0,0.5)] overflow-hidden"
               style={{ minWidth: 0 }}
             >
-
-          {/* Category slot pills at top of panel */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar px-3 pt-3 pb-2.5 border-b border-[#1E3E2F] shrink-0">
-            {([
-              { id: 'weapons' as StudioCategory, label: 'Weapons', icon: <Swords size={12} /> },
-              { id: 'species' as StudioCategory, label: 'Species', icon: <Zap size={12} /> },
-              { id: 'body' as StudioCategory, label: 'Body', icon: <Sliders size={12} /> },
-              { id: 'hair' as StudioCategory, label: 'Hair', icon: <Feather size={12} /> },
-              { id: 'tops' as StudioCategory, label: 'Tops', icon: <Shirt size={12} /> },
-              { id: 'bottoms' as StudioCategory, label: 'Bottoms', icon: <Layers size={12} /> },
-              { id: 'shoes' as StudioCategory, label: 'Shoes', icon: <Footprints size={12} /> },
-              { id: 'accessories' as StudioCategory, label: 'Access.', icon: <Backpack size={12} /> },
-              { id: 'colors' as StudioCategory, label: 'Colors', icon: <Palette size={12} /> },
-            ] as { id: StudioCategory; label: string; icon: React.ReactNode }[]).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveCategory(tab.id); sound.playClick(); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider shrink-0 transition-all ${
-                  activeCategory === tab.id
-                    ? 'bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/60 shadow-[0_0_10px_rgba(0,255,102,0.25)]'
-                    : 'text-[#7E9F90] hover:text-white hover:bg-white/8 border border-transparent'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Hover-preview indicator banner */}
-          <AnimatePresence>
-            {hoverPreview && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden shrink-0"
-              >
-                <div className="mx-3 my-2 px-3 py-1.5 rounded-lg bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center gap-2">
-                  <Eye size={12} className="text-[#00FF66] shrink-0" />
-                  <span className="text-[10px] font-bold text-[#00FF66] uppercase tracking-wider">Preview Mode — hover any item to try it on</span>
+              {/* Active Category Header with Close Button */}
+              <div className="px-4 py-3.5 border-b border-[#1E3E2F] flex items-center justify-between bg-[#07130E]/90 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#00FF66]/15 border border-[#00FF66]/50 flex items-center justify-center text-[#00FF66] shadow-[0_0_12px_rgba(0,255,102,0.25)]">
+                    {categoryMeta[activeCategory]?.icon || <Sparkles size={16} />}
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-mono font-bold tracking-widest text-[#7E9F90] uppercase block">
+                      Fitting Slot
+                    </span>
+                    <h2 className="text-xs font-black text-white uppercase tracking-wider">
+                      {categoryMeta[activeCategory]?.title || activeCategory}
+                    </h2>
+                  </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <button
+                  onClick={() => setPanelOpen(false)}
+                  title="Close Fitting Drawer"
+                  className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 hover:border-[#00FF66]/50 hover:bg-[#00FF66]/10 flex items-center justify-center text-[#7E9F90] hover:text-[#00FF66] transition-all"
+                >
+                  <X size={15} />
+                </button>
+              </div>
 
-          {/* Scrollable customization content */}
-          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-            <CustomizationPanel onHoverPreview={handleHoverPreview} />
-          </div>
+              {/* Hover-preview indicator banner */}
+              <AnimatePresence>
+                {hoverPreview && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden shrink-0"
+                  >
+                    <div className="mx-3 my-2 px-3 py-1.5 rounded-lg bg-[#00FF66]/10 border border-[#00FF66]/40 flex items-center gap-2">
+                      <Eye size={12} className="text-[#00FF66] shrink-0" />
+                      <span className="text-[10px] font-bold text-[#00FF66] uppercase tracking-wider">Preview Mode — hover any item to try it on</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          {/* Bottom action row in left panel */}
-          <div className="shrink-0 px-4 py-3 border-t border-[#1E3E2F] flex items-center gap-3 bg-[#050C08]">
-            <button
-              onClick={handleAutoEquip}
-              className="flex-1 rpg-auto-equip-btn py-2 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 rounded-xl"
-            >
-              <Sparkles size={14} className="text-[#00FF66]" />
-              <span>Auto Equip</span>
-            </button>
-            <button
-              onClick={() => { saveAvatar(); sound.playEquip(); addToast(`"${currentAvatar.name}" saved!`, 'success'); }}
-              className="px-5 py-2 rounded-xl bg-[#00FF66] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 hover:scale-105 transition-all shadow-[0_0_12px_rgba(0,255,102,0.4)]"
-            >
-              <Check size={13} strokeWidth={3} />
-              <span>Save</span>
-            </button>
-          </div>
-        </motion.div>
-        )}
+              {/* Scrollable customization content */}
+              <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+                <CustomizationPanel onHoverPreview={handleHoverPreview} />
+              </div>
+
+              {/* Bottom action row in left drawer */}
+              <div className="shrink-0 px-4 py-3 border-t border-[#1E3E2F] flex items-center gap-3 bg-[#050C08]">
+                <button
+                  onClick={handleAutoEquip}
+                  className="flex-1 rpg-auto-equip-btn py-2 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 rounded-xl"
+                >
+                  <Sparkles size={14} className="text-[#00FF66]" />
+                  <span>Auto Equip</span>
+                </button>
+                <button
+                  onClick={() => {
+                    saveAvatar();
+                    sound.playEquip();
+                    addToast(`"${currentAvatar.name}" saved!`, 'success');
+                  }}
+                  className="px-5 py-2 rounded-xl bg-[#00FF66] text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 hover:scale-105 transition-all shadow-[0_0_12px_rgba(0,255,102,0.4)]"
+                >
+                  <Check size={13} strokeWidth={3} />
+                  <span>Save</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
-        {/* ── RIGHT: 3D Avatar Showcase (never blocked) ── */}
+        {/* ── CENTER / RIGHT: 3D Avatar Hero Stage with Dual-Flank RPG Sockets ── */}
         <div className="relative flex-1 h-full flex flex-col items-center justify-center overflow-hidden">
 
-          {/* Panel toggle button — left edge of avatar side */}
+          {/* Panel toggle button — left edge of avatar stage */}
           <button
             onClick={() => setPanelOpen((v) => !v)}
-            title={panelOpen ? 'Hide Equipment Panel' : 'Show Equipment Panel'}
+            title={panelOpen ? 'Hide Equipment Drawer' : 'Show Equipment Drawer'}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-7 h-14 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] hover:border-[#00FF66] flex items-center justify-center text-[#00FF66] hover:scale-105 transition-all shadow-lg"
           >
             {panelOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
-          {/* Hover-preview golden border glow */}
-          {hoverPreview && (
-            <div className="absolute inset-0 pointer-events-none z-10 border-2 border-[#00FF66]/30 rounded-none" />
-          )}
 
-          {/* Hover preview label */}
+          {/* Hover preview indicator banner */}
           <AnimatePresence>
             {hoverPreview && (
               <motion.div
@@ -379,12 +467,13 @@ export function RpgEquipmentScreen() {
               >
                 <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest flex items-center gap-1.5">
                   <Eye size={12} />
-                  <span>Previewing</span>
+                  <span>Previewing Equipment</span>
                 </span>
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* 3D Avatar Viewer - Centered */}
           <div className="w-full h-full relative">
             <AvatarViewer
               config={displayConfig}
@@ -408,50 +497,78 @@ export function RpgEquipmentScreen() {
             )}
           </AnimatePresence>
 
-          {/* Flanking equipment slot quick-access dock (right side of avatar) */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5 p-2 rounded-2xl bg-[#07130E]/90 border border-[#1E3E2F] backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.7)]">
-            {[
-              { cat: 'weapons' as StudioCategory, icon: <Swords size={20} />, label: 'WEAPON', item: weaponDetails },
-              { cat: 'hair' as StudioCategory, icon: <HardHat size={20} />, label: 'HEAD', item: headDetails },
-              { cat: 'tops' as StudioCategory, icon: <Shield size={20} />, label: 'CHEST', item: chestDetails },
-              { cat: 'shoes' as StudioCategory, icon: <Footprints size={20} />, label: 'BOOTS', item: bootsDetails },
-              { cat: 'accessories' as StudioCategory, icon: <Eye size={20} />, label: 'FACE', item: faceDetails },
-              { cat: 'accessories' as StudioCategory, icon: <Backpack size={20} />, label: 'BACK', item: backDetails },
-            ].map((slot, i) => {
-              const isActive = activeCategory === slot.cat;
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleSlotClick(slot.cat)}
-                  title={`${slot.label}: ${slot.item.name}`}
-                  className={`group relative w-14 h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
-                    isActive
-                      ? 'bg-[#00FF66]/20 border-2 border-[#00FF66] shadow-[0_0_16px_rgba(0,255,102,0.45)] scale-105'
-                      : 'bg-white/5 border border-white/10 hover:border-[#00FF66]/50 hover:bg-[#00FF66]/10'
-                  }`}
-                >
-                  <div className={`transition-colors ${isActive ? 'text-[#00FF66]' : 'text-[#7E9F90] group-hover:text-white'}`}>
-                    {slot.icon}
-                  </div>
-                  <span className={`text-[8px] font-mono font-black tracking-widest ${isActive ? 'text-[#00FF66]' : 'text-white/40 group-hover:text-white/80'}`}>
-                    {slot.label}
-                  </span>
-                  {/* Equipped item tooltip on hover */}
-                  <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-white text-[10px] font-mono px-2.5 py-1 rounded-md border border-white/10 whitespace-nowrap shadow-xl z-30">
-                    <span className="text-[#00FF66] font-bold">{slot.label}:</span> {slot.item.name}
-                  </div>
-                </button>
-              );
-            })}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* DUAL-FLANK RPG EQUIPMENT SOCKETS (SURROUNDING CENTER AVATAR)*/}
+          {/* ═══════════════════════════════════════════════════════════ */}
+
+          {/* Left Flank Gear Sockets (Weapon, Head, Chest, Legs) */}
+          <div className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5 sm:gap-3">
+            {leftSlots.map((slot) => renderGearSlot(slot, 'left'))}
           </div>
 
-          {/* Bottom center: Buff pill */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+          {/* Right Flank Gear Sockets (Face, Boots, Species, Dyes - NO BACKPACK) */}
+          <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5 sm:gap-3">
+            {rightSlots.map((slot) => renderGearSlot(slot, 'right'))}
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* BOTTOM QUICK DOCK: BODY MATRIX, DYES & SHADERS, SAVE       */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#07130E]/90 border border-[#1E3E2F] backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
+            <button
+              onClick={() => handleSlotClick('body')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeCategory === 'body' && panelOpen
+                  ? 'bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]'
+                  : 'text-[#7E9F90] hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <Sliders size={13} />
+              <span className="hidden sm:inline">Body Matrix</span>
+            </button>
+
+            <button
+              onClick={() => handleSlotClick('colors')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeCategory === 'colors' && panelOpen
+                  ? 'bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]'
+                  : 'text-[#7E9F90] hover:text-white hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <Palette size={13} />
+              <span className="hidden sm:inline">Dyes & Shaders</span>
+            </button>
+
+            <div className="w-[1px] h-4 bg-[#1E3E2F] mx-0.5" />
+
+            <button
+              onClick={handleAutoEquip}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#00FF66]/15 border border-white/10 hover:border-[#00FF66]/50 text-white text-xs font-bold transition-all"
+            >
+              <Sparkles size={13} className="text-[#00FF66]" />
+              <span className="hidden sm:inline">Auto Equip</span>
+            </button>
+
+            <button
+              onClick={() => {
+                saveAvatar();
+                sound.playEquip();
+                addToast(`"${currentAvatar.name}" saved!`, 'success');
+              }}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#00FF66] hover:bg-[#00E65C] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(0,255,102,0.45)] transition-all hover:scale-105"
+            >
+              <Check size={13} strokeWidth={3} />
+              <span>Save</span>
+            </button>
+          </div>
+
+          {/* Buff pill (Bottom-right accent) */}
+          <div className="absolute bottom-4 right-4 z-20 hidden lg:block">
             <button
               onClick={() => setShowBuffInfo(!showBuffInfo)}
-              className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] text-[#8CA79B] text-[10px] font-bold shadow-md hover:border-[#00FF66] transition-all"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1C15]/90 border border-[#1E3E2F] text-[#8CA79B] text-[10px] font-bold shadow-md hover:border-[#00FF66] transition-all"
             >
-              <span>No Buff (Ready)</span>
+              <span>Buff Matrix</span>
               <Info size={11} className="text-[#00FF66]" />
             </button>
           </div>
