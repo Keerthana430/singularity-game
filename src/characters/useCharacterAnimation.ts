@@ -228,7 +228,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     blockAnimRef.current.weight += (targetBlockWeight - blockAnimRef.current.weight) * Math.min(1, 15 * dt);
     
     // Only apply stance weight if not hurt/celebrating/taunting/attacking via combo
-    const targetStanceWeight = (combatStanceRef?.current && !['HURT', 'ATTACKING', 'CELEBRATING', 'TAUNTING'].includes(combatState)) ? 1 : 0;
+    const targetStanceWeight = (combatStanceRef?.current && !['HURT', 'CELEBRATING', 'TAUNTING'].includes(combatState)) ? 1 : 0;
     stanceWeightRef.current += (targetStanceWeight - stanceWeightRef.current) * Math.min(1, 10 * dt);
     
     if (squatPhaseRef.current > 0) {
