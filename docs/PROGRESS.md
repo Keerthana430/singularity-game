@@ -22,7 +22,7 @@
   - `src/characters/ProceduralCharacter.tsx` (Added `pointerDownPos` tracking, separated click handlers, mapped right click)
 - **Decisions and assumptions**:
   - `pLunge` is applied locally to `bones.hips.position.z` rather than via the physics engine (`setLinvel`), allowing the lunge to be purely aesthetic and deterministic over the animation timeline without disrupting global physics positioning permanently.
-  - Lunge distance is explicitly set to `0.45` to balance the forward drive without sliding too far.
+  - Lunge distance is explicitly set to `0.15` to balance the forward drive without sliding too far.
 - **Deviations from spec**: None.
 - **Exit criteria**:
   - Uppercut is forward, not sideways - PASS
