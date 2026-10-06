@@ -77,8 +77,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       strikeElbow = -1.5; strikeChest = isLeft ? -0.9 : 0.9; strikeShoulder = -1.0; strikeArmZ = -0.5;
       windupHook = -0.6; strikeHook = 1.2; strikeDur = 0.15; lungeDist = 0.3; recoilDur = 0.4;
     } else if (attackType === 'UPPERCUT') {
-      strikeElbow = -2.2; strikeChest = isLeft ? -0.7 : 0.7; strikeShoulder = -1.2; strikeArmZ = 0.4;
-      windupUpper = -0.8; strikeUpper = 1.3; strikeDur = 0.14; lungeDist = 0.2; recoilDur = 0.45;
+      strikeElbow = -1.8; strikeChest = isLeft ? -0.7 : 0.7; strikeShoulder = -1.0; strikeArmZ = 0.2;
+      windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = 0.2; recoilDur = 0.45;
     } else if (attackType === 'CROSS') {
       strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; lungeDist = 0.6; recoilDur = 0.4; strikeArmZ = -0.1;
     } else if (attackType === 'JUMP_ATTACK') {
