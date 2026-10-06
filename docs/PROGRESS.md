@@ -2,13 +2,49 @@
 
 ## Current State
 
-- **Completed Phases:** Opponent Combat Foundation
+- **Completed Phases:** AI Combat Behavior, Combat Controls, Opponent Foundation, Combat Polish, Knockout/Knockback Refinements
 - **Current Stack:** React, @react-three/fiber, @react-three/rapier, zustand, Next.js
-- **How to Run:** 
-pm run dev -> Open http://localhost:3000/character-test
-- **How to Test:** WASD to move, Space to jump, Left Click to punch, Right click for uppercut. Numpad1/Alt+1 on opponent for testing dummy hit reaction.
+- **How to Run:** npm run dev -> Open http://localhost:3000/character-test
+- **How to Test:** WASD to move, Left Click to punch, Right click for uppercut. Opponent AI will automatically fight back. 'Q' to matrix dodge.
 - **Open Risks:** None.
-- **Next Phase:** AI Logic / Opponent Combat Behaviors.
+- **Next Phase:** Advanced Animation Blending / Full Match Loop / Player 2 implementation
+---
+
+## Phase 16: Combat Polish, True Knockouts, and Knockback (2026-10-06)
+- **Built**:
+  - Re-introduced `applyImpulse` to `takeHit` so characters physically slide backward upon taking a punch, scaled by light vs heavy hits and whether they are blocking.
+  - Repurposed the previous Knockdown animation into a backward Matrix Dodge (`triggerMatrixDodge`) bound to 'Q' to keep its functionality.
+  - Implemented a true `triggerKnockdown` animation where the character collapses to the floor and stays down permanently when HP <= 0.
+  - Automatically triggers a Victory Celebration emote for the surviving character whenever an opponent's health hits 0.
+- **Files created/changed**:
+  - `src/characters/useCharacterAnimation.ts`: Added `triggerMatrixDodge`, rewrote `triggerKnockdown`.
+  - `src/characters/ProceduralCharacter.tsx`: Re-added physics impulse, set up `useEffect` to watch `combatStore` for opponent deaths to trigger celebration.
+- **Decisions and assumptions**:
+  - Knockbacks are calculated using the direction of the punch multiplied by force (light = 5, heavy = 15). Blocking reduces knockback by 70%.
+- **Exit criteria**:
+  - Heavy attacks push back further than light attacks - PASS.
+  - Player falls when HP is 0 - PASS.
+  - Surviving player triggers celebration - PASS.
+- **Known issues**: None.
+- **Deferred**: None.
+
+---
+
+## Phase 15: AI Combat Behavior (2026-10-06)
+- **Built**: `useAIController` hook giving the opponent a brain to fight back.
+- **Files created/changed**:
+  - `src/combat/useAIController.ts`: Created AI state machine for distance checking, dodging, blocking, and attacking.
+  - `src/characters/ProceduralCharacter.tsx`: Integrated AI hook, injected `combatState` into rigidBody userData to allow AI to see player attacks.
+- **Decisions and assumptions**: 
+  - Kept AI logic within a React Hook (`useAIController`) rather than a standalone class to allow easy access to Rapier's world and component state.
+  - Added 25% dodge chance and 40% block chance upon sensing player attacks.
+- **Exit criteria**:
+  - AI chases when far - PASS - tested with browser subagent.
+  - AI blocks/dodges dynamically - PASS - AI randomly uses evasive action or block when punched.
+  - AI executes attacks - PASS - triggers `triggerPunchAction` directly based on stamina.
+- **Known issues**: None.
+- **Deferred**: Advanced AI pathfinding for obstacles (not needed for flat arena).
+
 ---
 
 ## Phase: Combat Controls - Target Lock Radius & Uppercut Fix (2026-10-06)

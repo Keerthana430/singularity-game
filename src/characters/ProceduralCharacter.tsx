@@ -7,6 +7,7 @@ import { buildProceduralCharacter } from './characterUtils';
 import { useCharacterAnimation } from './useCharacterAnimation';
 import { useCombatStore } from '../state/combatStore';
 import { ATTACKS, COMBAT_CONFIG, AttackType } from '../combat/attackDefinitions';
+import { useAIController } from '../combat/useAIController';
 
 export type CombatState = 'IDLE' | 'PUNCH_L' | 'PUNCH_R' | 'DODGING' | 'BLOCKING' | 'JUMP_ATTACK' | 'HURT' | 'KNOCKDOWN' | 'ATTACKING' | 'CELEBRATING' | 'TAUNTING';
 
@@ -52,7 +53,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
   const combatStanceRef = useRef(false);
   const lastKeyTime = useRef<Record<string, number>>({ w: 0, a: 0, s: 0, d: 0 });
 
-  const { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef, combatState);
+  const { triggerPunch, triggerDodge, triggerMatrixDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef, combatState);
 
   let punchCombo = useRef(0);
   let timeSinceLastPunch = useRef(999);
@@ -74,6 +75,17 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     const entity = useCombatStore.getState().entities[playerId];
     const hp = entity ? entity.hp : 100;
     
+    // Apply physical knockback (impulse) based on attack weight and block status
+    if (rigidBodyRef.current) {
+      // If blocking, take less knockback
+      const kbMultiplier = currentState === 'BLOCKING' ? 0.3 : 1.0;
+      const force = (isHeavy ? 15 : 5) * kbMultiplier;
+      rigidBodyRef.current.applyImpulse(
+        { x: dir.x * force, y: 0, z: dir.z * force }, 
+        true
+      );
+    }
+    
     if (hp <= 0) {
       setCombatState('KNOCKDOWN');
       triggerKnockdown(() => {
@@ -86,6 +98,72 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
       }
     }
   };
+
+  const triggerPunchAction = (attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' | 'SPIN_ATTACK', isLeft: boolean) => {
+    const attackDef = ATTACKS[attackType as AttackType];
+    if (!consumeStamina(playerId, attackDef.staminaCost)) return;
+    setCombatState(isLeft ? 'PUNCH_L' : 'PUNCH_R');
+    punchCombo.current++;
+    timeSinceLastPunch.current = 0;
+
+    const isHeavy = attackDef.hitReaction === 'HEAVY' || attackDef.hitReaction === 'KNOCKDOWN';
+    const hitDelay = isHeavy ? 280 : 120; // Wait for punch apex
+
+    setTimeout(() => {
+      if (rigidBodyRef.current) {
+        const trans = rigidBodyRef.current.translation();
+        const angle = facingAngleRef.current;
+        
+        const dirX = Math.sin(angle);
+        const dirZ = Math.cos(angle);
+        const rayOrigin = new rapier.Vector3(trans.x + dirX * 0.5, trans.y + 0.8, trans.z + dirZ * 0.5);
+        const rayDir = new rapier.Vector3(dirX, 0, dirZ);
+        
+        const ray = new rapier.Ray(rayOrigin, rayDir);
+        // Shortened raycast so they must physically touch to hit
+        const hit = world.castRay(ray, 0.85, true);
+
+        if (hit) {
+          const collider = hit.collider;
+          const userData = collider.parent()?.userData as any;
+          if (userData && userData.isEnemy && userData.takeHit && userData.playerId !== playerId) {
+            const attackDef = ATTACKS[attackType as AttackType];
+            const impactDir = new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z);
+            userData.takeHit(attackDef.damage, impactDir, isHeavy);
+          }
+        }
+      }
+    }, hitDelay); 
+
+    triggerPunch(attackType, isLeft, () => {
+      setCombatState('IDLE');
+    });
+  };
+
+  const { updateAI } = useAIController(playerId, world, rigidBodyRef, combatState, keys, triggerPunchAction, triggerMatrixDodge, setCombatState);
+
+  // Watch for opponent's death to trigger victory celebration
+  useEffect(() => {
+    const unsub = useCombatStore.subscribe((state) => {
+      const myEntity = state.entities[playerId];
+      if (!myEntity || !myEntity.isAlive) return;
+
+      // Check if any OTHER entity just died
+      const opponentDead = Object.values(state.entities).some(e => e.id !== playerId && !e.isAlive);
+      
+      // We check ref instead of state to avoid closure staleness without adding dependencies
+      if (opponentDead && combatStateRefForHit.current !== 'CELEBRATING') {
+        setCombatState('CELEBRATING');
+        triggerCelebrate(() => {
+          // Stay celebrating or return to idle? Let's just keep them in a loop by not returning to IDLE here,
+          // or return to IDLE and they can move around.
+          // For now, let them return to IDLE after a long celebration, or just stay IDLE.
+          setCombatState('IDLE');
+        });
+      }
+    });
+    return unsub;
+  }, [playerId, triggerCelebrate, setCombatState]);
 
   useEffect(() => {
     if (inputType === 'ai') {
@@ -154,9 +232,9 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
         setCombatState('HURT');
         triggerHurt(keys.current.shift, () => setCombatState('IDLE'));
       }
-      if (k === 'q' && combatState !== 'KNOCKDOWN') {
-        setCombatState('KNOCKDOWN');
-        triggerKnockdown(() => {
+      if (k === 'q' && combatState !== 'DODGING' && combatState !== 'KNOCKDOWN') {
+        setCombatState('DODGING');
+        triggerMatrixDodge(() => {
           setCombatState('IDLE');
         });
       }
@@ -179,16 +257,19 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
         // Raycast logic for the auto combo
         const performStrike = (type: string, delay: number, dmg: number) => {
           setTimeout(() => {
-            if (!characterRef.current || !rigidBodyRef.current) return;
-            const pos = characterRef.current.position.clone();
-            const rayOrigin = { x: pos.x, y: pos.y + 1, z: pos.z };
-            const q = characterRef.current.quaternion;
-            const rayDir = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+            if (!rigidBodyRef.current) return;
+            const trans = rigidBodyRef.current.translation();
+            const angle = facingAngleRef.current;
+            const dirX = Math.sin(angle);
+            const dirZ = Math.cos(angle);
+            const rayOrigin = new rapier.Vector3(trans.x + dirX * 0.5, trans.y + 0.8, trans.z + dirZ * 0.5);
+            const rayDir = new rapier.Vector3(dirX, 0, dirZ);
             const ray = new rapier.Ray(rayOrigin, rayDir);
-            const hit = world.castRay(ray, 1.2, true, undefined, undefined, rigidBodyRef.current.collider(0));
+            const hit = world.castRay(ray, 1.2, true);
             if (hit) {
-              const userData = hit.collider.parent()?.userData as any;
-              if (userData && userData.isEnemy && userData.takeHit) {
+              const collider = hit.collider;
+              const userData = collider.parent()?.userData as any;
+              if (userData && userData.isEnemy && userData.takeHit && userData.playerId !== playerId) {
                 userData.takeHit(dmg, new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z), dmg > 15);
               }
             }
@@ -235,7 +316,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     // Player 2 uses Numpad instead of Mouse
     if (inputType === 'player2') {
       const handleP2Keys = (e: KeyboardEvent) => {
-        if (combatState !== 'IDLE' || !combatStanceRef.current) return;
+        if (combatState !== 'IDLE') return;
         
         let attackType: CombatState | null = null;
         let isLeft = true;
@@ -275,9 +356,6 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
       
       // Safety threshold for long presses that aren't dragged but held for an unusual amount of time
       if (clickDuration > 400) return;
-      
-      // Only allow mouse attacks when explicitly locked onto an enemy
-      if (!combatStanceRef.current) return;
 
       if (e.button === 0 || e.button === 2) {
         if (combatState === 'IDLE') {
@@ -312,42 +390,6 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
           triggerPunchAction(attackType, isLeft);
         }
       }
-    };
-    
-    const triggerPunchAction = (attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' | 'SPIN_ATTACK', isLeft: boolean) => {
-      const attackDef = ATTACKS[attackType as AttackType];
-      if (!consumeStamina(playerId, attackDef.staminaCost)) return;
-      setCombatState(isLeft ? 'PUNCH_L' : 'PUNCH_R');
-      punchCombo.current++;
-      timeSinceLastPunch.current = 0;
-
-      setTimeout(() => {
-        if (rigidBodyRef.current) {
-          const trans = rigidBodyRef.current.translation();
-          const angle = facingAngleRef.current;
-          
-          const rayOrigin = new rapier.Vector3(trans.x, trans.y + 0.8, trans.z);
-          const rayDir = new rapier.Vector3(Math.sin(angle), 0, Math.cos(angle));
-          
-          const ray = new rapier.Ray(rayOrigin, rayDir);
-          const hit = world.castRay(ray, 1.2, true, undefined, undefined, rigidBodyRef.current.collider(0));
-
-          if (hit) {
-            const collider = hit.collider;
-            const userData = collider.parent()?.userData as any;
-            if (userData && userData.isEnemy && userData.takeHit && userData.playerId !== playerId) {
-              const attackDef = ATTACKS[attackType as AttackType];
-              const isHeavy = attackDef.hitReaction === 'HEAVY' || attackDef.hitReaction === 'KNOCKDOWN';
-              const impactDir = new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z);
-              userData.takeHit(attackDef.damage, impactDir, isHeavy);
-            }
-          }
-        }
-      }, 100); 
-
-      triggerPunch(attackType, isLeft, () => {
-        setCombatState('IDLE');
-      });
     };
     
     const handleContextMenu = (e: MouseEvent) => {
@@ -489,29 +531,9 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
       setIsGrounded(false);
     }
 
-    // Determine combat stance
-    let nearEnemy = false;
-    world.bodies.forEach(b => {
-      const ud = b.userData as any;
-      if (ud && ud.isEnemy && ud.playerId !== playerId) {
-        const et = b.translation();
-        const dist = Math.hypot(translation.x - et.x, translation.z - et.z);
-        if (dist <= 4.0) nearEnemy = true;
-      }
-    });
-    // Fallback if userData is on the collider's parent
-    if (!nearEnemy) {
-      world.colliders.forEach(c => {
-        const ud = c.parent()?.userData as any;
-        if (ud && ud.isEnemy && ud.playerId !== playerId) {
-          const et = c.translation();
-          const dist = Math.hypot(translation.x - et.x, translation.z - et.z);
-          if (dist <= 4.0) nearEnemy = true;
-        }
-      });
-    }
-
-    combatStanceRef.current = nearEnemy;
+    // Determine combat stance (arms raised)
+    // Active when near an enemy OR during/shortly after attacks
+    combatStanceRef.current = lockedOn || (timeSinceLastPunch.current < 3.0) || combatState !== 'IDLE';
 
     // Stamina Regeneration
     if (timeSinceLastPunch.current > 1.0) {
@@ -520,11 +542,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
     
     // AI Input (Testing dummy)
     if (inputType === 'ai') {
-       // Just stand still
-       keys.current.w = false;
-       keys.current.s = false;
-       keys.current.a = false;
-       keys.current.d = false;
+       updateAI(dt, state.clock.getElapsedTime());
     }
 
     // Apply Velocity directly via physics
@@ -544,7 +562,7 @@ export function ProceduralCharacter({ playerId = 'player1', inputType = 'player1
       position={position}
       colliders={false} 
       enabledRotations={[false, false, false]}
-      userData={{ isEnemy: true, playerId, takeHit }}
+      userData={{ isEnemy: true, playerId, takeHit, combatState }}
     >
       <CapsuleCollider args={[0.4, 0.4]} position={[0, 0.8, 0]} />
       <primitive ref={characterRef} object={group} />

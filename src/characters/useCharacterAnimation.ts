@@ -149,7 +149,7 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
     tl.to(hitAnim, { weight: 0, pitch: 0, twist: 0, duration: heavy ? 0.5 : 0.25, ease: "power2.inOut" });
   };
 
-  const triggerKnockdown = (onComplete: () => void) => {
+  const triggerMatrixDodge = (onComplete: () => void) => {
     const kAnim = knockdownAnimRef.current;
     gsap.killTweensOf(kAnim);
     kAnim.weight = 0;
@@ -164,6 +164,21 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
     // 4. Snap back to standing
     tl.to(kAnim, { pitch: -0.2, hipsY: -0.2, knees: 0.5, armsSpread: 0, duration: 0.15, ease: "power2.in" });
     tl.to(kAnim, { weight: 0, pitch: 0, hipsY: 0, knees: 0, duration: 0.15, ease: "power2.out" });
+  };
+
+  const triggerKnockdown = (onComplete: () => void) => {
+    const kAnim = knockdownAnimRef.current;
+    gsap.killTweensOf(kAnim);
+    kAnim.weight = 0;
+    
+    const tl = gsap.timeline({ onComplete });
+    // 1. Stagger back (head snaps back, arms fly up)
+    tl.to(kAnim, { weight: 1.0, pitch: -0.8, hipsY: -0.3, knees: 0.5, armsSpread: 1.2, duration: 0.2, ease: "power2.out" });
+    // 2. Heavy crash to ground
+    tl.to(kAnim, { pitch: -1.5, hipsY: -0.95, knees: 0.1, armsSpread: 1.8, duration: 0.25, ease: "power1.in" });
+    // 3. Settling bounce
+    tl.to(kAnim, { pitch: -1.55, hipsY: -0.98, armsSpread: 1.5, duration: 0.3, ease: "power2.out" });
+    // Stays down!
   };
 
   const triggerGetUp = (onComplete: () => void) => {
@@ -522,5 +537,5 @@ export function useCharacterAnimation(_bones: Record<string, THREE.Object3D>, ve
     });
   };
 
-  return { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo };
+  return { triggerPunch, triggerDodge, triggerMatrixDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo };
 }
