@@ -39,7 +39,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   const baseHipsYRef = useRef(0.95); // Base Y from generation
   
   // Combat animation state objects
-  const combatAnimRef = useRef({ pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2 });
+  const combatAnimRef = useRef({ pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2, pSquat: 0, pLean: 0 });
   const dodgeAnimRef = useRef({ weight: 0, x: 0, z: 0, squat: 0, rollX: 0, rollZ: 0 });
   const hitAnimRef = useRef({ weight: 0, pitch: 0, twist: 0 });
   const knockdownAnimRef = useRef({ weight: 0, pitch: 0, hipsY: 0, knees: 0, armsSpread: 0 });
@@ -66,11 +66,14 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     combatAnim.pUpper = 0;
     combatAnim.pLunge = 0;
     combatAnim.pArmZ = -0.2; // Starts flared
+    combatAnim.pSquat = 0;
+    combatAnim.pLean = 0;
 
     const tl = gsap.timeline({ onComplete });
 
     let strikeElbow = -0.1, strikeChest = isLeft ? -0.4 : 0.4, strikeShoulder = -1.5, strikeArmZ = 0;
     let windupHook = 0, strikeHook = 0, windupUpper = 0, strikeUpper = 0;
+    let windupSquat = 0, strikeSquat = 0, windupLean = 0, strikeLean = 0;
     let strikeDur = 0.12, lungeDist = 0.4, recoilDur = 0.35, recoilDelay = "+=0.05";
     
     if (attackType === 'HOOK') {
@@ -78,6 +81,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       windupHook = -0.6; strikeHook = 1.2; strikeDur = 0.15; lungeDist = 0.3; recoilDur = 0.4;
     } else if (attackType === 'UPPERCUT') {
       strikeElbow = -1.8; strikeChest = isLeft ? -0.7 : 0.7; strikeShoulder = -1.0; strikeArmZ = 0.2;
+      windupSquat = 0.8; strikeSquat = -0.3; 
+      windupLean = isLeft ? 0.3 : -0.3; strikeLean = isLeft ? -0.2 : 0.2;
       windupUpper = 0; strikeUpper = 0; strikeDur = 0.14; lungeDist = 0.2; recoilDur = 0.45;
     } else if (attackType === 'CROSS') {
       strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; lungeDist = 0.6; recoilDur = 0.4; strikeArmZ = -0.1;
@@ -89,11 +94,11 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     }
 
     // 1. Windup (Anticipation)
-    tl.to(combatAnim, { pWeight: 1.0, pHook: windupHook, pUpper: windupUpper, pLunge: -0.1, duration: 0.1, ease: "power2.out" });
+    tl.to(combatAnim, { pWeight: 1.0, pHook: windupHook, pUpper: windupUpper, pLunge: -0.1, pSquat: windupSquat, pLean: windupLean, duration: 0.1, ease: "power2.out" });
     
     // 2. Strike (Follow-through)
     tl.to(combatAnim, {
-      pElbow: strikeElbow, pChestTwist: strikeChest, pShoulder: strikeShoulder, pHook: strikeHook, pUpper: strikeUpper, pLunge: lungeDist, pArmZ: strikeArmZ,
+      pElbow: strikeElbow, pChestTwist: strikeChest, pShoulder: strikeShoulder, pHook: strikeHook, pUpper: strikeUpper, pLunge: lungeDist, pArmZ: strikeArmZ, pSquat: strikeSquat, pLean: strikeLean,
       duration: strikeDur, ease: "back.out(1.5)"
     });
     
@@ -380,9 +385,18 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       const cw = cAnim.pWeight;
 
       bones.chest.rotation.y = bones.chest.rotation.y * iw + cAnim.pChestTwist * cw;
+      bones.chest.rotation.z = bones.chest.rotation.z * iw + cAnim.pLean * cw;
       // Pivot hips and shift weight forward into the punch to drive leg movement
       bones.hips.rotation.y = bones.hips.rotation.y * iw + (cAnim.pChestTwist * 0.4) * cw;
       bones.hips.rotation.x = bones.hips.rotation.x * iw + (0.15) * cw;
+      bones.hips.rotation.z = bones.hips.rotation.z * iw + (cAnim.pLean * 0.5) * cw;
+      bones.hips.position.y -= (cAnim.pSquat * 0.4) * cw;
+      
+      // Squat legs to match the hip drop
+      bones.lUpperLeg.rotation.x -= (cAnim.pSquat * 0.8) * cw;
+      bones.lLowerLeg.rotation.x += (cAnim.pSquat * 1.5) * cw;
+      bones.rUpperLeg.rotation.x -= (cAnim.pSquat * 0.8) * cw;
+      bones.rLowerLeg.rotation.x += (cAnim.pSquat * 1.5) * cw;
       
       if (activeArmOverrideRef.current === 'L') {
         bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.2) * cw;
