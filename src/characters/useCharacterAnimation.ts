@@ -119,8 +119,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const tl = gsap.timeline({ onComplete });
     tl.to(dodgeAnim, { 
       weight: 1.0, 
-      rollX: isSideways ? 0 : (dz > 0 ? -1 : 1) * Math.PI * 2, // Dive roll forward/back
-      rollZ: isSideways ? (dx > 0 ? -1 : 1) * Math.PI * 2 : 0, // Barrel roll left/right
+      rollX: 0, 
+      rollZ: 0, 
       duration: 0.4, 
       ease: "power1.inOut" 
     }, 0);
