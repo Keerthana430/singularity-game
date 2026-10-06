@@ -2,12 +2,34 @@
 
 ## Current State
 
-- **Completed Phases:** 22-Animation Phase 1-8 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll, Combos), Phase 11 (Multiplayer Readiness)
+- **Completed Phases:** 22-Animation Phase 1-8 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll, Combos), Phase 11 (Multiplayer Readiness), Combat & Uppercut Polish
 - **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
 - **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
-- **How to Test:** WASD to move, Space to jump, Left Click to punch, `1` for auto-combo, `C`/`T` for emotes, Double-Tap WASD to dodge/slide.
+- **How to Test:** WASD to move, Space to jump, Left Click to punch, Right click for uppercut, `1` for auto-combo, `C`/`T` for emotes, Double-Tap WASD to dodge/slide.
 - **Open Risks:** None.
 - **Next Phase:** Phase 12 (Future Features) or character integration back to the board.
+
+---
+
+## Phase: Combat Controls & Uppercut Mechanics Polish (2026-10-06)
+- **Built**:
+  - Implemented strict Pointer Drag Distance tracking (10px threshold) to ensure orbiting the camera never accidentally triggers combat attacks.
+  - Hard-separated combat inputs: Left-Click now strictly fires Light attacks (Jab, Cross, Hook), and Right-Click strictly fires the Heavy Uppercut.
+  - Rewrote the Uppercut GSAP animation into a "Gazelle/Stepping Uppercut". The character now performs a deep physical squat (`pSquat`) and lateral lean (`pLean`), followed by a physical forward translation along their Z-axis (`pLunge`) to close distance during the punch.
+  - Eliminated the sideways sweep on the uppercut by fixing the `strikeArmZ`, `strikeChest`, and `strikeElbow` variables.
+- **Files created/changed**:
+  - `src/characters/useCharacterAnimation.ts` (Added `pSquat`, `pLean`, `pLunge` bone mapping; modified UPPERCUT GSAP timelines)
+  - `src/characters/ProceduralCharacter.tsx` (Added `pointerDownPos` tracking, separated click handlers, mapped right click)
+- **Decisions and assumptions**:
+  - `pLunge` is applied locally to `bones.hips.position.z` rather than via the physics engine (`setLinvel`), allowing the lunge to be purely aesthetic and deterministic over the animation timeline without disrupting global physics positioning permanently.
+  - Lunge distance is explicitly set to `0.45` to balance the forward drive without sliding too far.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - Uppercut is forward, not sideways - PASS
+  - Leg movement goes forward during uppercut - PASS
+  - Separated left click and right click correctly - PASS
+- **Known issues**: None.
+- **Deferred**: None.
 
 ---
 
