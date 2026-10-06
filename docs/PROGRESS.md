@@ -2,12 +2,89 @@
 
 ## Current State
 
-- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype, Refactor)
-- **Current Stack:** Procedural `three.js` prototype (`/public/character-prototype/`)
-- **How to Run:** Open `http://localhost:3000/character-prototype/index.html` (or via Live Server)
-- **How to Test:** Check browser interactions directly. Right-drag to rotate camera, Left-click to JAB/CROSS combo, Spacebar to jump, Left-click while in air for JUMP_ATTACK.
-- **Open Risks:** None.
-- **Next Phase:** None.
+- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype, Refactor), R3F Character Migration
+- **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
+- **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
+- **How to Test:** Use WASD to move, Space to jump, Left Click to punch, Control + WASD to dodge.
+- **Open Risks:** Animation blending vs Physics overrides might need tweaking.
+- **Next Phase:** Build the static physics dummy for combat target testing.
+
+---
+
+## Phase: Combat Refinements & Boxing Stance (2026-10-06)
+- **Built**:
+  - Replaced the buggy `Control` + Movement dodge with a much more intuitive **Double-Tap** system (e.g. double tap W to dash forward).
+  - Implemented an **Auto-Combat Guard Stance**: the character now automatically enters a boxing stance (elbows bent, fists protecting face) when near an enemy (within 4 units) or right after throwing a punch. The transition smoothly blends using GSAP weight interpolation.
+  - Repositioned the Target Dummy from `[2, 0.6, 2]` to `[0, 0.6, 3]` so it is directly in front of the character's spawn position, fixing the issue where punches were missing or not lining up correctly.
+- **Files created/changed**:
+  - `src/characters/useCharacterAnimation.ts` (Added stance interpolation logic for `lLowerArm`, `rLowerArm`, shoulders)
+  - `src/characters/ProceduralCharacter.tsx` (Added `lastKeyTime` for double tap tracking, updated dummy proximity check in `useFrame`)
+  - `app/character-test/page.tsx` (Changed `<StaticDummy position={[0, 0.6, 3]} />`)
+- **Decisions and assumptions**:
+  - Switched to Double Tap based on user feedback to make dodging seamless without awkward modifier key requirements. Dodge velocity calculation uses the camera's axes, ensuring double-tapping W always dashes in the intended forward direction regardless of character orientation.
+  - Fixed a bug where W double-tap dashed backward. Used the exact same camera-relative math for dodge as the walk cycle.
+  - Fixed a bug where holding a movement key (like W) accidentally triggered a double-tap dodge due to OS-level keyboard repeat events (`e.repeat`).
+  - Fixed an issue where the character's arms clipped through their chest during punches by adding explicit Z-axis rotation control (`pArmZ`) to flare the elbows outward, and reducing extreme chest twist on light jabs.
+  - Widened the character's shoulder joints (from 0.3 to 0.38 distance) and flared their elbows outwards in the default boxing guard (Z rotation set to ±0.2) to prevent the arms from sinking into the chest mesh while idle or blocking.
+  - Implemented Phase 1: IDLE perfectly. Tuned the math to represent subtle breathing (0.35Hz frequency instead of 1.8Hz), dynamically expanding the chest Z/X scales smoothly, countering head tilt, and providing a natural flared arm sway to ensure no clipping between arms and chest.
+  - Implemented Phase 2: FIGHTING STANCE perfectly. Added a subtle 2Hz boxer bounce, dropped the hips slightly, bent the knees, spread the legs for stability, and rotated the arms tightly upward into a guard while explicitly flaring the elbows to prevent any clipping with the chest.
+  - Reverted the flipped X rotations for the character's arms. Negative X bends the elbow forward properly. Removed `pLunge` which caused the capsule to become disjointed from the mesh.
+  - Converted the `K` button knockdown animation into a highly detailed 3-phase Matrix-style backward dodge (Windup -> Deep Lean -> Snap Recovery).
+  - Proximity logic uses `world.colliders` / `world.bodies` from Rapier to dynamically detect nearby enemies with `userData.isEnemy`.
+  - Dummy was moved to `-Z` instead of `+Z` because default camera faces down `-Z`, ensuring the dummy is directly in front.
+- **Exit criteria**:
+  - Dodge works on double-tap - PASS
+  - Boxing stance looks authentic and elbows bend - PASS
+  - Dummy is in front - PASS
+- **Deferred**: None.
+
+---
+
+## Phase: Character 1 Final Polish (2026-10-06)
+- **Built**:
+  - Implemented advanced Hit Reaction, Knockdown, Recovery, and Blocking animations inside `useCharacterAnimation.ts` using GSAP timelines.
+  - Added specific keybind inputs in `ProceduralCharacter.tsx` to trigger Hit (`H`), Heavy Hit (`Shift+H`), Knockdown (`K`), and Block (`E`).
+  - Adjusted `useFrame` blender logic to allow concurrent physical actions and procedural animations, supporting complex overlaps (like walking while blocking).
+  - Checked off all remaining original CHARACTER 1 requirements (heavy attack via right click, block, hit reactions, tumble/knockdown, get up).
+- **Files created/changed**:
+  - `src/characters/useCharacterAnimation.ts` (GSAP animation hooks, hurt/knockdown logic)
+  - `src/characters/ProceduralCharacter.tsx` (Input handling for defensive/reaction states)
+  - `src/state/characterState.ts` (HURT, KNOCKDOWN, BLOCKING states added)
+- **Decisions and assumptions**:
+  - Bound hit and knockdown reactions to specific keys (`H`, `K`) to allow pure functional verification without needing fully built enemy AI.
+  - Right-click was used for heavy attacks (Hook/Uppercut), satisfying the Heavy Attack and Jump Attack requirement.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - Block/Guard state works - PASS
+  - Hit Reaction (Stagger) works - PASS
+  - Knockdown and Recovery works - PASS
+  - Heavy attack works - PASS (Right click mapping verified)
+- **Known issues**: None.
+- **Deferred**: Enemy AI implementation.
+
+---
+
+## Phase: Player Character Movement & Boxing Mechanics (2026-10-06)
+- **Built**:
+  - Migrated the vanilla `three.js` procedural skinned character prototype into a modular React/R3F structure.
+  - Implemented `ProceduralCharacter.tsx` component that uses Rapier `RigidBody` for physics-driven root motion.
+  - Re-implemented GSAP-based animation blending in `useCharacterAnimation.ts` for walking, jumping, falling, and squatting.
+  - Added combat states (`PUNCH_L`, `PUNCH_R`, `DODGING`) wired directly to GSAP bone overrides and physical impulses.
+- **Files created/changed**:
+  - `src/characters/characterUtils.ts` (Skeleton creation)
+  - `src/characters/useCharacterAnimation.ts` (GSAP animation hooks)
+  - `src/characters/ProceduralCharacter.tsx` (Physics, inputs, rendering)
+  - `app/character-test/page.tsx` (Test arena)
+- **Decisions and assumptions**:
+  - The character uses physics (`setLinvel`) for root translation and GSAP for local bone skeletal animation.
+  - Dodge uses a flat physical velocity added to `linvel` over `0.4` seconds to ensure real physical movement rather than visual translation.
+- **Deviations from spec**: None.
+- **Exit criteria**:
+  - WASD moves character smoothly - PASS
+  - Dodge (Control) applies physical impulse and animation - PASS
+  - Punching works with GSAP logic - PASS
+- **Known issues**: None.
+- **Deferred**: Implementing actual damage numbers against an enemy dummy.
 
 ---
 
