@@ -40,7 +40,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   
   // Combat animation state objects
   const combatAnimRef = useRef({ pWeight: 0, pElbow: -1.8, pShoulder: 0, pChestTwist: 0, pHook: 0, pUpper: 0, pLunge: 0, pArmZ: -0.2 });
-  const dodgeAnimRef = useRef({ weight: 0, x: 0, z: 0, squat: 0 });
+  const dodgeAnimRef = useRef({ weight: 0, x: 0, z: 0, squat: 0, rollX: 0, rollZ: 0 });
   const hitAnimRef = useRef({ weight: 0, pitch: 0, twist: 0 });
   const knockdownAnimRef = useRef({ weight: 0, pitch: 0, hipsY: 0, knees: 0, armsSpread: 0 });
   const blockAnimRef = useRef({ weight: 0 });
@@ -107,10 +107,22 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     dodgeAnim.x = dx * 1.5;
     dodgeAnim.z = dz * 1.5;
     dodgeAnim.squat = 1.0;
+    dodgeAnim.rollX = 0;
+    dodgeAnim.rollZ = 0;
+    
+    // Choose roll axis. Dive roll if mostly moving forward/back, barrel roll if moving sideways.
+    const isSideways = Math.abs(dx) > Math.abs(dz);
     
     const tl = gsap.timeline({ onComplete });
-    tl.to(dodgeAnim, { weight: 1.0, duration: 0.15, ease: "power2.out" });
-    tl.to(dodgeAnim, { weight: 0, squat: 0, duration: 0.25, ease: "power2.inOut" });
+    tl.to(dodgeAnim, { 
+      weight: 1.0, 
+      rollX: isSideways ? 0 : (dz > 0 ? -1 : 1) * Math.PI * 2, // Dive roll forward/back
+      rollZ: isSideways ? (dx > 0 ? -1 : 1) * Math.PI * 2 : 0, // Barrel roll left/right
+      duration: 0.4, 
+      ease: "power1.inOut" 
+    }, 0);
+    
+    tl.to(dodgeAnim, { squat: 0, duration: 0.4, ease: "power2.inOut" }, 0);
   };
 
   const triggerHurt = (heavy: boolean, onComplete: () => void) => {
@@ -155,6 +167,14 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const sin = Math.sin;
     const PI2 = Math.PI * 2;
 
+    const facingAngle = bones.root.parent ? bones.root.parent.rotation.y : 0;
+    
+    // Rotate global velocity to local to enable omni-directional strafing
+    const localVel = new THREE.Vector3(velocity.x, 0, velocity.z);
+    localVel.applyAxisAngle(new THREE.Vector3(0, 1, 0), -facingAngle);
+    
+    const speedX = localVel.x;
+    const speedZ = localVel.z;
     const speed = new THREE.Vector2(velocity.x, velocity.z).length();
     
     // Calculate movement blend
@@ -202,9 +222,16 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const chestLeanMax = WALK.leanForward + runWeight * 0.25; // Lean aggressively forward
     const hipBobMax = WALK.hipBob + runWeight * 0.03; // More vertical bounce
 
-    // Walk/Run Cycle Mathematics
-    const lLegSwing = -sin(wc) * legSwingMax;
-    const rLegSwing = sin(wc) * legSwingMax;
+    // Omni-directional Leg Crossover Math (Phase 6: Strafe)
+    const speedRatio = speed + 0.001;
+    const zSwing = (speedZ / speedRatio);
+    const xSwing = (speedX / speedRatio);
+
+    const lLegPitch = -sin(wc) * legSwingMax * zSwing;
+    const rLegPitch = sin(wc) * legSwingMax * zSwing;
+    
+    const lLegRoll = -sin(wc) * legSwingMax * xSwing;
+    const rLegRoll = sin(wc) * legSwingMax * xSwing;
     
     const lKnee = Math.max(0, Math.cos(wc)) * WALK.kneeFlexion * (1 + runWeight);
     const rKnee = Math.max(0, -Math.cos(wc)) * WALK.kneeFlexion * (1 + runWeight);
@@ -212,8 +239,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const lFootLift = Math.max(0, Math.cos(wc)) * footLiftMax;
     const rFootLift = Math.max(0, -Math.cos(wc)) * footLiftMax;
     
-    const lFootRoll = sin(wc) * 0.3 * (1 + runWeight * 0.5); // Heel -> Toe
-    const rFootRoll = -sin(wc) * 0.3 * (1 + runWeight * 0.5);
+    const lFootRoll = sin(wc) * 0.3 * (1 + runWeight * 0.5) * zSwing; // Heel -> Toe
+    const rFootRoll = -sin(wc) * 0.3 * (1 + runWeight * 0.5) * zSwing;
 
     const lArmSwing = sin(wc) * armSwingMax;
     const rArmSwing = -sin(wc) * armSwingMax;
@@ -227,18 +254,20 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
 
     const tuckLegs = -1.0 * jumpRiseWeight + 0.1 * fallWeight + -1.2 * squatPhaseRef.current;
     const tuckKnees = 1.2 * jumpRiseWeight + 0.1 * fallWeight + 1.8 * squatPhaseRef.current;
+    const spineStretch = 0.2 * jumpRiseWeight - 0.1 * fallWeight;
     const armFlailZ = 0.3 * jumpRiseWeight + 0.8 * fallWeight;
-    const armFlailX = 0.2 * jumpRiseWeight - 1.2 * fallWeight;
+    const armFlailX = 1.5 * jumpRiseWeight - 1.2 * fallWeight;
     const fallElbowBend = -0.6 * jumpRiseWeight - 0.4 * fallWeight;
     
     // Core body
     // Simulate breathing by expanding chest depth (Z) and width (X) slightly, and tilting it up (negative X rotation)
+    bones.spine.scale.y = 1 + spineStretch;
     bones.chest.scale.z = 1 + breathPhase * IDLE.breathAmp * idleWeight;
     bones.chest.scale.x = 1 + breathPhase * (IDLE.breathAmp * 0.5) * idleWeight;
     bones.chest.scale.y = 1;
-    bones.chest.rotation.x = walkWeight * chestLeanMax + 0.8 * squatPhaseRef.current - 0.1 * fallWeight - breathPhase * IDLE.breathAmp * idleWeight;
-    bones.chest.rotation.y = walkWeight * chestTwist;
-    bones.chest.rotation.z = 0; // Lean into turns could go here
+    bones.chest.rotation.x = walkWeight * chestLeanMax * zSwing + 0.8 * squatPhaseRef.current - 0.1 * fallWeight - breathPhase * IDLE.breathAmp * idleWeight;
+    bones.chest.rotation.y = walkWeight * chestTwist * zSwing;
+    bones.chest.rotation.z = walkWeight * chestLeanMax * 0.5 * xSwing; // Lean into strafes
 
     // In fighting stance, add a 2Hz boxer bounce and lower the hips
     const sw = stanceWeightRef.current;
@@ -262,18 +291,18 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     // Head subtly counters the chest breathing tilt
     bones.head.rotation.x = Math.sin(t * Math.PI * 2 * 0.4) * 0.01 * idleWeight - walkWeight * WALK.headStabilize - 0.3 * squatPhaseRef.current + 0.2 * fallWeight + breathPhase * (IDLE.breathAmp * 0.5) * idleWeight;
 
-    // Default Legs (IDLE + WALK + FALLING + STANCE)
+    // Default Legs (IDLE + WALK + FALLING + STANCE + STRAFE)
     // Left Leg (Lead Leg in stance)
-    bones.lUpperLeg.rotation.x = lLegSwing * walkWeight + tuckLegs - 0.5 * sw;
-    bones.lUpperLeg.rotation.z = -0.2 * sw; // Spread outward left
+    bones.lUpperLeg.rotation.x = lLegPitch * walkWeight + tuckLegs - 0.5 * sw;
+    bones.lUpperLeg.rotation.z = lLegRoll * walkWeight - 0.2 * sw; // Spread outward left
     bones.lLowerLeg.rotation.x = lKnee * walkWeight + tuckKnees + 0.8 * sw;
     bones.lLowerLeg.rotation.z = 0.2 * sw; // Keep shin vertical
     bones.lFoot.rotation.x = lFootRoll * walkWeight - 0.3 * sw;
     bones.lFoot.position.y = -0.38 + lFootLift * walkWeight;
 
     // Right Leg (Rear Leg in stance)
-    bones.rUpperLeg.rotation.x = rLegSwing * walkWeight + tuckLegs + 0.1 * sw;
-    bones.rUpperLeg.rotation.z = 0.2 * sw; // Spread outward right
+    bones.rUpperLeg.rotation.x = rLegPitch * walkWeight + tuckLegs + 0.1 * sw;
+    bones.rUpperLeg.rotation.z = rLegRoll * walkWeight + 0.2 * sw; // Spread outward right
     bones.rLowerLeg.rotation.x = rKnee * walkWeight + tuckKnees + 0.5 * sw;
     bones.rLowerLeg.rotation.z = -0.2 * sw; // Keep shin vertical
     bones.rFoot.rotation.x = rFootRoll * walkWeight - 0.6 * sw;
@@ -323,11 +352,15 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       }
     }
 
-    // Apply Dodge Override
+    // Apply Dodge Override (Phase 7: Roll/Evade)
     const dAnim = dodgeAnimRef.current;
-    if (dAnim.squat > 0) {
+    if (dAnim.squat > 0 || dAnim.weight > 0) {
       bones.hips.position.y -= dAnim.squat * 0.3;
       bones.chest.rotation.x += dAnim.squat * 0.5;
+      
+      // Roll 360 mechanics
+      bones.hips.rotation.x += dAnim.rollX * dAnim.weight;
+      bones.hips.rotation.z += dAnim.rollZ * dAnim.weight;
     }
     // Apply Knockdown Override
     const kAnim = knockdownAnimRef.current;

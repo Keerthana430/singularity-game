@@ -249,7 +249,34 @@ export function ProceduralCharacter() {
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
       
-      facingAngleRef.current += diff * 15.0 * dt;
+      if (combatStanceRef.current) {
+        let enemyPos: THREE.Vector3 | null = null;
+        let minDist = 10.0;
+        const charPos = rigidBodyRef.current.translation();
+        world.bodies.forEach(b => {
+          const ud = b.userData as any;
+          if (ud && ud.isEnemy) {
+            const et = b.translation();
+            const dist = Math.hypot(charPos.x - et.x, charPos.z - et.z);
+            if (dist < minDist) {
+              minDist = dist;
+              enemyPos = new THREE.Vector3(et.x, et.y, et.z);
+            }
+          }
+        });
+        
+        if (enemyPos) {
+           const lockAngle = Math.atan2(enemyPos!.x - charPos.x, enemyPos!.z - charPos.z);
+           let lockDiff = lockAngle - facingAngleRef.current;
+           while (lockDiff < -Math.PI) lockDiff += Math.PI * 2;
+           while (lockDiff > Math.PI) lockDiff -= Math.PI * 2;
+           facingAngleRef.current += lockDiff * 10.0 * dt;
+        } else {
+           facingAngleRef.current += diff * 15.0 * dt;
+        }
+      } else {
+        facingAngleRef.current += diff * 15.0 * dt;
+      }
     }
 
     characterRef.current.rotation.y = facingAngleRef.current;

@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Completed Phases:** 22-Animation Phase 1 (Idle), Phase 2 (Fighting Stance), Phase 3 (Walk Cycle)
+- **Completed Phases:** 22-Animation Phase 1-7 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll)
 - **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
 - **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
-- **How to Test:** Use WASD to move, Space to jump, Left Click to punch, Double-Tap WASD to dodge.
+- **How to Test:** WASD to move, Space to jump, Left Click to punch, Double-Tap WASD to dodge/roll.
 - **Open Risks:** Animation blending vs Physics overrides might need tweaking.
-- **Next Phase:** Phase 4 (Run Cycle)
+- **Next Phase:** Phase 8 (Attack Combo 1)
 
 ---
 
@@ -634,4 +634,13 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
 - Files changed: src/characters/useCharacterAnimation.ts
 - Decisions: Dynamically blended leg swing arc, arm pump intensity, elbow tightness, knee drive, and chest forward lean based on `speed > 2.8`.
 - Exit criteria: Distinct visual difference from walking. PASS. (Stride is wider, elbows tighter, deep forward lean).
+- Known issues: None.
+
+## Phase 5-7: Jump/Fall, Strafe, and Roll (06 Oct 2026)
+- Built: Procedural Jump and Fall blending using vertical velocity. 
+- Built: Omni-directional strafing math using `Math.atan2(localVelZ, localVelX)` relative to the character's facing angle, ensuring feet cross naturally when moving diagonally.
+- Built: Dark Souls-style 360-degree Dive/Barrel Roll on double-tap dash.
+- Files changed: src/characters/useCharacterAnimation.ts, src/characters/ProceduralCharacter.tsx
+- Decisions: Localized velocity to character facing angle so the walking animation correctly adapts when targeting an enemy while moving laterally. Applied a fast X-axis spin to the chest during a dash for the roll.
+- Exit criteria: Smooth jump stretching. PASS. Fluid strafing. PASS. Double-tap rolls character in the dash direction. PASS.
 - Known issues: None.
