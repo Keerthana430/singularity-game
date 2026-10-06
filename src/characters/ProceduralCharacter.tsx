@@ -259,7 +259,7 @@ export function ProceduralCharacter() {
       runSpeed: 5.5,
       accel: 12.0,
       decel: 8.0,
-      jumpForce: 8.0
+      jumpForce: 4.0
     };
 
     let inputX = 0;
