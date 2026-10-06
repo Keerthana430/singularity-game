@@ -35,6 +35,7 @@ export function ProceduralCharacter() {
   let punchCombo = useRef(0);
   let timeSinceLastPunch = useRef(999);
   let pointerDownTime = useRef(0);
+  let pointerDownPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -149,12 +150,20 @@ export function ProceduralCharacter() {
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
       pointerDownTime.current = performance.now();
+      pointerDownPos.current = { x: e.clientX, y: e.clientY };
     };
 
     const handlePointerUp = (e: MouseEvent) => {
       const clickDuration = performance.now() - pointerDownTime.current;
-      // If the click is longer than 200ms, it's a drag (camera movement), so ignore it
-      if (clickDuration > 200) return;
+      const dx = e.clientX - pointerDownPos.current.x;
+      const dy = e.clientY - pointerDownPos.current.y;
+      const distanceSq = dx * dx + dy * dy;
+      
+      // Threshold: ~10px distance squared is 100
+      if (distanceSq > 100) return;
+      
+      // Safety threshold for long presses that aren't dragged but held for an unusual amount of time
+      if (clickDuration > 400) return;
       
       // Only allow mouse attacks when explicitly locked onto an enemy
       if (!combatStanceRef.current) return;
