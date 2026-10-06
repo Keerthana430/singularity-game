@@ -224,7 +224,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const targetBlockWeight = combatState === 'BLOCKING' ? 1 : 0;
     blockAnimRef.current.weight += (targetBlockWeight - blockAnimRef.current.weight) * Math.min(1, 15 * dt);
     
-    const targetStanceWeight = combatStanceRef?.current ? 1 : 0;
+    // Only apply stance weight if not hurt/celebrating/taunting/attacking via combo
+    const targetStanceWeight = (combatStanceRef?.current && combatState !== 'HURT' && combatState !== 'ATTACKING') ? 1 : 0;
     stanceWeightRef.current += (targetStanceWeight - stanceWeightRef.current) * Math.min(1, 10 * dt);
     
     if (squatPhaseRef.current > 0) {
@@ -441,8 +442,23 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       // Bend elbows straight up and slightly in, forming a vertical shield in front of the face
       bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + (-2.0) * bw;
       bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + (-2.0) * bw;
-    }
-  });
+  const triggerAutoCombo = (onComplete: () => void) => {
+    // We can chain the animations manually using delayed calls or a master timeline.
+    // Since triggerPunch handles its own mini-timeline, it's easier to just call it sequentially.
+    triggerPunch('JAB', true, () => {});
+    
+    gsap.delayedCall(0.3, () => {
+      triggerPunch('CROSS', false, () => {});
+    });
+    
+    gsap.delayedCall(0.6, () => {
+      triggerPunch('HOOK', true, () => {});
+    });
+    
+    gsap.delayedCall(0.9, () => {
+      triggerPunch('SPIN_ATTACK', false, onComplete);
+    });
+  };
 
-  return { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt };
+  return { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo };
 }

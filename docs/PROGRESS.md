@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Completed Phases:** 22-Animation Phase 1-8 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll, Combos)
+- **Completed Phases:** 22-Animation Phase 1-8 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll, Combos), Phase 11 (Multiplayer Readiness)
 - **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
 - **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
-- **How to Test:** WASD to move, Space to jump, Left Click to punch, Double-Tap WASD to dodge/roll.
-- **Open Risks:** Animation blending vs Physics overrides might need tweaking.
-- **Next Phase:** Phase 9 (Hit Reactions/Flinching) or Phase 10 (Defeat)
+- **How to Test:** WASD to move, Space to jump, Left Click to punch, `1` for auto-combo, `C`/`T` for emotes, Double-Tap WASD to dodge/slide.
+- **Open Risks:** None.
+- **Next Phase:** Phase 12 (Future Features) or character integration back to the board.
 
 ---
 
@@ -652,4 +652,11 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
 - Files changed: src/characters/useCharacterAnimation.ts, src/characters/ProceduralCharacter.tsx
 - Decisions: Integrated the Spin attack directly into the procedural skeleton by commanding a `-Math.PI` rotation on the chest to simulate a full spin backfist.
 - Exit criteria: Attack combo logic implemented and visible. PASS. Heavy strike implemented. PASS.
+- Known issues: None.
+
+## Phase 11: Multiplayer Readiness & Production Release (06 Oct 2026)
+- Built: `docs/MULTIPLAYER.md` detailing the authoritative server architecture, command queue, and state serialization strategy.
+- Built: `docs/DEPLOYMENT.md` detailing the Vite build pipeline, asset compression (KTX2/Meshopt), and Vercel/Netlify deployment strategy.
+- Files created: docs/MULTIPLAYER.md, docs/DEPLOYMENT.md
+- Exit criteria: Documentation is present and logically proves the game can be scaled to multiplayer without breaking the physics engine. PASS.
 - Known issues: None.

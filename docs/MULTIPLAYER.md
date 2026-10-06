@@ -1,32 +1,40 @@
-# Multiplayer Architecture & Readiness
+# Multiplayer Readiness Architecture
 
-## Overview
-The Singularity 3D game core was built from Phase 1 to be fully decoupled from presentation. The state and rules reside in `src/rules/gameReducer.ts`, a pure deterministic function that accepts `GameState` and `GameCommand` to output a new `GameState` and an array of `GameEvent`s. 
+This document proves the technical feasibility of scaling "3D Snakes & Ladders" from local multiplayer to a fully online networked experience, fulfilling Phase 11 of the master project plan.
 
-Because of this strict purity, the client is **100% multiplayer-ready** using an Authoritative Server model.
+## The Challenge
+Browser-based 3D games with physics (like the Rapier-powered dice) and procedural animation present significant challenges for multiplayer synchronization. If we rely on clients to calculate physics, desynchronization is guaranteed.
 
-## Authoritative Server Model
-1. **Server Authority**: The server hosts the "true" `GameState`. Clients do not directly mutate their game states.
-2. **Command Dispatch**: When a player clicks "Roll Dice", a `GameCommand` (e.g., `ROLL_DICE`) is sent over WebSockets to the server.
-3. **Server Execution**: The server passes the command into `gameReducer()`. It increments a `sequenceNumber`.
-4. **Broadcast Sync**: The server broadcasts a `SERVER_SYNC` payload containing the command, the new sequence number, and a DJB2 state hash to all connected clients.
-5. **Client Application**: Clients receive `SERVER_SYNC`, run `gameReducer()` on their local state, and compare their local DJB2 hash to the server's hash.
+## The Solution: Deterministic State & Command Queue
 
-## Anti-Cheat
-- **Server-Side RNG**: The random seed is stored in the `GameState`. `gameReducer()` uses `createSeededRng` to produce deterministic results. A hacked client cannot "roll a 6" because the server computes the dice roll entirely based on the shared seed state.
-- **Validation**: If a client sends a command for another player's turn, `gameReducer()` simply ignores it (returns the same state).
+To support multiplayer, the game's architecture strictly separates the **State Engine** (rules, logic) from the **Presentation Layer** (3D rendering, animation).
 
-## Reconnect and Rejoin
-If a client disconnects or falls out of sync (i.e. `localHash !== serverHash`), they drop their local state and request a `STATE_SNAPSHOT` from the server. The server sends the entire serialized JSON string of the current `GameState`, allowing the client to instantly resume.
+### 1. Authoritative Server Model
+- **No Client Physics for Logic:** The Rapier physics engine on the client is purely cosmetic. The server rolls the dice using a seeded RNG and sends the *result* to all clients. The clients' physics engines then use steering forces to ensure the physical dice always land on the server-mandated result.
+- **Command Queue:** Clients do not directly mutate state. They send `COMMANDS` to the server (e.g., `Command.ROLL_DICE`, `Command.END_TURN`). The server validates the command against the current state and broadcasts a `DOMAIN EVENT` (e.g., `Event.DICE_ROLLED { value: 4 }`).
 
-## Handling Latency and Desync
-Animations take time (up to 5+ seconds for a ladder climb). To handle desync:
-- **Presentation Layer Separation**: The `turnPhase` inside `GameState` controls rules logic (e.g., wait for next roll), but the 3D presentation relies on the `eventBus`. 
-- **Late Clients / Fast-Forward**: If a client joins late, they receive the final `GameState` snapshot and skip the animations entirely. 
-- **Command Queuing**: If commands arrive while a client is animating, they are queued and applied sequentially after the animation resolves.
+### 2. State Serialization
+Because our board, player positions, and turn data are modeled as pure serializable JSON (using Zustand), the server can dump the entire game state at any moment and send it to a reconnecting client.
+```typescript
+interface GameState {
+  players: Record<string, PlayerState>;
+  turnIndex: number;
+  boardConfig: string; // "classic"
+  seed: number;
+}
+```
 
-## Required Codebase Changes for Online Play
-1. **WebSocket Client**: Replace `useGameStore` local dispatcher with a `ws.send()` wrapper.
-2. **WebSocket Server**: Spin up a Node.js process that holds the `GameState` instances per room and relays commands.
-3. **Lobby UI**: Add matchmaking or room code UI.
-4. **Local Prediction (Optional)**: If instant response is desired, the client can visually roll the dice before the server replies, though it's safer for tabletop board games to wait for the server's sync broadcast to begin the roll animation.
+### 3. Latency Compensation & Animation Fast-Forwarding
+What happens if player 2 rolls the dice, but player 1's client lags and receives the event 2 seconds late?
+- The animation system uses GSAP timelines with deterministic durations.
+- If a client detects that it is "behind" the server state, it will scale the `timeScale()` of the GSAP animations so the 3D character sprints rapidly across the board to catch up to their true position, preserving immersion without breaking logic.
+
+### 4. Anti-Cheat
+- The server generates all random numbers.
+- Movement validation is trivial since movement is strictly constrained by the board logic.
+- "Speed hacks" do not work because the client's animation speed has no effect on the server's rules engine.
+
+## Implementation Steps (Future Phase)
+1. Set up a WebSockets server (e.g., Colyseus or Socket.io) in Node.js.
+2. Move the core Zustand reducer logic into a shared `common/` folder imported by both client and server.
+3. Replace local `dispatch` calls with WebSocket `emit` calls.

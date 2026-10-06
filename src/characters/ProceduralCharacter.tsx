@@ -29,7 +29,7 @@ export function ProceduralCharacter() {
   const combatStanceRef = useRef(false);
   const lastKeyTime = useRef<Record<string, number>>({ w: 0, a: 0, s: 0, d: 0 });
 
-  const { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef);
+  const { triggerPunch, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo } = useCharacterAnimation(bones, velocityRef.current, isGrounded, combatStanceRef);
 
   let punchCombo = useRef(0);
   let timeSinceLastPunch = useRef(999);
@@ -90,6 +90,35 @@ export function ProceduralCharacter() {
         setCombatState('HURT');
         triggerTaunt(() => setCombatState('IDLE'));
       }
+      if (k === '1' && combatState === 'IDLE') {
+        setCombatState('ATTACKING');
+        // Start auto combo
+        triggerAutoCombo(() => setCombatState('IDLE'));
+        
+        // Raycast logic for the auto combo
+        const performStrike = (type: string, delay: number, dmg: number) => {
+          setTimeout(() => {
+            if (!characterRef.current || !rigidBodyRef.current) return;
+            const pos = characterRef.current.position.clone();
+            const rayOrigin = { x: pos.x, y: pos.y + 1, z: pos.z };
+            const q = characterRef.current.quaternion;
+            const rayDir = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+            const ray = new rapier.Ray(rayOrigin, rayDir);
+            const hit = world.castRay(ray, 1.2, true, undefined, undefined, rigidBodyRef.current.collider(0));
+            if (hit) {
+              const userData = hit.collider.parent()?.userData as any;
+              if (userData && userData.isEnemy && userData.takeHit) {
+                userData.takeHit(dmg, new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z));
+              }
+            }
+          }, delay);
+        };
+        
+        performStrike('JAB', 100, 5);
+        performStrike('CROSS', 400, 10);
+        performStrike('HOOK', 700, 15);
+        performStrike('SPIN_ATTACK', 1000, 35);
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
@@ -111,7 +140,7 @@ export function ProceduralCharacter() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [combatState, setCombatState, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt]);
+  }, [combatState, setCombatState, triggerDodge, triggerHurt, triggerKnockdown, triggerGetUp, triggerCelebrate, triggerTaunt, triggerAutoCombo, world]);
 
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
