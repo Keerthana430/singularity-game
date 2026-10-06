@@ -58,14 +58,12 @@ export function FPSEnemy({ enemy, isTargeted = false }: FPSEnemyProps) {
         <LichMesh color={enemy.color} flashActive={flashActive} isTelegraphing={isTelegraphing} />
       )}
 
-      {/* Telegraph Attack Warning Aura */}
+      {/* Telegraph Attack Warning Aura (Emissive mesh ring, 0 GPU light cost) */}
       {isTelegraphing && (
-        <pointLight
-          position={[0, 1.2, 0]}
-          color="#EF4444"
-          intensity={6 * (enemy.telegraphProgress || 0.6)}
-          distance={4.5}
-        />
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.8, 1.1 + (enemy.telegraphProgress || 0) * 0.4, 24]} />
+          <meshBasicMaterial color="#EF4444" transparent opacity={0.6 + (enemy.telegraphProgress || 0) * 0.3} />
+        </mesh>
       )}
 
       {/* Overhead Monster Nameplate & Vitality Bar */}
@@ -76,7 +74,7 @@ export function FPSEnemy({ enemy, isTargeted = false }: FPSEnemyProps) {
         occlude={false}
       >
         <div className="pointer-events-none flex flex-col items-center select-none font-mono">
-          <div className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/85 px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/90 px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-xl">
             <span style={{ color: enemy.color }}>{enemy.name}</span>
             {enemy.isRanged && (
               <span className="rounded bg-cyan-500/20 px-1 text-[7px] text-cyan-300 border border-cyan-500/40">
@@ -432,9 +430,8 @@ function LichMesh({
           >
             <mesh>
               <sphereGeometry args={[0.14, 8, 8]} />
-              <meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={3.0} />
+              <meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={3.2} />
             </mesh>
-            <pointLight color={glow} intensity={2} distance={3} />
           </group>
         ))}
       </group>

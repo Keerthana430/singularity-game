@@ -35,6 +35,7 @@ import { EndlessDungeonHUD } from '@/components/dungeon/fps/EndlessDungeonHUD';
 import { DungeonTitleScreen } from '@/components/dungeon/fps/DungeonTitleScreen';
 import { RunSummaryModal } from '@/components/dungeon/fps/RunSummaryModal';
 import { FPSPauseModal } from '@/components/dungeon/fps/FPSPauseModal';
+import { FPSControlsSettingsModal } from '@/components/dungeon/fps/FPSControlsSettingsModal';
 import {
   WeaponId,
   WEAPON_CONFIGS,
@@ -89,8 +90,17 @@ export default function DungeonPage() {
   // Game Flow State
   const [mode, setMode] = useState<PageMode>('title');
   const [isPaused, setIsPaused] = useState(false);
-  const [records, setRecords] = useState<PersistentStorage>(() => loadRecords());
+  const [records, setRecords] = useState<PersistentStorage>({
+    bestSurvivalSeconds: 0,
+    bestScore: 0,
+    totalKills: 0,
+    totalRuns: 0,
+  });
   const [showControlsModal, setShowControlsModal] = useState(false);
+
+  useEffect(() => {
+    setRecords(loadRecords());
+  }, []);
 
   // Survival Run State
   const [survivalSeconds, setSurvivalSeconds] = useState(0);
@@ -394,6 +404,7 @@ export default function DungeonPage() {
       setDamageVignette(true);
       window.setTimeout(() => setDamageVignette(false), 350);
 
+      let died = false;
       // Shields absorb damage first
       setPlayerShield((curShield) => {
         let remaining = amount;
@@ -414,8 +425,7 @@ export default function DungeonPage() {
           setPlayerHp((curHp) => {
             const nextHp = Math.max(0, curHp - remaining);
             if (nextHp <= 0) {
-              // Operative chassis destroyed
-              endRun(false);
+              died = true;
             }
             return nextHp;
           });
@@ -423,6 +433,10 @@ export default function DungeonPage() {
 
         return nextShield;
       });
+
+      if (died) {
+        endRun(false);
+      }
     },
     [endRun, mode]
   );
@@ -434,11 +448,8 @@ export default function DungeonPage() {
       const isElite = enemy.archetype === 'elite' || enemy.archetype === 'boss';
       if (isElite) setEliteKills((ek) => ek + 1);
 
-      setStreak((s) => {
-        const nextStreak = s + 1;
-        setHighestStreak((hs) => Math.max(hs, nextStreak));
-        return nextStreak;
-      });
+      setStreak((s) => s + 1);
+      setHighestStreak((hs) => Math.max(hs, streak + 1));
 
       // Spawn physical loot drop in 3D world (if dropped at max 30% rate)
       if (droppedLoot) {

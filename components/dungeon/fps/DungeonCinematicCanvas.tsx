@@ -235,8 +235,9 @@ export function DungeonCinematicCanvas() {
   return (
     <div className="absolute inset-0 pointer-events-none">
       <Canvas
+        dpr={1}
         camera={{ position: [0, 2.5, 3.5], fov: 60 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#040906']} />
         <fogExp2 attach="fog" args={['#040d07', 0.045]} />
@@ -249,8 +250,8 @@ export function DungeonCinematicCanvas() {
         {/* Dynamic Scene Objects */}
         <CinematicCamera />
         <RuinArchitecture />
-        <QuantumMonolith />
-        <FloatingEmbers count={180} />
+        <pointLight position={[0, 4, -14]} color="#00FF66" intensity={2} distance={25} />
+        <FloatingEmbers count={35} />
       </Canvas>
 
       {/* Atmospheric Film Grain / Vignette Overlays */}
