@@ -50,19 +50,19 @@ export function createSegmentedLimb(radius: number, upperLength: number, lowerLe
 }
 
 export function buildProceduralCharacter(
-  colorBody: number = 0x1a1a1c, // Obsidian Black
-  colorAccent: number = 0xffa800, // Neon Amber glow
-  colorDark: number = 0x0a0a0a
+  colorBody: number = 0xb0b5b9, // Real Steel Silver/Grey
+  colorAccent: number = 0x00e5ff, // Bright Cyan Glow (Atom's mesh)
+  colorDark: number = 0x2b1c4a // Deep Purple/Blue for contrasting parts (Noisy Boy vibes)
 ): CharacterRig {
   const group = new THREE.Group();
   const bones: Record<string, THREE.Group | THREE.Bone> = {};
 
   const bodyMat = new THREE.MeshStandardMaterial({
     color: colorBody, 
-    roughness: 0.15, // Glossier for high-end look
-    metalness: 0.7, // Highly metallic
-    emissive: 0x2b2b2b,
-    emissiveIntensity: 0.2 // Very subtle base glow so it doesn't get lost in the dark
+    roughness: 0.2, // Shiny metallic finish
+    metalness: 0.85, // Highly metallic robot chassis
+    emissive: 0x111111,
+    emissiveIntensity: 0.2 // Subtle base glow
   });
   
   // High emissive intensity triggers post-processing bloom
