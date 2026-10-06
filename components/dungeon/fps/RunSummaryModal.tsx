@@ -81,7 +81,7 @@ export function RunSummaryModal({
             {stats.extracted ? `SECTOR ${currentSector} EVACUATION COMPLETE` : `SECTOR ${currentSector} OPERATIVE TERMINATED`}
           </p>
           <h1 className="mt-1 text-2xl sm:text-3xl font-black uppercase tracking-tight">
-            {stats.extracted ? 'Quantum Extraction Success' : 'Chassis Critical'}
+            {stats.extracted ? 'Quantum Extraction Success' : 'YOU DIED — CHASSIS CRITICAL'}
           </h1>
           <p className="text-[11px] font-bold tracking-wider mt-0.5" style={{ color: rankGrade.color }}>
             {rankGrade.label}
@@ -165,9 +165,9 @@ export function RunSummaryModal({
 
           <button
             onClick={onRestart}
-            className="w-full neon-green-button py-3 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2"
+            className="w-full neon-green-button py-3.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2"
           >
-            <RotateCcw size={14} /> Deploy Again (Clean Sector 1)
+            <RotateCcw size={15} /> {stats.extracted ? 'Deploy Again (Clean Run)' : 'TRY AGAIN (RE-DEPLOY OPERATIVE)'}
           </button>
           <button
             onClick={onReturnToHub}
