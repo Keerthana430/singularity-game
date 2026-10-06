@@ -4,7 +4,6 @@
 
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { FPSEnemyEntity } from './types';
 
@@ -66,39 +65,31 @@ export function FPSEnemy({ enemy, isTargeted = false }: FPSEnemyProps) {
         </mesh>
       )}
 
-      {/* Overhead Monster Nameplate & Vitality Bar */}
-      <Html
-        position={[0, isLich ? 2.6 : isGolem ? 2.8 : 2.0, 0]}
-        center
-        distanceFactor={9}
-        occlude={false}
-      >
-        <div className="pointer-events-none flex flex-col items-center select-none font-mono">
-          <div className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/90 px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-xl">
-            <span style={{ color: enemy.color }}>{enemy.name}</span>
-            {enemy.isRanged && (
-              <span className="rounded bg-cyan-500/20 px-1 text-[7px] text-cyan-300 border border-cyan-500/40">
-                RANGED
-              </span>
-            )}
-          </div>
-
-          <div className="mt-1 h-1.5 w-22 rounded-full bg-black/80 p-[1px] border border-white/20 overflow-hidden shadow">
-            {percentShield > 0 && (
-              <div
-                className="h-full bg-cyan-400 mb-[1px] transition-all"
-                style={{ width: `${percentShield}%` }}
-              />
-            )}
-            <div
-              className={`h-full transition-all ${
-                percentHp < 30 ? 'bg-amber-400' : 'bg-[#00FF66]'
-              }`}
-              style={{ width: `${percentHp}%` }}
-            />
-          </div>
-        </div>
-      </Html>
+      {/* Native 3D Monster Health Bar (100% Crash-Free, Zero DOM removeChild overhead) */}
+      <group position={[0, isLich ? 2.6 : isGolem ? 2.8 : 2.0, 0]}>
+        {/* Background Frame */}
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[1.2, 0.14]} />
+          <meshBasicMaterial color="#0B1017" />
+        </mesh>
+        {/* Border Outline */}
+        <mesh position={[0, 0, -0.005]}>
+          <planeGeometry args={[1.26, 0.2]} />
+          <meshBasicMaterial color="#334155" />
+        </mesh>
+        {/* Shield Bar (if active) */}
+        {percentShield > 0 && (
+          <mesh position={[-0.6 + (percentShield / 100) * 0.6, 0.035, 0.005]}>
+            <planeGeometry args={[Math.max(0.01, (percentShield / 100) * 1.18), 0.05]} />
+            <meshBasicMaterial color="#38BDF8" />
+          </mesh>
+        )}
+        {/* Health Bar Fill */}
+        <mesh position={[-0.6 + (percentHp / 100) * 0.6, percentShield > 0 ? -0.03 : 0, 0.005]}>
+          <planeGeometry args={[Math.max(0.01, (percentHp / 100) * 1.18), percentShield > 0 ? 0.06 : 0.1]} />
+          <meshBasicMaterial color={percentHp < 30 ? '#F59E0B' : '#00FF66'} />
+        </mesh>
+      </group>
     </group>
   );
 }

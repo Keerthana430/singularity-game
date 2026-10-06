@@ -100,8 +100,8 @@ export const useAvatarStore = create<AvatarStore>()(
       historyIndex: 0,
       activeCategory: 'body',
       recentColors: [],
-      // Testing Phase: Unlimited Coins
-      coins: 9999999,
+      // Real account-based economy; no unlimited demo currency.
+      coins: 1000,
       unlockedItems: STARTER_UNLOCKED,
       weaponLevels: { unarmed: 1 },
       // Post-battle healing timer state
@@ -110,27 +110,28 @@ export const useAvatarStore = create<AvatarStore>()(
       healingDurationSec: 0,
 
       topUpCoins: () => {
-        set({ coins: 9999999 });
+        set({ coins: Math.max(0, get().coins + 1000) });
       },
 
       addCoins: (amount) => {
-        set({ coins: Math.max(9999999, get().coins + amount) });
+        set({ coins: Math.max(0, get().coins + amount) });
       },
 
-      spendCoins: (_amount) => {
-        // Testing phase: unlimited coins! Never decline purchase, maintain unlimited funds
-        set({ coins: 9999999 });
+      spendCoins: (amount) => {
+        const { coins } = get();
+        if (coins < amount) return false;
+        set({ coins: Math.max(0, coins - amount) });
         return true;
       },
 
-      unlockItem: (itemId, _cost) => {
-        const { unlockedItems } = get();
-        if (!unlockedItems.includes(itemId)) {
-          set({
-            coins: 9999999,
-            unlockedItems: [...unlockedItems, itemId],
-          });
-        }
+      unlockItem: (itemId, cost) => {
+        const { unlockedItems, coins } = get();
+        if (unlockedItems.includes(itemId)) return true;
+        if (coins < cost) return false;
+        set({
+          coins: Math.max(0, coins - cost),
+          unlockedItems: [...unlockedItems, itemId],
+        });
         return true;
       },
 

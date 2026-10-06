@@ -1,43 +1,31 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-// ─── Pre-defined Team Credentials ─────────────────────────────────────────────
-// Admin distributes these to each team. Teams can change their display name
-// after login, but their login ID remains fixed.
-
-export interface TeamAccount {
-  teamId: string;       // Immutable login identifier
-  username: string;     // Login username
-  password: string;     // Login password
-  displayName: string;  // Changeable team display name
+// ─── Account Management ────────────────────────────────────────────────
+export interface AccountRecord {
+  id: string;
+  username: string;
+  passwordHash: string;
+  passwordSalt: string;
+  displayName: string;
+  gold: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// In-memory team registry (in production, this would be a database)
-const TEAM_ACCOUNTS: TeamAccount[] = [
-  { teamId: 'team-alpha',   username: 'alpha',   password: 'singularity2026A', displayName: 'Team Alpha' },
-  { teamId: 'team-bravo',   username: 'bravo',   password: 'singularity2026B', displayName: 'Team Bravo' },
-  { teamId: 'team-charlie', username: 'charlie', password: 'singularity2026C', displayName: 'Team Charlie' },
-  { teamId: 'team-delta',   username: 'delta',   password: 'singularity2026D', displayName: 'Team Delta' },
-  { teamId: 'team-echo',    username: 'echo',    password: 'singularity2026E', displayName: 'Team Echo' },
-  { teamId: 'team-foxtrot', username: 'foxtrot', password: 'singularity2026F', displayName: 'Team Foxtrot' },
-  { teamId: 'team-golf',    username: 'golf',    password: 'singularity2026G', displayName: 'Team Golf' },
-  { teamId: 'team-hotel',   username: 'hotel',   password: 'singularity2026H', displayName: 'Team Hotel' },
-  { teamId: 'team-india',   username: 'india',   password: 'singularity2026I', displayName: 'Team India' },
-  { teamId: 'team-juliet',  username: 'juliet',  password: 'singularity2026J', displayName: 'Team Juliet' },
-];
-
-// Use a signed HMAC-based token (JWT-like) stored in an HttpOnly cookie.
-// This is a lightweight replacement until a real session store / DB is used.
+const USER_ACCOUNTS = new Map<string, AccountRecord>();
+const SESSION_TOKENS = new Map<string, { userId: string; expiresAt: number }>();
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
+const STARTING_GOLD = 1000;
 
+// ─── Token Utilities ─────────────────────────────────────────────────
 function base64url(input: Buffer | string) {
   return Buffer.from(input).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function sign(payload: Record<string, any>) {
   const header = { alg: 'HS256', typ: 'JWT' };
-  const body = { ...payload };
-  const encoded = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(body))}`;
+  const encoded = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
   const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64');
   // base64 -> base64url
   const sigUrl = signature.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -54,67 +42,131 @@ function verify(token: string) {
     if (expected !== sig) return null;
     const payload = JSON.parse(Buffer.from(body, 'base64').toString());
     return payload;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
-// POST /api/auth — Login
+// ─── Password Utilities ───────────────────────────────────────────────
+function hashPassword(password: string, salt: string) {
+  return crypto.pbkdf2Sync(password, salt, 100_000, 64, 'sha512').toString('hex');
+}
+
+// ─── Account Utilities ────────────────────────────────────────────────
+function sanitizeName(value: string, fallback: string) {
+  const safe = value
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 30);
+  return safe || fallback;
+}
+
+function publicAccount(account: AccountRecord) {
+  return {
+    teamId: account.id,
+    displayName: account.displayName,
+    username: account.username,
+    gold: account.gold,
+  };
+}
+
+function getAccountByUsername(username: string) {
+  const key = username.trim().toLowerCase();
+  return [...USER_ACCOUNTS.values()].find((account) => account.username.toLowerCase() === key) ?? null;
+}
+
+// ─── Session Utilities ─────────────────────────────────────────────────
+function getTokenFromRequest(request: Request, token?: string) {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
+  return cookieMatch ? cookieMatch[1] : token;
+}
+
+function createSession(userId: string) {
+  const expiresIn = 24 * 60 * 60;
+  const payload = { userId, exp: Math.floor(Date.now() / 1000) + expiresIn };
+  const token = sign(payload);
+  SESSION_TOKENS.set(token, { userId, expiresAt: payload.exp * 1000 });
+  return token;
+}
+
+// ─── API Routes ───────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
-    const { action, username, password, token, displayName } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { action, username, password, token, displayName } = body;
+
+    // ─── REGISTER ────────────────────────────────────────────────────
+    if (action === 'register') {
+      if (!username || !password) {
+        return NextResponse.json({ success: false, error: 'Username and password are required' }, { status: 400 });
+      }
+
+      const safeUsername = String(username).trim();
+      const safePassword = String(password).trim();
+
+      if (safeUsername.length < 3 || safePassword.length < 6) {
+        return NextResponse.json({ success: false, error: 'Username must be at least 3 characters and password at least 6 characters' }, { status: 400 });
+      }
+
+      const existing = getAccountByUsername(safeUsername);
+      if (existing) {
+        return NextResponse.json({ success: false, error: 'That username is already taken' }, { status: 409 });
+      }
+
+      const salt = crypto.randomBytes(16).toString('hex');
+      const account: AccountRecord = {
+        id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        username: safeUsername,
+        passwordHash: hashPassword(safePassword, salt),
+        passwordSalt: salt,
+        displayName: sanitizeName(String(displayName || safeUsername), safeUsername),
+        gold: STARTING_GOLD,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      USER_ACCOUNTS.set(account.id, account);
+      const sessionToken = createSession(account.id);
+      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      const cookie = `sg_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
+
+      const res = NextResponse.json({ success: true, team: publicAccount(account) });
+      res.headers.set('Set-Cookie', cookie);
+      return res;
+    }
 
     // ─── LOGIN ────────────────────────────────────────────────────
     if (action === 'login') {
       if (!username || !password) {
-        return NextResponse.json(
-          { success: false, error: 'Username and password are required' },
-          { status: 400 }
-        );
+        return NextResponse.json({ success: false, error: 'Username and password are required' }, { status: 400 });
       }
 
-      const safeUser = String(username).trim().toLowerCase();
-      const safePwd = String(password).trim();
-
-      // NOTE: TEAM_ACCOUNTS currently stores plaintext passwords for demo/dev.
-      // In production migrate these to hashed passwords in a secure DB and remove
-      // the plaintext entries from source control.
-      const team = TEAM_ACCOUNTS.find((t) => t.username.toLowerCase() === safeUser && t.password === safePwd);
-
-      if (!team) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid team credentials. Contact the organizer.' },
-          { status: 401 }
-        );
+      const safeUsername = String(username).trim();
+      const safePassword = String(password).trim();
+      const account = getAccountByUsername(safeUsername);
+      if (!account) {
+        return NextResponse.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
       }
 
-      // Issue signed token (valid 24 hours) and set as HttpOnly cookie.
-      const expiresIn = 24 * 60 * 60; // seconds
-      const payload = { teamId: team.teamId, exp: Math.floor(Date.now() / 1000) + expiresIn };
-      const jwt = sign(payload);
+      const providedHash = hashPassword(safePassword, account.passwordSalt);
+      if (providedHash !== account.passwordHash) {
+        return NextResponse.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+      }
 
+      const sessionToken = createSession(account.id);
       const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      const cookie = `sg_session=${jwt}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${expiresIn}${secureFlag}`;
+      const cookie = `sg_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
 
-      const res = NextResponse.json({
-        success: true,
-        team: {
-          teamId: team.teamId,
-          displayName: team.displayName,
-          username: team.username,
-        },
-      });
+      const res = NextResponse.json({ success: true, team: publicAccount(account) });
       res.headers.set('Set-Cookie', cookie);
       return res;
     }
 
     // ─── VERIFY SESSION ───────────────────────────────────────────
     if (action === 'verify') {
-      // Check cookie first
-      const cookieHeader = request.headers.get('cookie') || '';
-      const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
-      const providedToken = cookieMatch ? cookieMatch[1] : token;
-
+      const providedToken = getTokenFromRequest(request, token); 
       if (!providedToken) {
         return NextResponse.json({ success: false, error: 'No token provided' }, { status: 401 });
       }
@@ -124,86 +176,55 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
       }
 
-      const team = TEAM_ACCOUNTS.find((t) => t.teamId === payload.teamId);
-      if (!team) {
-        return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 });
+      const account = USER_ACCOUNTS.get(payload.userId || payload.teamId);
+      if (!account) {
+        return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
       }
 
-      return NextResponse.json({
-        success: true,
-        team: {
-          teamId: team.teamId,
-          displayName: team.displayName,
-          username: team.username,
-        },
-      });
+      return NextResponse.json({ success: true, team: publicAccount(account) });
     }
 
-    // ─── CHANGE TEAM NAME ─────────────────────────────────────────
+    // ─── CHANGE DISPLAY NAME ─────────────────────────────────────────
     if (action === 'rename') {
-      // Read token from cookie if present
-      const cookieHeader = request.headers.get('cookie') || '';
-      const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
-      const providedToken = cookieMatch ? cookieMatch[1] : token;
-
+      const providedToken = getTokenFromRequest(request, token);
       const payload = providedToken ? verify(providedToken) : null;
       if (!payload || (payload.exp && payload.exp < Math.floor(Date.now() / 1000))) {
         return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
       }
 
       if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {
-        return NextResponse.json(
-          { success: false, error: 'Team name must be at least 2 characters' },
-          { status: 400 }
-        );
+        return NextResponse.json({ success: false, error: 'Display name must be at least 2 characters' }, { status: 400 });
       }
 
-      const safeName = displayName.replace(/<[^>]*>/g, '').trim().slice(0, 30);
-      const team = TEAM_ACCOUNTS.find((t) => t.teamId === payload.teamId);
-      if (!team) {
-        return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 });
+      const account = USER_ACCOUNTS.get(payload.userId || payload.teamId);
+      if (!account) {
+        return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
       }
 
-      // Check if name is already taken by another team
-      const nameTaken = TEAM_ACCOUNTS.some(
-        (t) => t.teamId !== payload.teamId && t.displayName.toLowerCase() === safeName.toLowerCase()
+      const candidateName = sanitizeName(displayName, account.username);
+      const duplicate = [...USER_ACCOUNTS.values()].some(
+        (person) => person.id !== account.id && person.displayName.toLowerCase() === candidateName.toLowerCase()
       );
-      if (nameTaken) {
-        return NextResponse.json(
-          { success: false, error: 'That team name is already taken' },
-          { status: 409 }
-        );
+      if (duplicate) {
+        return NextResponse.json({ success: false, error: 'That display name is already taken' }, { status: 409 });
       }
 
-      team.displayName = safeName;
-
-      return NextResponse.json({
-        success: true,
-        message: 'Team name updated',
-        team: {
-          teamId: team.teamId,
-          displayName: team.displayName,
-          username: team.username,
-        },
-      });
+      account.displayName = candidateName;
+      account.updatedAt = new Date().toISOString();
+      return NextResponse.json({ success: true, message: 'Display name updated', team: publicAccount(account) });
     }
 
     // ─── LOGOUT ───────────────────────────────────────────────────
     if (action === 'logout') {
-      // Clear cookie
       const res = NextResponse.json({ success: true, message: 'Logged out' });
-      // Overwrite cookie with expired value
       const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
       res.headers.set('Set-Cookie', `sg_session=deleted; Path=/; HttpOnly; Max-Age=0; SameSite=Strict${secureFlag}`);
       return res;
     }
 
     return NextResponse.json({ success: false, error: 'Unknown action' }, { status: 400 });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: 'Server error' },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -211,9 +232,11 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({
     success: true,
-    teams: TEAM_ACCOUNTS.map((t) => ({
-      teamId: t.teamId,
-      displayName: t.displayName,
+    users: [...USER_ACCOUNTS.values()].map((account) => ({
+      id: account.id,
+      username: account.username,
+      displayName: account.displayName,
+      gold: account.gold,
     })),
   });
 }

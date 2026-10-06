@@ -8,6 +8,7 @@ export interface TeamInfo {
   teamId: string;
   displayName: string;
   username: string;
+  gold: number;
 }
 
 interface AuthStore {
@@ -17,6 +18,7 @@ interface AuthStore {
   error: string | null;
 
   login: (username: string, password: string) => Promise<boolean>;
+  register: (username: string, password: string, displayName?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   verifySession: () => Promise<boolean>;
   renameTeam: (newName: string) => Promise<boolean>;
@@ -49,11 +51,39 @@ export const useAuthStore = create<AuthStore>()(
               error: null,
             });
             return true;
-          } else {
-            set({ isLoading: false, error: json.error || 'Login failed' });
-            return false;
           }
-        } catch (err) {
+
+          set({ isLoading: false, error: json.error || 'Login failed' });
+          return false;
+        } catch {
+          set({ isLoading: false, error: 'Network error. Please try again.' });
+          return false;
+        }
+      },
+
+      register: async (username, password, displayName) => {
+        set({ isLoading: true, error: null });
+        try {
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'register', username, password, displayName }),
+          });
+          const json = await res.json();
+
+          if (json.success) {
+            set({
+              isLoggedIn: true,
+              team: json.team,
+              isLoading: false,
+              error: null,
+            });
+            return true;
+          }
+
+          set({ isLoading: false, error: json.error || 'Registration failed' });
+          return false;
+        } catch {
           set({ isLoading: false, error: 'Network error. Please try again.' });
           return false;
         }
@@ -84,10 +114,10 @@ export const useAuthStore = create<AuthStore>()(
           if (json.success) {
             set({ isLoggedIn: true, team: json.team });
             return true;
-          } else {
-            set({ isLoggedIn: false, team: null });
-            return false;
           }
+
+          set({ isLoggedIn: false, team: null });
+          return false;
         } catch {
           return get().isLoggedIn;
         }
@@ -106,10 +136,10 @@ export const useAuthStore = create<AuthStore>()(
           if (json.success) {
             set({ team: json.team, isLoading: false, error: null });
             return true;
-          } else {
-            set({ isLoading: false, error: json.error || 'Rename failed' });
-            return false;
           }
+
+          set({ isLoading: false, error: json.error || 'Rename failed' });
+          return false;
         } catch {
           set({ isLoading: false, error: 'Network error' });
           return false;
