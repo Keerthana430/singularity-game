@@ -31,8 +31,6 @@ import { PRESET_AVATARS } from '@/data/presets';
 import { sound } from '@/lib/audio';
 import { useToast } from '@/components/Toast';
 import { Ludo3DView } from '@/components/ludo/Ludo3DView';
-import { useGameSettingsStore } from '@/store/gameSettingsStore';
-import { GameSettingsButton, GameSettingsModal } from '@/components/shared/GameSettingsModal';
 import {
   CombatClash,
   FloatingText3D,
@@ -766,7 +764,7 @@ export default function LudoPage() {
   };
 
   return (
-    <div className="bg-[#020502] h-[calc(100dvh-4rem)] w-full overflow-hidden">
+    <div className="relative bg-[#020502] h-[calc(100vh-4rem)] mt-16 w-full overflow-hidden select-none">
       {/* ═══════════════════════════════════════════════════════════════
           FULL-VIEWPORT GAME ARENA
           3D colosseum fills the entire screen, all UI is floating HUD
@@ -774,7 +772,7 @@ export default function LudoPage() {
       <div className="game-viewport">
 
         {/* ── THE 3D CANVAS (FILLS ENTIRE VIEWPORT) ── */}
-        <div className="absolute inset-0 z-[1]">
+        <div className="absolute inset-0 z-0">
           <Ludo3DView
             players={players}
             currentTurn={currentTurn}
@@ -787,7 +785,6 @@ export default function LudoPage() {
             activeClash={activeClash}
             floatingTexts={floatingTexts}
             activeMovement={activeMovement}
-            bloomEnabled={useGameSettingsStore.getState().bloomEnabled}
             onRollDice={handleRollDice}
             onSelectPiece={(pieceId: number) => {
               if (diceRoll !== null) {
@@ -840,18 +837,28 @@ export default function LudoPage() {
               </span>
             </div>
 
-            {/* Stepped HP Gauge */}
+            {/* Ludo Token Home Goal Tracker */}
             <div className="flex items-center gap-2 font-mono text-xs">
-              <span className="text-[10px] font-bold text-white/50 tracking-wider">HP</span>
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 10 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="w-2.5 sm:w-3 h-2.5 rounded-[2px] bg-gradient-to-t from-emerald-500 to-[#00FF66] shadow-[0_0_5px_rgba(0,255,102,0.4)]"
-                  />
-                ))}
+              <span className="text-[10px] font-bold text-white/50 tracking-wider">GOAL</span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 4 }).map((_, idx) => {
+                  const homeCount = activePlayer.pieces.filter((p) => p.step === 57).length;
+                  const isHome = homeCount > idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`w-3 h-2.5 rounded-[2px] transition-all ${
+                        isHome
+                          ? 'bg-[#00FF66] shadow-[0_0_8px_#00FF66]'
+                          : 'bg-white/10 border border-white/10'
+                      }`}
+                    />
+                  );
+                })}
               </div>
-              <span className="text-[10px] font-bold text-[#00FF66] ml-1">900/900</span>
+              <span className="text-[10px] font-bold text-[#00FF66] ml-1">
+                {activePlayer.pieces.filter((p) => p.step === 57).length} / 4 HOME
+              </span>
             </div>
           </div>
 
@@ -935,126 +942,163 @@ export default function LudoPage() {
             >
               <RotateCcw size={13} />
             </button>
-
-            {/* Quick Experience / FX Settings */}
-            <GameSettingsButton className="p-2 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border border-white/15 text-white/50 hover:text-cyan-400 transition-all" />
           </div>
         </div>
 
         {/* ─── 4 FACTION BASES (OVERLAYING THE 4 QUADRANTS) ─── */}
         {/* Top-Left: ASTRAEA VANGUARD */}
         <div className="absolute top-24 left-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'red' ? 'border-[#0099FF] shadow-[0_0_18px_rgba(0,153,255,0.45)]' : 'border-white/10'
+          <div className={`px-4 py-2.5 rounded-2xl bg-[#14192d]/95 backdrop-blur-2xl border-2 transition-all flex items-center gap-3.5 shadow-2xl ${
+            currentTurn === 'red'
+              ? 'border-[#0099FF] shadow-[0_0_24px_rgba(0,153,255,0.55)] scale-105 ring-1 ring-[#0099FF]/40'
+              : 'border-white/15 opacity-90'
           }`}>
-            <Shield size={16} className="text-[#0099FF]" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#0099FF]/15 border border-[#0099FF]/30 text-[#0099FF] shrink-0">
+              <Shield size={20} />
+            </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
-                {players[0].name}
-              </span>
-              <div className="flex items-center gap-1 mt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-mono font-black uppercase text-white tracking-wider truncate max-w-[180px]">
+                  {players[0].name}
+                </span>
+                {currentTurn === 'red' && (
+                  <span className="text-[9px] font-mono font-black text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/50">
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 mt-1">
                 {players[0].pieces.map((pc) => (
                   <span
                     key={pc.id}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#0099FF]' : 'bg-white/20'
+                    className={`w-2.5 h-2.5 rounded-full border border-black/40 transition-all ${
+                      pc.step === 57
+                        ? 'bg-[#FFC700] shadow-[0_0_8px_#FFC700] scale-110'
+                        : pc.step >= 0
+                        ? 'bg-[#0099FF] shadow-[0_0_6px_#0099FF]'
+                        : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            {currentTurn === 'red' && (
-              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
-                ACTIVE
-              </span>
-            )}
           </div>
         </div>
 
         {/* Top-Right: HYPERION CORSAIR */}
         <div className="absolute top-24 right-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'green' ? 'border-[#FF6633] shadow-[0_0_18px_rgba(255,102,51,0.45)]' : 'border-white/10'
+          <div className={`px-4 py-2.5 rounded-2xl bg-[#14192d]/95 backdrop-blur-2xl border-2 transition-all flex items-center gap-3.5 shadow-2xl ${
+            currentTurn === 'green'
+              ? 'border-[#FF6633] shadow-[0_0_24px_rgba(255,102,51,0.55)] scale-105 ring-1 ring-[#FF6633]/40'
+              : 'border-white/15 opacity-90'
           }`}>
             <div className="flex flex-col text-right">
-              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
-                {players[1].name}
-              </span>
-              <div className="flex items-center justify-end gap-1 mt-0.5">
+              <div className="flex items-center justify-end gap-2">
+                {currentTurn === 'green' && (
+                  <span className="text-[9px] font-mono font-black text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/50">
+                    ACTIVE
+                  </span>
+                )}
+                <span className="text-xs sm:text-sm font-mono font-black uppercase text-white tracking-wider truncate max-w-[180px]">
+                  {players[1].name}
+                </span>
+              </div>
+              <div className="flex items-center justify-end gap-1.5 mt-1">
                 {players[1].pieces.map((pc) => (
                   <span
                     key={pc.id}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#FF6633]' : 'bg-white/20'
+                    className={`w-2.5 h-2.5 rounded-full border border-black/40 transition-all ${
+                      pc.step === 57
+                        ? 'bg-[#FFC700] shadow-[0_0_8px_#FFC700] scale-110'
+                        : pc.step >= 0
+                        ? 'bg-[#FF6633] shadow-[0_0_6px_#FF6633]'
+                        : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            <Crosshair size={16} className="text-[#FF6633]" />
-            {currentTurn === 'green' && (
-              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
-                ACTIVE
-              </span>
-            )}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#FF6633]/15 border border-[#FF6633]/30 text-[#FF6633] shrink-0">
+              <Crosshair size={20} />
+            </div>
           </div>
         </div>
 
         {/* Bottom-Left: VOID SYNDICATE */}
         <div className="absolute bottom-28 left-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'blue' ? 'border-[#9D4EDD] shadow-[0_0_18px_rgba(157,78,221,0.45)]' : 'border-white/10'
+          <div className={`px-4 py-2.5 rounded-2xl bg-[#14192d]/95 backdrop-blur-2xl border-2 transition-all flex items-center gap-3.5 shadow-2xl ${
+            currentTurn === 'blue'
+              ? 'border-[#9D4EDD] shadow-[0_0_24px_rgba(157,78,221,0.55)] scale-105 ring-1 ring-[#9D4EDD]/40'
+              : 'border-white/15 opacity-90'
           }`}>
-            <Sparkles size={16} className="text-[#9D4EDD]" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#9D4EDD]/15 border border-[#9D4EDD]/30 text-[#9D4EDD] shrink-0">
+              <Sparkles size={20} />
+            </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
-                {players[3].name}
-              </span>
-              <div className="flex items-center gap-1 mt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-mono font-black uppercase text-white tracking-wider truncate max-w-[180px]">
+                  {players[3].name}
+                </span>
+                {currentTurn === 'blue' && (
+                  <span className="text-[9px] font-mono font-black text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/50">
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 mt-1">
                 {players[3].pieces.map((pc) => (
                   <span
                     key={pc.id}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#9D4EDD]' : 'bg-white/20'
+                    className={`w-2.5 h-2.5 rounded-full border border-black/40 transition-all ${
+                      pc.step === 57
+                        ? 'bg-[#FFC700] shadow-[0_0_8px_#FFC700] scale-110'
+                        : pc.step >= 0
+                        ? 'bg-[#9D4EDD] shadow-[0_0_6px_#9D4EDD]'
+                        : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            {currentTurn === 'blue' && (
-              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
-                ACTIVE
-              </span>
-            )}
           </div>
         </div>
 
         {/* Bottom-Right: SOLAR NOVA */}
         <div className="absolute bottom-28 right-4 z-10 pointer-events-none">
-          <div className={`px-3 py-1.5 rounded-2xl bg-[#181D33]/90 backdrop-blur-xl border transition-all flex items-center gap-2.5 ${
-            currentTurn === 'yellow' ? 'border-[#FFC700] shadow-[0_0_18px_rgba(255,199,0,0.45)]' : 'border-white/10'
+          <div className={`px-4 py-2.5 rounded-2xl bg-[#14192d]/95 backdrop-blur-2xl border-2 transition-all flex items-center gap-3.5 shadow-2xl ${
+            currentTurn === 'yellow'
+              ? 'border-[#FFC700] shadow-[0_0_24px_rgba(255,199,0,0.55)] scale-105 ring-1 ring-[#FFC700]/40'
+              : 'border-white/15 opacity-90'
           }`}>
             <div className="flex flex-col text-right">
-              <span className="text-[10px] font-mono font-bold uppercase text-[#FFF8EE] truncate max-w-[110px]">
-                {players[2].name}
-              </span>
-              <div className="flex items-center justify-end gap-1 mt-0.5">
+              <div className="flex items-center justify-end gap-2">
+                {currentTurn === 'yellow' && (
+                  <span className="text-[9px] font-mono font-black text-[#00FF66] bg-[#00FF66]/20 px-2 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/50">
+                    ACTIVE
+                  </span>
+                )}
+                <span className="text-xs sm:text-sm font-mono font-black uppercase text-white tracking-wider truncate max-w-[180px]">
+                  {players[2].name}
+                </span>
+              </div>
+              <div className="flex items-center justify-end gap-1.5 mt-1">
                 {players[2].pieces.map((pc) => (
                   <span
                     key={pc.id}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      pc.step === 57 ? 'bg-[#FFC700] shadow-[0_0_4px_#FFC700]' : pc.step >= 0 ? 'bg-[#FFC700]' : 'bg-white/20'
+                    className={`w-2.5 h-2.5 rounded-full border border-black/40 transition-all ${
+                      pc.step === 57
+                        ? 'bg-[#FFC700] shadow-[0_0_8px_#FFC700] scale-110'
+                        : pc.step >= 0
+                        ? 'bg-[#FFC700] shadow-[0_0_6px_#FFC700]'
+                        : 'bg-white/20'
                     }`}
                   />
                 ))}
               </div>
             </div>
-            <Crown size={16} className="text-[#FFC700]" />
-            {currentTurn === 'yellow' && (
-              <span className="text-[8px] font-mono font-bold text-[#00FF66] bg-[#00FF66]/20 px-1.5 py-0.5 rounded-full uppercase animate-pulse border border-[#00FF66]/40">
-                ACTIVE
-              </span>
-            )}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#FFC700]/15 border border-[#FFC700]/30 text-[#FFC700] shrink-0">
+              <Crown size={20} />
+            </div>
           </div>
         </div>
 
@@ -1221,9 +1265,6 @@ export default function LudoPage() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Global Experience & Accessibility Settings Modal */}
-      <GameSettingsModal />
     </div>
   );
 }

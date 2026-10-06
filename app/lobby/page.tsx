@@ -905,7 +905,7 @@ export default function LobbyPage() {
   };
 
   return (
-    <div className="h-[calc(100dvh-4rem)] w-full overflow-hidden flex flex-col pt-3 pb-3 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans bg-[#020502] text-white">
+    <div className="h-[calc(100dvh-4rem)] w-full overflow-hidden flex flex-col pt-3 pb-3 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans bg-transparent text-white">
       {/* Header with Navigation Tabs & Wallet */}
       <div className="flex-shrink-0 flex items-center justify-between gap-3 mb-2 pb-2 border-b border-white/10">
         <div className="flex items-center gap-2.5">

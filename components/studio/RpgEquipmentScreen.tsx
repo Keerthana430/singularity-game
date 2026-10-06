@@ -20,7 +20,6 @@ import {
   Eye,
   Sliders,
   Palette,
-  Backpack,
   Layers,
   Info,
 } from 'lucide-react';
@@ -57,7 +56,8 @@ export function RpgEquipmentScreen() {
   const [selectedLoadout, setSelectedLoadout] = useState<number>(1);
   const [showBuffInfo, setShowBuffInfo] = useState(false);
   const [sparkleActive, setSparkleActive] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(true);
+  // Default panelOpen to false so the avatar is immediately centered on load with sockets around it
+  const [panelOpen, setPanelOpen] = useState(false);
 
   // Hover-preview: temporarily show an item on the avatar without equipping it
   const [hoverPreview, setHoverPreview] = useState<Partial<AvatarConfig> | null>(null);
@@ -114,10 +114,6 @@ export function RpgEquipmentScreen() {
         const item = accessories.find((a) => a.id === id);
         return { name: item?.name || id, rarity: item?.rarity || 'common' };
       }
-      case 'back': {
-        const item = accessories.find((a) => a.id === id);
-        return { name: item?.name || id, rarity: item?.rarity || 'common' };
-      }
       case 'species': {
         const sp = SPECIES_LIST.find((s) => s.id === id);
         return { name: sp?.name || id, rarity: 'rare' };
@@ -150,7 +146,7 @@ export function RpgEquipmentScreen() {
     tops: { title: 'Chest Armor', subtitle: 'Torso Plating & Robes', icon: <Shield size={18} /> },
     bottoms: { title: 'Legs & Greaves', subtitle: 'Pants, Kilts & Armor', icon: <Layers size={18} /> },
     shoes: { title: 'Boots & Footwear', subtitle: 'Treads, Sabatons & Kicks', icon: <Footprints size={18} /> },
-    accessories: { title: 'Back Auxiliaries', subtitle: 'Wings, Capes & Jetpacks', icon: <Backpack size={18} /> },
+    accessories: { title: 'Face & Optics', subtitle: 'Visors & Accessories', icon: <Eye size={18} /> },
     face: { title: 'Face & Optics', subtitle: 'Visors, Masks & Eyewear', icon: <Eye size={18} /> },
     species: { title: 'Species Core', subtitle: 'Genetics & Innate Heritage', icon: <Zap size={18} /> },
     body: { title: 'Body Matrix', subtitle: 'Height, Silhouette & Frame', icon: <Sliders size={18} /> },
@@ -163,7 +159,6 @@ export function RpgEquipmentScreen() {
   const legsDetails = getSlotDetails('bottom', currentAvatar.bottom);
   const bootsDetails = getSlotDetails('shoes', currentAvatar.shoes);
   const faceDetails = getSlotDetails('face', currentAvatar.accessories?.face);
-  const backDetails = getSlotDetails('back', currentAvatar.accessories?.back);
   const speciesDetails = getSlotDetails('species', currentAvatar.species);
 
   // Left Flank (Combat & Upper Armor)
@@ -174,12 +169,12 @@ export function RpgEquipmentScreen() {
     { cat: 'bottoms' as StudioCategory, label: 'LEGS / GREAVES', item: legsDetails, icon: <Layers size={22} />, color: '#A855F7' },
   ];
 
-  // Right Flank (Mobility, Aux & Core)
+  // Right Flank (Mobility, Core & Aesthetics - No Backpack)
   const rightSlots = [
-    { cat: 'accessories' as StudioCategory, label: 'BACK GEAR', item: backDetails, icon: <Backpack size={22} />, color: '#F59E0B' },
-    { cat: 'shoes' as StudioCategory, label: 'BOOTS', item: bootsDetails, icon: <Footprints size={22} />, color: '#EC4899' },
     { cat: 'face' as StudioCategory, label: 'FACE / VISOR', item: faceDetails, icon: <Eye size={22} />, color: '#6366F1' },
+    { cat: 'shoes' as StudioCategory, label: 'BOOTS', item: bootsDetails, icon: <Footprints size={22} />, color: '#EC4899' },
     { cat: 'species' as StudioCategory, label: 'SPECIES CORE', item: speciesDetails, icon: <Zap size={22} />, color: '#14B8A6' },
+    { cat: 'colors' as StudioCategory, label: 'DYES / AURA', item: { name: 'Chromatic Matrix', rarity: 'mythic' }, icon: <Palette size={22} />, color: '#F59E0B' },
   ];
 
   // Handle clicking an equipment slot
@@ -189,23 +184,17 @@ export function RpgEquipmentScreen() {
     sound.playClick();
   };
 
-  // Handle Auto-Equip
+  // Handle Auto-Equip (no backpack)
   const handleAutoEquip = () => {
     const randomWeapon = weapons[Math.floor(Math.random() * (weapons.length - 1))];
     const bestTops = ['armor', 'futuristic-suit', 'jacket', 'hoodie'];
     const randomTop = bestTops[Math.floor(Math.random() * bestTops.length)];
     const randomShoe = shoes[Math.floor(Math.random() * shoes.length)];
-    const backAccessories = ['backpack', 'wings', 'fairy-wings', 'angel-wings'];
-    const randomBack = backAccessories[Math.floor(Math.random() * backAccessories.length)];
 
     updateAvatar({
       weapon: randomWeapon.id,
       top: randomTop,
       shoes: randomShoe.id,
-      accessories: {
-        ...currentAvatar.accessories,
-        back: randomBack,
-      },
     });
 
     setSparkleActive(true);
@@ -256,7 +245,7 @@ export function RpgEquipmentScreen() {
       >
         {/* Holographic Socket Disc Frame */}
         <div
-          className="relative w-13 h-13 sm:w-15 sm:h-15 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform overflow-hidden"
+          className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform overflow-hidden"
           style={{
             background: isActive
               ? 'radial-gradient(circle, rgba(0,255,102,0.25) 0%, rgba(7,19,14,0.95) 75%)'
@@ -280,14 +269,14 @@ export function RpgEquipmentScreen() {
 
           {/* Small Corner Rarity Dot */}
           <div
-            className="absolute bottom-1.5 right-1.5 w-2.5 h-2.5 rounded-full border border-black/80 shadow-sm"
+            className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full border border-black/80 shadow-sm"
             style={{ backgroundColor: rarityColor }}
             title={`Rarity: ${slot.item.rarity}`}
           />
         </div>
 
         {/* Sleek Minimal Label Under/Beside Socket on Hover or Active */}
-        <div className={`hidden lg:flex flex-col ${align === 'right' ? 'items-end' : 'items-start'} max-w-[110px]`}>
+        <div className={`hidden md:flex flex-col ${align === 'right' ? 'items-end' : 'items-start'} max-w-[110px]`}>
           <span
             className="text-[9px] font-mono font-black tracking-widest uppercase transition-colors"
             style={{ color: isActive ? '#00FF66' : '#7E9F90' }}
@@ -368,7 +357,7 @@ export function RpgEquipmentScreen() {
       </header>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* 2. MAIN STAGE: LEFT DRAWER + 3D AVATAR HERO STAGE             */}
+      {/* 2. MAIN STAGE: LEFT DRAWER + CENTERED 3D AVATAR HERO STAGE    */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <div className="relative flex-1 min-h-0 flex overflow-hidden w-full">
 
@@ -378,7 +367,7 @@ export function RpgEquipmentScreen() {
             <motion.div
               key="equip-panel"
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 420, opacity: 1 }}
+              animate={{ width: 400, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
               className="relative z-20 shrink-0 flex flex-col bg-[#050C08]/98 border-r border-[#1E3E2F] shadow-[4px_0_24px_rgba(0,0,0,0.5)] overflow-hidden"
@@ -484,7 +473,7 @@ export function RpgEquipmentScreen() {
             )}
           </AnimatePresence>
 
-          {/* 3D Avatar Viewer */}
+          {/* 3D Avatar Viewer - Centered */}
           <div className="w-full h-full relative">
             <AvatarViewer
               config={displayConfig}
@@ -509,16 +498,16 @@ export function RpgEquipmentScreen() {
           </AnimatePresence>
 
           {/* ═══════════════════════════════════════════════════════════ */}
-          {/* DUAL-FLANK RPG EQUIPMENT SOCKETS (DIABLO / DESTINY STYLE)   */}
+          {/* DUAL-FLANK RPG EQUIPMENT SOCKETS (SURROUNDING CENTER AVATAR)*/}
           {/* ═══════════════════════════════════════════════════════════ */}
 
           {/* Left Flank Gear Sockets (Weapon, Head, Chest, Legs) */}
-          <div className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3">
+          <div className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5 sm:gap-3">
             {leftSlots.map((slot) => renderGearSlot(slot, 'left'))}
           </div>
 
-          {/* Right Flank Gear Sockets (Back, Boots, Face, Species) */}
-          <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3">
+          {/* Right Flank Gear Sockets (Face, Boots, Species, Dyes - NO BACKPACK) */}
+          <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5 sm:gap-3">
             {rightSlots.map((slot) => renderGearSlot(slot, 'right'))}
           </div>
 

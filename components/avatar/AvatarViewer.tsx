@@ -117,65 +117,6 @@ export function AvatarViewer({
           </div>
         )}
       </div>
-
-      {/* Floating Camera Control HUD */}
-      {showControls && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="absolute top-3 right-3 flex items-center gap-2 z-20"
-        >
-          {/* Main Control Bar */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-black/85 backdrop-blur-xl border border-[#00FF66]/30 shadow-[0_4px_24px_rgba(0,0,0,0.75)]">
-            {/* Quick Zoom Focus Buttons */}
-            {FOCUS_OPTIONS.map((opt) => {
-              const isActive = focusMode === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => setFocusMode(opt.id)}
-                  title={`Zoom to ${opt.label}`}
-                  aria-label={`Zoom to ${opt.label}`}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
-                    isActive
-                      ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.5)]'
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {opt.icon}
-                </button>
-              );
-            })}
-
-            <div className="w-px h-4 bg-white/20 mx-1" />
-
-            {/* Reset Camera button */}
-            <button
-              onClick={handleResetCamera}
-              title="Reset camera focus"
-              aria-label="Reset camera position"
-              className="p-1.5 rounded-xl text-white/50 hover:text-[#00FF66] hover:bg-white/10 transition-colors"
-            >
-              <RotateCcw size={13} />
-            </button>
-
-            {/* Toggle auto-rotate */}
-            <button
-              onClick={() => setAutoRotate((r) => !r)}
-              title="Toggle auto-rotate"
-              aria-label="Toggle auto-rotate"
-              className={`p-1 rounded-lg transition-colors ${
-                autoRotate
-                  ? 'text-[#00FF66] bg-[#00FF66]/15 shadow-[0_0_8px_rgba(0,255,102,0.35)]'
-                  : 'text-white/45 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <RefreshCw size={12} className={autoRotate ? 'animate-spin' : ''} style={{ animationDuration: '6s' }} />
-            </button>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }

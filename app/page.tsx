@@ -798,11 +798,11 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="order-2 md:order-1 glass-panel rounded-2xl border border-slate-400/40 p-4 flex flex-col items-center text-center relative overflow-hidden bg-gradient-to-b from-slate-900/40 via-[#020502] to-black shadow-[0_0_30px_rgba(148,163,184,0.1)]"
             >
-              <div className="absolute top-3 left-3 bg-slate-400 text-black font-black font-mono text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                <Award size={12} />
-                <span>#2</span>
-              </div>
               <div className="w-full h-44 rounded-xl overflow-hidden bg-black/60 border border-slate-400/20 mb-3 relative">
+                <div className="absolute top-2.5 left-2.5 z-20 bg-slate-400 text-black font-black font-mono text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md pointer-events-none">
+                  <Award size={12} />
+                  <span>#2</span>
+                </div>
                 <AvatarViewer config={PRESET_AVATARS[1]?.avatar || currentAvatar} className="w-full h-full" showControls={false} animate={true} />
                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black to-transparent pointer-events-none" />
               </div>
@@ -835,11 +835,11 @@ export default function HomePage() {
               transition={{ duration: 0.5 }}
               className="order-1 md:order-2 glass-panel rounded-3xl border-2 border-[#00FF66] p-5 flex flex-col items-center text-center relative overflow-hidden bg-gradient-to-b from-[#00FF66]/15 via-[#020502] to-black shadow-[0_0_40px_rgba(0,255,102,0.25)] md:-mt-6"
             >
-              <div className="absolute top-3 left-3 bg-[#00FF66] text-black font-black font-mono text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_#00FF66]">
-                <Crown size={14} />
-                <span>#1 APEX</span>
-              </div>
               <div className="w-full h-56 rounded-2xl overflow-hidden bg-black/70 border border-[#00FF66]/40 mb-4 relative shadow-[inset_0_0_20px_rgba(0,255,102,0.2)]">
+                <div className="absolute top-3 left-3 z-20 bg-[#00FF66] text-black font-black font-mono text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_#00FF66] pointer-events-none">
+                  <Crown size={14} />
+                  <span>#1 APEX</span>
+                </div>
                 <AvatarViewer config={PRESET_AVATARS[0]?.avatar || currentAvatar} className="w-full h-full" showControls={false} animate={true} />
                 <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black to-transparent pointer-events-none" />
               </div>
@@ -873,11 +873,11 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="order-3 glass-panel rounded-2xl border border-amber-600/40 p-4 flex flex-col items-center text-center relative overflow-hidden bg-gradient-to-b from-amber-950/30 via-[#020502] to-black shadow-[0_0_30px_rgba(217,119,6,0.1)]"
             >
-              <div className="absolute top-3 left-3 bg-amber-600 text-white font-black font-mono text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                <Award size={12} />
-                <span>#3</span>
-              </div>
               <div className="w-full h-40 rounded-xl overflow-hidden bg-black/60 border border-amber-500/20 mb-3 relative">
+                <div className="absolute top-2.5 left-2.5 z-20 bg-amber-600 text-white font-black font-mono text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-md pointer-events-none">
+                  <Award size={12} />
+                  <span>#3</span>
+                </div>
                 <AvatarViewer config={PRESET_AVATARS[2]?.avatar || PRESET_AVATARS[0]?.avatar} className="w-full h-full" showControls={false} animate={true} />
                 <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black to-transparent pointer-events-none" />
               </div>

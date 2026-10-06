@@ -114,70 +114,6 @@ function Pedestal() {
   );
 }
 
-// ─── Canopy Starlight Spores & Floating Fireflies ────────────────────────────
-function StarField() {
-  const pointsRef = useRef<THREE.Points>(null);
-
-  const { positions, colors } = useMemo(() => {
-    const count = 260;
-    const pos = new Float32Array(count * 3);
-    const col = new Float32Array(count * 3);
-
-    const palette = [
-      new THREE.Color('#84CC16'), // moss lime
-      new THREE.Color('#67E8F9'), // starlight cyan
-      new THREE.Color('#FEF3C7'), // warm amber spore
-      new THREE.Color('#00FF66'), // emerald soul
-      new THREE.Color('#FFFFFF'), // white sparkle
-    ];
-
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 24;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 14;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 18 - 2;
-
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      col[i * 3] = c.r;
-      col[i * 3 + 1] = c.g;
-      col[i * 3 + 2] = c.b;
-    }
-    return { positions: pos, colors: col };
-  }, []);
-
-  useFrame(({ clock }) => {
-    if (!pointsRef.current) return;
-    const t = clock.getElapsedTime();
-    // Gentle upward drift & sway of forest motes
-    const geom = pointsRef.current.geometry;
-    const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
-    const arr = posAttr.array as Float32Array;
-
-    for (let i = 0; i < arr.length / 3; i++) {
-      arr[i * 3 + 1] += 0.004;
-      arr[i * 3] += Math.sin(t * 0.8 + i) * 0.002;
-      if (arr[i * 3 + 1] > 7) {
-        arr[i * 3 + 1] = -7;
-      }
-    }
-    posAttr.needsUpdate = true;
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.045}
-        vertexColors
-        transparent
-        opacity={0.65}
-        sizeAttenuation
-      />
-    </points>
-  );
-}
 
 // ─── Dynamic Contextual Camera Rig ───────────────────────────────────────────
 interface DynamicCameraRigProps {
@@ -368,7 +304,6 @@ function SceneContent({
       <pointLight position={[2, torsoWorldY, 1]} intensity={0.9} color="#67E8F9" distance={5} decay={2} />
 
       {/* Scene elements */}
-      <StarField />
       <Pedestal />
 
       {/* Avatar positioned accurately on dais */}

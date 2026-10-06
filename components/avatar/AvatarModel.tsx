@@ -453,20 +453,6 @@ function AvatarHead({ config }: HeadProps) {
         );
       })}
 
-      {/* Cheek Band-Aid / Adhesive Patch (from indie survivor reference) */}
-      <group position={[eyeOffsetX * 1.05, eyeY - headRadius * 0.24, headRadius * 0.88]} rotation={[0, 0.22, 0.28]}>
-        <mesh castShadow>
-          <boxGeometry args={[headRadius * 0.35, headRadius * 0.16, 0.012]} />
-          <meshToonMaterial color={hexToColor('#FDE68A')} />
-          <AnimeOutline thickness={1.3} />
-        </mesh>
-        {/* Inner gauze pad */}
-        <mesh position={[0, 0, 0.008]}>
-          <boxGeometry args={[headRadius * 0.16, headRadius * 0.12, 0.008]} />
-          <meshToonMaterial color={hexToColor('#FEF3C7')} />
-        </mesh>
-      </group>
-
       {/* Sprouting Nature Leaf / Moss Sprig (from mossy ancient lore reference) */}
       <group position={[headRadius * 0.28, headRadius * 0.95, -headRadius * 0.15]} rotation={[0.15, 0, 0.25]}>
         {/* Plant Stem */}

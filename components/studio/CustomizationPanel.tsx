@@ -114,7 +114,6 @@ function AccessoriesPanel({ onHoverPreview }: { onHoverPreview?: (patch: Partial
   const slots = [
     { key: 'head' as const, label: 'Head', items: accessories.filter((a) => ['cat-ears', 'bunny-ears', 'bow', 'halo', 'glasses', 'hat', 'cap', 'headphones', 'crown'].includes(a.id)) },
     { key: 'face' as const, label: 'Face', items: accessories.filter((a) => ['ribbon-choker', 'mask', 'visor'].includes(a.id)) },
-    { key: 'back' as const, label: 'Back', items: accessories.filter((a) => ['angel-wings', 'fairy-wings', 'backpack', 'wings', 'jetpack'].includes(a.id)) },
     { key: 'shoulder' as const, label: 'Shoulder', items: accessories.filter((a) => ['shoulder-pads', 'pauldrons'].includes(a.id)) },
   ];
 
