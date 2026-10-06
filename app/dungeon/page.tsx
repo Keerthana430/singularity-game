@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Shield,
   ShieldAlert,
+  Skull,
   Sparkles,
   Swords,
   Target,
@@ -241,13 +242,10 @@ export default function DungeonPage() {
       setSurvivalSeconds((prev) => {
         const next = prev + 1;
 
-        // Wave countdown timer & anti-stall enrage warning
+        // Wave countdown timer (healthy 45s tactical wave refresh)
         setWaveCountdown((curr) => {
           if (curr <= 1) {
-            // Player delayed / avoided horde -> Enrage enemies!
-            setIsHordeEnraged(true);
-            sound.playBossCharge();
-            return 16; // Reset for next assault wave
+            return 45;
           }
           return curr - 1;
         });
@@ -509,22 +507,26 @@ export default function DungeonPage() {
         if (remaining > 0) {
           setPlayerHp((curHp) => {
             const nextHp = Math.max(0, curHp - remaining);
-            if (nextHp <= 0) {
-              died = true;
-            }
             return nextHp;
           });
         }
 
         return nextShield;
       });
-
-      if (died) {
-        endRun(false);
-      }
     },
-    [endRun, mode]
+    [mode]
   );
+
+  // Dedicated death detector guaranteeing death screen / run summary triggers reliably
+  useEffect(() => {
+    if (mode === 'survival' && playerHp <= 0) {
+      sound.playDefeat();
+      const timer = window.setTimeout(() => {
+        endRun(false);
+      }, 1100);
+      return () => window.clearTimeout(timer);
+    }
+  }, [mode, playerHp, endRun]);
 
   // ─── ENEMY KILLED HANDLER ──────────────────────────────────────────────────
   const handleEnemyKilled = useCallback(
@@ -823,6 +825,24 @@ export default function DungeonPage() {
               </h2>
               <p className="mt-2 text-xs uppercase tracking-widest text-cyan-400">
                 QUANTUM EVACUATION CONFIRMED // BANKING BOUNTY CREDITS
+              </p>
+            </div>
+          )}
+
+          {/* Visceral Death Screen Flash during Chassis Critical */}
+          {playerHp <= 0 && mode === 'survival' && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xl animate-fadeIn font-mono text-center px-4">
+              <div className="w-20 h-20 rounded-3xl bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center text-rose-500 mb-4 animate-pulse shadow-[0_0_50px_rgba(244,63,94,0.6)]">
+                <Skull size={44} />
+              </div>
+              <h1 className="text-4xl sm:text-6xl font-black text-rose-500 tracking-widest uppercase drop-shadow-[0_0_30px_#F43F5E]">
+                YOU DIED
+              </h1>
+              <p className="text-sm font-bold text-white/80 tracking-widest uppercase mt-2">
+                CHASSIS CRITICAL // SIGNAL TERMINATED
+              </p>
+              <p className="text-xs text-rose-400/80 mt-1 uppercase tracking-wider animate-pulse">
+                Opening tactical debrief & retry console...
               </p>
             </div>
           )}

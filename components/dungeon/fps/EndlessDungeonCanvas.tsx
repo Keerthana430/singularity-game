@@ -197,17 +197,13 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
   const currentWeaponId: WeaponId =
     activeItem?.kind === 'weapon' && activeItem.weaponId ? activeItem.weaponId : 'pulse_rifle';
 
-  // Spawn initial 2 scouts cleanly on mount
+  // Start cleanly with 0 enemies so player has time to orient and explore
   const initialSpawnDone = useRef(false);
   useEffect(() => {
     if (!initialSpawnDone.current) {
       initialSpawnDone.current = true;
-      const initial: FPSEnemyEntity[] = [
-        generateSurvivalEnemy('init-1', 0, 0, [0, 0, 0]),
-        generateSurvivalEnemy('init-2', 0, 0, [0, 0, 0]),
-      ];
-      setEnemies(initial);
-      enemiesRef.current = initial;
+      setEnemies([]);
+      enemiesRef.current = [];
     }
   }, []);
 
@@ -1010,7 +1006,7 @@ function EndlessSceneLogicManager({
           if (enemy.archetype === 'elite') sound.playBossCharge();
         }
       } else if (nextState === 'telegraph') {
-        const telegraphDuration = enemy.archetype === 'elite' ? 0.85 : 0.6;
+        const telegraphDuration = enemy.archetype === 'elite' ? 1.0 : 1.1;
         nextTelegraph = Math.min(1, nextTimer / telegraphDuration);
 
         if (nextTimer >= telegraphDuration) {
@@ -1027,14 +1023,14 @@ function EndlessSceneLogicManager({
             // Ranged Projectile Attack: Only fire if line is not already blocked
             if (!isBlocked) {
               const projDir = new THREE.Vector3(dx, 0, dz).normalize();
-              const projSpeed = enemy.archetype === 'elite' ? 12 : 9.0;
+              const projSpeed = enemy.archetype === 'elite' ? 9.0 : 7.0;
               projectilesRef.current.push({
                 id: `proj-${Date.now()}-${Math.random()}`,
                 position: [ex, ey + 1.2, ez],
                 velocity: [projDir.x * projSpeed, 0, projDir.z * projSpeed],
                 damage: Math.round(enemy.attack * dmgMultiplier),
                 color: enemy.color,
-                radius: enemy.archetype === 'elite' ? 0.25 : 0.16,
+                radius: enemy.archetype === 'elite' ? 0.22 : 0.15,
                 life: 3.5,
                 isHostile: true,
               });
@@ -1043,7 +1039,7 @@ function EndlessSceneLogicManager({
           }
         }
       } else if (nextState === 'attack') {
-        if (nextTimer >= 0.4) {
+        if (nextTimer >= 0.7) {
           nextState = 'chase';
           nextTimer = 0;
           nextTelegraph = 0;
