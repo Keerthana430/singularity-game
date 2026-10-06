@@ -331,6 +331,6 @@ test('Transaction failure/rollback: no half-created match or orphan queue state'
   }
 });
 
-process.on('exit', async () => {
+test.after(async () => {
   await pool.end();
 });

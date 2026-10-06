@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS matches (
   ended_at TIMESTAMPTZ NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   state_version INT NOT NULL DEFAULT 0,
+  snapshot_state_version INT NOT NULL DEFAULT 0,
   active_turn_team_id UUID NULL REFERENCES teams(id),
   winner_team_id UUID NULL REFERENCES teams(id),
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -146,6 +147,8 @@ CREATE INDEX IF NOT EXISTS idx_queue_entries_status_game ON queue_entries(status
 CREATE INDEX IF NOT EXISTS idx_matches_status_game ON matches(status, game_type);
 CREATE INDEX IF NOT EXISTS idx_match_participants_match_id ON match_participants(match_id);
 CREATE INDEX IF NOT EXISTS idx_match_actions_match_id ON match_actions(match_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_match_actions_applied_version ON match_actions(match_id, applied_state_version) WHERE applied_state_version IS NOT NULL AND status = 'applied';
+CREATE INDEX IF NOT EXISTS idx_match_actions_replay ON match_actions(match_id, applied_state_version ASC) WHERE status = 'applied';
 CREATE INDEX IF NOT EXISTS idx_leaderboard_stats_game_type ON leaderboard_stats(game_type);
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at DESC);
 

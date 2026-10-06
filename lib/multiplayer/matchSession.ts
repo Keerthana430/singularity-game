@@ -10,6 +10,7 @@ export interface MatchSessionConfig {
   participants?: MatchParticipant[];
   state?: Record<string, unknown>;
   status?: MatchLifecycleStatus;
+  stateVersion?: number;
 }
 
 export interface MatchActionRequest {
@@ -65,7 +66,7 @@ export class MatchSessionController {
       ruleVersion: config.ruleVersion,
       participants: normalizedParticipants,
       status: config.status ?? 'waiting',
-      stateVersion: 0,
+      stateVersion: config.stateVersion ?? 0,
       state: config.state ?? {},
     });
   }
@@ -201,6 +202,39 @@ export class MatchSessionController {
     this.session.checkpoint = checkpoint;
     this.session.updatedAt = new Date().toISOString();
     return this.session;
+  }
+
+  setCheckpoint(checkpoint: MatchCheckpoint) {
+    this.session.checkpoint = checkpoint;
+    return this.session;
+  }
+
+  commitDurableTransition(
+    action: MatchActionRequest,
+    nextState: Record<string, unknown>,
+    newVersion: number
+  ) {
+    this.processedActions.add(action.actionId);
+    this.session.state = nextState;
+    this.session.stateVersion = newVersion;
+    this.session.updatedAt = new Date().toISOString();
+    return this.getMatch();
+  }
+
+  restoreProcessedActions(actionIds: string[]) {
+    for (const actionId of actionIds) {
+      if (typeof actionId === 'string' && actionId.trim()) {
+        this.processedActions.add(actionId.trim());
+      }
+    }
+  }
+
+  isActionProcessed(actionId: string): boolean {
+    return this.processedActions.has(actionId);
+  }
+
+  getProcessedActionIds(): string[] {
+    return Array.from(this.processedActions);
   }
 
   validateExpectedState(expectedStateVersion: number | undefined, actionId: string) {

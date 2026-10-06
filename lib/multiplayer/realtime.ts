@@ -2,8 +2,10 @@ import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 
+import { pgPool } from '@/lib/db/postgres';
 import { verifySessionFromToken } from '@/lib/auth/teamIdentity';
 import { MatchSessionController, type MatchActionRequest } from './matchSession';
+import { executeDurableAction, recoverMatchFromDatabase } from './durableMatchStore';
 import type { MatchSession as MatchSessionShape } from './types';
 
 export type RealtimeIdentity = {
@@ -82,6 +84,7 @@ interface ActiveClient {
 
 const MAX_MESSAGE_BYTES = 64 * 1024;
 const UNSAFE_ACTION_KEYS = new Set(['teamId', 'playerId', 'role', 'winner', 'score', 'reward', 'turn', 'state']);
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function getTokenFromRequest(request: IncomingMessage, fallback?: string) {
   const url = new URL(request.url || '/', 'http://localhost');
@@ -258,22 +261,23 @@ export class RealtimeServer {
     }
   }
 
-  sendState(matchId: string, excludeSocket?: WebSocket) {
+  sendState(matchId: string, targetSocket?: WebSocket) {
     const match = this.matchSessions.get(matchId);
     const snapshot = match ? getMatchSnapshot(match) : null;
-
-    this.sendToMatch(
+    const message: RealtimeMessage = {
+      type: 'state',
       matchId,
-      {
-        type: 'state',
-        matchId,
-        payload: {
-          match: snapshot,
-          receivedAt: new Date().toISOString(),
-        },
+      payload: {
+        match: snapshot,
+        receivedAt: new Date().toISOString(),
       },
-      excludeSocket
-    );
+    };
+
+    if (targetSocket) {
+      this.sendToClient(targetSocket, message);
+    } else {
+      this.sendToMatch(matchId, message);
+    }
   }
 
   private async handleConnection(socket: WebSocket, request: IncomingMessage) {
@@ -299,7 +303,21 @@ export class RealtimeServer {
       return;
     }
 
-    const match = this.matchSessions.get(matchId);
+    let match = this.matchSessions.get(matchId);
+    if (!match && pgPool && UUID_REGEX.test(matchId)) {
+      const recovery = await recoverMatchFromDatabase(matchId);
+      if (recovery.ok) {
+        this.registerMatch(matchId, recovery.controller);
+        match = recovery.controller;
+      } else {
+        const errorCode = recovery.code === 'MATCH_NOT_FOUND' ? 'MATCH_NOT_FOUND' : 'MATCH_RECOVERY_FAILED';
+        const errorMsg = recovery.code === 'MATCH_NOT_FOUND' ? 'Match does not exist.' : `Match recovery failed: ${recovery.error}`;
+        this.sendToClient(socket, { type: 'error', payload: { error: errorMsg, code: errorCode } });
+        socket.close();
+        return;
+      }
+    }
+
     if (match) {
       const snapshot = getMatchSnapshot(match);
       const isMember = snapshot.participants.some((participant) => participant.teamId === auth.identity.teamId);
@@ -422,7 +440,20 @@ export class RealtimeServer {
         return;
       }
 
-      const match = this.matchSessions.get(requestedMatchId);
+      let match = this.matchSessions.get(requestedMatchId);
+      if (!match && pgPool && UUID_REGEX.test(requestedMatchId)) {
+        const recovery = await recoverMatchFromDatabase(requestedMatchId);
+        if (recovery.ok) {
+          this.registerMatch(requestedMatchId, recovery.controller);
+          match = recovery.controller;
+        } else {
+          const errorCode = recovery.code === 'MATCH_NOT_FOUND' ? 'MATCH_NOT_FOUND' : 'MATCH_RECOVERY_FAILED';
+          const errorMsg = recovery.code === 'MATCH_NOT_FOUND' ? 'Match does not exist.' : `Match recovery failed: ${recovery.error}`;
+          this.sendToClient(socket, { type: 'error', payload: { error: errorMsg, code: errorCode } });
+          return;
+        }
+      }
+
       const snapshot = match ? getMatchSnapshot(match) : null;
       const isMember = snapshot ? snapshot.participants.some((participant) => participant.teamId === client.teamId) : true;
 
@@ -446,7 +477,14 @@ export class RealtimeServer {
         this.sendToClient(socket, { type: 'error', payload: { error: 'matchId does not match the current session subscription.', code: 'MATCH_ID_MISMATCH' } });
         return;
       }
-      const match = this.matchSessions.get(matchId);
+      let match = this.matchSessions.get(matchId);
+      if (!match && pgPool && UUID_REGEX.test(matchId)) {
+        const recovery = await recoverMatchFromDatabase(matchId);
+        if (recovery.ok) {
+          this.registerMatch(matchId, recovery.controller);
+          match = recovery.controller;
+        }
+      }
       if (match) {
         const snapshot = getMatchSnapshot(match);
         const isMember = snapshot.participants.some((participant) => participant.teamId === client.teamId);
@@ -482,7 +520,14 @@ export class RealtimeServer {
     }
 
     if (message.type === 'action') {
-      const match = this.matchSessions.get(client.matchId);
+      let match = this.matchSessions.get(client.matchId);
+      if (!match && pgPool && UUID_REGEX.test(client.matchId)) {
+        const recovery = await recoverMatchFromDatabase(client.matchId);
+        if (recovery.ok) {
+          this.registerMatch(client.matchId, recovery.controller);
+          match = recovery.controller;
+        }
+      }
       if (!match || !isMatchSessionController(match)) {
         this.sendToClient(socket, { type: 'error', payload: { error: 'No authoritative match session is available for this action.', code: 'MATCH_NOT_FOUND' } });
         return;
@@ -524,7 +569,54 @@ export class RealtimeServer {
       }
 
       const mutator = actionResolution?.mutator ?? ((state, action) => ({ ...state, lastActionId: action.actionId, ...(action.payload ?? {}) }));
-      const result = match.applyAction(normalized.action, mutator);
+      let result: {
+        ok: boolean;
+        error?: string;
+        code?: string;
+        stateVersion?: number;
+        appliedActionId?: string;
+        match?: MatchSessionShape;
+      };
+
+      if (pgPool) {
+        const durableResult = await executeDurableAction(match, normalized.action, mutator);
+        if (durableResult.ok) {
+          result = {
+            ok: true,
+            stateVersion: durableResult.stateVersion,
+            appliedActionId: durableResult.appliedActionId,
+            match: durableResult.match,
+          };
+        } else if (durableResult.code === 'MATCH_NOT_FOUND') {
+          const memResult = match.applyAction(normalized.action, mutator);
+          result = {
+            ok: memResult.ok,
+            error: memResult.error,
+            code: memResult.ok ? undefined : 'STALE_STATE',
+            stateVersion: memResult.stateVersion,
+            appliedActionId: memResult.appliedActionId,
+            match: memResult.match,
+          };
+        } else {
+          result = {
+            ok: false,
+            error: durableResult.error,
+            code: durableResult.code ?? 'STALE_STATE',
+            stateVersion: durableResult.currentVersion ?? match.getStateVersion(),
+            match: getMatchSnapshot(match),
+          };
+        }
+      } else {
+        const memResult = match.applyAction(normalized.action, mutator);
+        result = {
+          ok: memResult.ok,
+          error: memResult.error,
+          code: memResult.ok ? undefined : 'STALE_STATE',
+          stateVersion: memResult.stateVersion,
+          appliedActionId: memResult.appliedActionId,
+          match: memResult.match,
+        };
+      }
 
       if (!result.ok) {
         this.sendToClient(socket, {
@@ -532,7 +624,7 @@ export class RealtimeServer {
           matchId: normalized.matchId,
           payload: {
             error: result.error ?? 'Action rejected.',
-            code: 'STALE_STATE',
+            code: result.code ?? 'STALE_STATE',
             match: getMatchSnapshot(match),
             stateVersion: match.getStateVersion(),
             resync: true,

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { testDatabaseConnection } from '@/lib/db/postgres';
+import { testDatabaseConnection, closePostgresPool } from '@/lib/db/postgres';
 
 const hasDb = !!process.env.DATABASE_URL;
 
@@ -11,4 +11,8 @@ test('PostgreSQL integration smoke test', { skip: !hasDb }, async () => {
   }
 
   assert.ok(result.data.now);
+});
+
+test.after(async () => {
+  await closePostgresPool();
 });

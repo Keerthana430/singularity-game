@@ -6,6 +6,7 @@ import { createMatchSession } from './matchSession';
 import { createRealtimeServer } from './realtime';
 
 async function waitForSocketOpen(socket: WebSocket) {
+  ensureSocketListener(socket);
   if (socket.readyState === socket.OPEN) return;
   await new Promise<void>((resolve, reject) => {
     const onOpen = () => {
@@ -21,27 +22,59 @@ async function waitForSocketOpen(socket: WebSocket) {
   });
 }
 
-async function waitForMessage(socket: WebSocket, predicate: (payload: any) => boolean) {
-  return new Promise<any>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      socket.off('message', onMessage);
-      reject(new Error('Timed out waiting for a match message.'));
-    }, 2000);
+const socketMessageBuffers = new WeakMap<WebSocket, any[]>();
+const socketMessageWaiters = new WeakMap<
+  WebSocket,
+  Array<{ predicate: (p: any) => boolean; resolve: (p: any) => void; timer: NodeJS.Timeout }>
+>();
 
-    const onMessage = (raw: any) => {
+function ensureSocketListener(socket: WebSocket) {
+  if (!socketMessageBuffers.has(socket)) {
+    const buffer: any[] = [];
+    const waiters: Array<{
+      predicate: (p: any) => boolean;
+      resolve: (p: any) => void;
+      timer: NodeJS.Timeout;
+    }> = [];
+    socketMessageBuffers.set(socket, buffer);
+    socketMessageWaiters.set(socket, waiters);
+
+    socket.on('message', (raw: any) => {
       try {
         const parsed = JSON.parse(raw.toString());
-        if (predicate(parsed)) {
-          clearTimeout(timer);
-          socket.off('message', onMessage);
-          resolve(parsed);
+        const waiterIdx = waiters.findIndex((w) => w.predicate(parsed));
+        if (waiterIdx !== -1) {
+          const [waiter] = waiters.splice(waiterIdx, 1);
+          clearTimeout(waiter.timer);
+          waiter.resolve(parsed);
+        } else {
+          buffer.push(parsed);
         }
       } catch {
         // ignore malformed messages while waiting
       }
-    };
+    });
+  }
+}
 
-    socket.on('message', onMessage);
+async function waitForMessage(socket: WebSocket, predicate: (payload: any) => boolean) {
+  ensureSocketListener(socket);
+  const buffer = socketMessageBuffers.get(socket)!;
+  const waiters = socketMessageWaiters.get(socket)!;
+
+  const bufIdx = buffer.findIndex(predicate);
+  if (bufIdx !== -1) {
+    return buffer.splice(bufIdx, 1)[0];
+  }
+
+  return new Promise<any>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const idx = waiters.findIndex((w) => w.resolve === resolve);
+      if (idx !== -1) waiters.splice(idx, 1);
+      reject(new Error('Timed out waiting for a match message.'));
+    }, 2000);
+
+    waiters.push({ predicate, resolve, timer });
   });
 }
 
@@ -69,16 +102,7 @@ test('realtime server authenticates the session and validates match membership b
   });
 
   server.registerMatch('match-rt-1', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      const actualPort = typeof address === 'object' && address ? address.port : 0;
-      server.registerMatch('match-rt-1', match);
-      server['wss']?.on('connection', () => {});
-      resolve(actualPort);
-    });
-  });
+  const port = await server.listen();
 
   const socket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=valid-team-session&matchId=match-rt-1`);
   await waitForSocketOpen(socket);
@@ -96,8 +120,8 @@ test('realtime server authenticates the session and validates match membership b
 test('realtime server rejects non-members and malformed payloads', async () => {
   const match = createMatchSession({
     matchId: 'match-rt-2',
-    gameType: 'snakes',
-    ruleVersion: 'v2',
+    gameType: 'ludo',
+    ruleVersion: 'v1',
     participants: [{ teamId: 'TEAM-10', seatIndex: 0, status: 'joined', joinedAt: new Date().toISOString(), connectionIds: [] }],
   });
 
@@ -113,14 +137,7 @@ test('realtime server rejects non-members and malformed payloads', async () => {
   });
 
   server.registerMatch('match-rt-2', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      const actualPort = typeof address === 'object' && address ? address.port : 0;
-      resolve(actualPort);
-    });
-  });
+  const port = await server.listen();
 
   const rejectedSocket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=team-99-session&matchId=match-rt-2`);
   const rejection = await waitForMessage(rejectedSocket, (payload) => payload.type === 'error');
@@ -170,13 +187,7 @@ test('realtime action path validates the authenticated session and applies valid
   });
 
   server.registerMatch('match-rt-action', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      resolve(typeof address === 'object' && address ? address.port : 0);
-    });
-  });
+  const port = await server.listen();
 
   const socket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=team-01-valid&matchId=match-rt-action`);
   await waitForSocketOpen(socket);
@@ -225,13 +236,7 @@ test('realtime rejects duplicate and stale actions with a resync payload', async
   });
 
   server.registerMatch('match-rt-stale', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      resolve(typeof address === 'object' && address ? address.port : 0);
-    });
-  });
+  const port = await server.listen();
 
   const socket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=team-09-valid&matchId=match-rt-stale`);
   await waitForSocketOpen(socket);
@@ -285,13 +290,7 @@ test('realtime broadcasts authoritative state to all valid match connections and
   });
 
   server.registerMatch('match-rt-broadcast', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      resolve(typeof address === 'object' && address ? address.port : 0);
-    });
-  });
+  const port = await server.listen();
 
   const team3Socket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=team-03-valid&matchId=match-rt-broadcast`);
   const team4Socket = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=team-04-valid&matchId=match-rt-broadcast`);
@@ -342,13 +341,7 @@ test('realtime rejects invalid sessions, unauthorized actions, malformed payload
   });
 
   server.registerMatch('match-rt-guard', match);
-  const port = await new Promise<number>((resolve) => {
-    const httpServer = require('node:http').createServer();
-    httpServer.listen(0, '127.0.0.1', () => {
-      const address = httpServer.address();
-      resolve(typeof address === 'object' && address ? address.port : 0);
-    });
-  });
+  const port = await server.listen();
 
   const invalidSession = new WebSocket(`ws://127.0.0.1:${port}/?sessionToken=bad-session&matchId=match-rt-guard`);
   const invalidError = await waitForMessage(invalidSession, (payload) => payload.type === 'error');
