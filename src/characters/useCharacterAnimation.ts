@@ -45,15 +45,16 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   const knockdownAnimRef = useRef({ weight: 0, pitch: 0, hipsY: 0, knees: 0, armsSpread: 0 });
   const blockAnimRef = useRef({ weight: 0 });
   
-  // Track previous grounded state to trigger landing squat
   const prevGroundedRef = useRef(true);
   const stanceWeightRef = useRef(0);
+  const activeArmOverrideRef = useRef<'L' | 'R' | 'BOTH'>('BOTH');
 
   // We need combat logic to trigger when combatState changes in global store.
   // We can just rely on the component using this hook to trigger GSAP directly, OR we can watch state here.
   // For simplicity, we'll expose a triggerPunch method.
   
   const triggerPunch = (attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' | 'SPIN_ATTACK', isLeft: boolean, onComplete: () => void) => {
+    activeArmOverrideRef.current = isLeft ? 'L' : 'R';
     const combatAnim = combatAnimRef.current;
     
     gsap.killTweensOf(combatAnim);
@@ -164,6 +165,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   };
 
   const triggerCelebrate = (onComplete: () => void) => {
+    activeArmOverrideRef.current = 'BOTH';
     const cAnim = combatAnimRef.current; // Reuse combat anim for arms
     gsap.killTweensOf(cAnim);
     cAnim.pWeight = 0;
@@ -176,6 +178,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   };
 
   const triggerTaunt = (onComplete: () => void) => {
+    activeArmOverrideRef.current = 'BOTH';
     const cAnim = combatAnimRef.current;
     gsap.killTweensOf(cAnim);
     cAnim.pWeight = 0;
@@ -225,7 +228,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     blockAnimRef.current.weight += (targetBlockWeight - blockAnimRef.current.weight) * Math.min(1, 15 * dt);
     
     // Only apply stance weight if not hurt/celebrating/taunting/attacking via combo
-    const targetStanceWeight = (combatStanceRef?.current && combatState !== 'HURT' && combatState !== 'ATTACKING') ? 1 : 0;
+    const targetStanceWeight = (combatStanceRef?.current && !['HURT', 'ATTACKING', 'CELEBRATING', 'TAUNTING'].includes(combatState)) ? 1 : 0;
     stanceWeightRef.current += (targetStanceWeight - stanceWeightRef.current) * Math.min(1, 10 * dt);
     
     if (squatPhaseRef.current > 0) {
@@ -364,19 +367,31 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
 
       bones.chest.rotation.y = bones.chest.rotation.y * iw + cAnim.pChestTwist * cw;
       
-      if (combatState === 'PUNCH_L') {
+      if (activeArmOverrideRef.current === 'L') {
         bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.2) * cw;
         bones.lShoulder.rotation.y = cAnim.pHook * cw;
         bones.lShoulder.rotation.z = bones.lShoulder.rotation.z * iw + cAnim.pUpper * cw;
         bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * iw + cAnim.pShoulder * cw;
         bones.lUpperArm.rotation.z = bones.lUpperArm.rotation.z * iw + cAnim.pArmZ * cw;
         bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + cAnim.pElbow * cw;
-      } else if (combatState === 'PUNCH_R') {
+      } else if (activeArmOverrideRef.current === 'R') {
         bones.rShoulder.rotation.x = bones.rShoulder.rotation.x * iw + (-0.2) * cw;
         bones.rShoulder.rotation.y = -cAnim.pHook * cw;
         bones.rShoulder.rotation.z = bones.rShoulder.rotation.z * iw - cAnim.pUpper * cw;
         bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * iw + cAnim.pShoulder * cw;
         bones.rUpperArm.rotation.z = bones.rUpperArm.rotation.z * iw - cAnim.pArmZ * cw;
+        bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + cAnim.pElbow * cw;
+      } else if (activeArmOverrideRef.current === 'BOTH') {
+        bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.2) * cw;
+        bones.rShoulder.rotation.x = bones.rShoulder.rotation.x * iw + (-0.2) * cw;
+        
+        bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * iw + cAnim.pShoulder * cw;
+        bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * iw + cAnim.pShoulder * cw;
+        
+        bones.lUpperArm.rotation.z = bones.lUpperArm.rotation.z * iw + cAnim.pArmZ * cw;
+        bones.rUpperArm.rotation.z = bones.rUpperArm.rotation.z * iw - cAnim.pArmZ * cw;
+        
+        bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + cAnim.pElbow * cw;
         bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + cAnim.pElbow * cw;
       }
     }

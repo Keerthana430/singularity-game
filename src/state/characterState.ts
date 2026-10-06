@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type CombatState = 'IDLE' | 'PUNCH_L' | 'PUNCH_R' | 'DODGING' | 'BLOCKING' | 'JUMP_ATTACK' | 'HURT' | 'KNOCKDOWN';
+export type CombatState = 'IDLE' | 'PUNCH_L' | 'PUNCH_R' | 'DODGING' | 'BLOCKING' | 'JUMP_ATTACK' | 'HURT' | 'KNOCKDOWN' | 'ATTACKING' | 'CELEBRATING' | 'TAUNTING';
 export type MovementState = 'IDLE' | 'WALK' | 'RUN' | 'JUMP' | 'FALL' | 'SQUAT';
 
 interface CharacterState {

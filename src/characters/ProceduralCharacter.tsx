@@ -83,11 +83,11 @@ export function ProceduralCharacter() {
       }
       if (k === 'c' && combatState === 'IDLE') {
         // Pseudo state for celebrate so we don't punch
-        setCombatState('HURT');
+        setCombatState('CELEBRATING');
         triggerCelebrate(() => setCombatState('IDLE'));
       }
       if (k === 't' && combatState === 'IDLE') {
-        setCombatState('HURT');
+        setCombatState('TAUNTING');
         triggerTaunt(() => setCombatState('IDLE'));
       }
       if (k === '1' && combatState === 'IDLE') {
