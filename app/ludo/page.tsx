@@ -139,14 +139,21 @@ export default function LudoPage() {
   const { add: addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'board' | 'leaderboard' | 'rules'>('board');
+  const [gameMode, setGameMode] = useState<'pvp' | 'bot' | 'friends'>('bot');
+  const [showProtocolsModal, setShowProtocolsModal] = useState<boolean>(false);
+  const [leaderboardResult, setLeaderboardResult] = useState<{
+    pointsAwarded: number;
+    message: string;
+    isCasual?: boolean;
+  } | null>(null);
   const [gameSpeed, setGameSpeed] = useState<'1x' | '2x' | 'instant'>('1x');
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('isometric');
   const [winner, setWinner] = useState<LudoPlayer | null>(null);
 
   // Turn management & Console HUD tracking
   const [currentTurn, setCurrentTurn] = useState<PlayerColor>('red');
-  const [turnCount, setTurnCount] = useState<number>(3);
-  const [matchSeconds, setMatchSeconds] = useState<number>(261); // Starts at 04:21 for rich initial state
+  const [turnCount, setTurnCount] = useState<number>(1);
+  const [matchSeconds, setMatchSeconds] = useState<number>(0);
   const [diceRoll, setDiceRoll] = useState<number | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [canRoll, setCanRoll] = useState(true);
@@ -155,6 +162,48 @@ export default function LudoPage() {
     'Welcome to Singularity Ludo 3D Colosseum! Roll a 6 to deploy your avatar onto the track.',
   ]);
   const [logOpen, setLogOpen] = useState(false);
+
+  const switchGameMode = (newMode: 'pvp' | 'bot' | 'friends') => {
+    setGameMode(newMode);
+    setPlayers((prev) =>
+      prev.map((pl, idx) => ({
+        ...pl,
+        name:
+          newMode === 'friends'
+            ? idx === 0
+              ? currentAvatar.name || 'Player 1'
+              : `Player ${idx + 1}`
+            : idx === 0
+            ? currentAvatar.name || 'Astraea Cadet'
+            : idx === 1
+            ? 'Hyperion Corsair'
+            : idx === 2
+            ? 'Solar Nova'
+            : 'Void Syndicate',
+        isAi: newMode === 'friends' ? false : idx !== 0,
+        pieces: pl.pieces.map((pc) => ({ ...pc, step: -1, hasShield: false })),
+      }))
+    );
+    setCurrentTurn('red');
+    setTurnCount(1);
+    setMatchSeconds(0);
+    setDiceRoll(null);
+    setWinner(null);
+    setLeaderboardResult(null);
+    setCanRoll(true);
+    setSelectablePieces([]);
+    setActiveClash(null);
+    setActiveMovement(null);
+    setFloatingTexts([]);
+    addToast(
+      newMode === 'friends'
+        ? 'Mode: Play with Friends (Local Pass & Play - 0 Leaderboard pts)'
+        : newMode === 'pvp'
+        ? 'Mode: Ranked PvP (+35 ELO / Official Match)'
+        : 'Mode: Solo vs AI (+10 ELO / Bot Practice)',
+      'info'
+    );
+  };
 
   // Live Console Match Timer
   useEffect(() => {
@@ -696,7 +745,11 @@ export default function LudoPage() {
     if (allFinished && !winner) {
       sound.playWin();
       setWinner(movedPlayer);
-      if (movedPlayer.id === 'red') {
+      const isUserWin = movedPlayer.id === 'red';
+      const isCasual = gameMode === 'friends';
+      const isBot = gameMode === 'bot';
+
+      if (isUserWin) {
         addCoins(500);
         addToast('[CHAMPION] 1ST PLACE! +500 Cyber Coins earned!', 'success');
       } else {
@@ -704,17 +757,42 @@ export default function LudoPage() {
       }
 
       if (typeof window !== 'undefined') {
+        const modeLabel = isCasual ? 'CASUAL' : isBot ? 'BOT PRACTICE' : 'RANKED PVP';
         fetch('/api/activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             iconType: 'ludo',
-            tag: 'LUDO',
-            text: `Commander ${movedPlayer.name} conquered 1st Place in Ludo Colosseum`,
+            tag: modeLabel,
+            text: `Commander ${movedPlayer.name} conquered 1st Place in Ludo Colosseum [${modeLabel}]`,
             color: movedPlayer.colorHex,
             link: '/ludo',
           }),
         }).catch(() => {});
+
+        // Submit to Leaderboard API with exact matchType logic
+        fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentAvatar.name || movedPlayer.name || 'Player',
+            isVictory: isUserWin,
+            classRole: currentAvatar.classRole || 'Cyber Fighter',
+            matchType: gameMode,
+            game: 'ludo',
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              setLeaderboardResult({
+                pointsAwarded: data.pointsAwarded ?? 0,
+                message: data.message,
+                isCasual: data.isCasual,
+              });
+            }
+          })
+          .catch(() => {});
       }
       return;
     }
@@ -769,6 +847,7 @@ export default function LudoPage() {
     setMatchSeconds(0);
     setDiceRoll(null);
     setWinner(null);
+    setLeaderboardResult(null);
     setCanRoll(true);
     setSelectablePieces([]);
     setActiveClash(null);
@@ -905,8 +984,42 @@ export default function LudoPage() {
               )}
             </div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-[#8F97B0] mt-1">
-              {activePlayer.isAi ? `${activePlayer.name.toUpperCase()} PONDERING MOVE...` : 'STATION LOUNGE // ROLL QUANTUM DIE'}
+              {gameMode === 'friends'
+                ? `[PASS & PLAY] ${activePlayer.name.toUpperCase()}'S TURN — ROLL DIE`
+                : activePlayer.isAi
+                ? `${activePlayer.name.toUpperCase()} PONDERING MOVE...`
+                : 'STATION LOUNGE // ROLL QUANTUM DIE'}
             </span>
+
+            {/* Game Mode Selector Pills & Protocols */}
+            <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[#101426]/90 border border-white/10 backdrop-blur-md">
+                {(['pvp', 'bot', 'friends'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => switchGameMode(m)}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase transition-all ${
+                      gameMode === m
+                        ? m === 'pvp'
+                          ? 'bg-[#00FF66] text-[#101426] shadow-[0_0_10px_rgba(0,255,102,0.4)]'
+                          : m === 'bot'
+                          ? 'bg-amber-400 text-[#101426] shadow-[0_0_10px_rgba(251,191,36,0.4)]'
+                          : 'bg-[#38BDF8] text-[#101426] shadow-[0_0_10px_rgba(56,189,248,0.4)]'
+                        : 'text-white/40 hover:text-white'
+                    }`}
+                  >
+                    {m === 'pvp' ? 'Ranked PvP' : m === 'bot' ? 'Solo AI' : 'With Friends'}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowProtocolsModal(true)}
+                className="px-2 py-1 rounded-xl bg-[#101426]/90 border border-white/10 hover:border-[#00FF66]/50 text-white/60 hover:text-white text-[9px] font-bold uppercase transition-all flex items-center gap-1"
+                title="Ludo Protocols"
+              >
+                <Shield size={10} className="text-[#00FF66]" /> Rules
+              </button>
+            </div>
           </div>
 
           {/* Top-Right: Match Timer & Camera Controls */}
@@ -1250,18 +1363,45 @@ export default function LudoPage() {
 
               <p className="text-xs text-white/50 mt-2 max-w-xs">
                 {winner.id === 'red'
-                  ? 'All 4 avatars reached the Nexus. +500 Coins.'
+                  ? 'All 4 avatars reached the Nexus. +500 Coins banked.'
                   : `${winner.name} finished first.`}
               </p>
 
+              {/* ─── LEADERBOARD RATING OUTCOME CARD ─── */}
+              <div className="mt-3 w-full rounded-xl border p-2.5 text-center font-mono">
+                {gameMode === 'friends' ? (
+                  <div className="border-cyan-400/30 bg-cyan-950/30 text-cyan-300">
+                    <span className="block text-[9px] uppercase tracking-wider text-cyan-400 font-bold">CASUAL MATCH WITH FRIENDS</span>
+                    <span className="text-sm font-black text-cyan-200 block mt-0.5">0 LEADERBOARD PTS</span>
+                    <span className="block text-[8px] text-cyan-300/70 mt-0.5">Pass & Play couch matches do not affect competitive rankings</span>
+                  </div>
+                ) : gameMode === 'bot' ? (
+                  <div className="border-amber-400/30 bg-amber-950/30 text-amber-300">
+                    <span className="block text-[9px] uppercase tracking-wider text-amber-400 font-bold">SOLO VS AI (BOT TRAINING)</span>
+                    <span className="text-sm font-black text-amber-200 block mt-0.5">
+                      {winner.id === 'red' ? '+10 ELO RATING' : '-5 ELO RATING'}
+                    </span>
+                    <span className="block text-[8px] text-amber-300/70 mt-0.5">Reduced practice points applied</span>
+                  </div>
+                ) : (
+                  <div className="border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66]">
+                    <span className="block text-[9px] uppercase tracking-wider text-[#00FF66] font-bold">RANKED PVP OFFICIAL MATCH</span>
+                    <span className="text-sm font-black text-white block mt-0.5">
+                      {winner.id === 'red' ? '+35 ELO RATING' : '-15 ELO RATING'}
+                    </span>
+                    <span className="block text-[8px] text-white/50 mt-0.5">Official match points updated</span>
+                  </div>
+                )}
+              </div>
+
               {winner.id === 'red' && (
-                <div className="mt-4 px-4 py-2 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] text-xs font-bold flex items-center gap-2">
+                <div className="mt-3 px-4 py-2 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] text-xs font-bold flex items-center gap-2">
                   <Coins size={14} />
                   <span>+500 COINS</span>
                 </div>
               )}
 
-              <div className="flex gap-3 w-full mt-6">
+              <div className="flex gap-3 w-full mt-5">
                 <button
                   onClick={handleResetMatch}
                   className="hud-action-btn flex-1 py-3 text-xs uppercase tracking-wider"
@@ -1275,6 +1415,46 @@ export default function LudoPage() {
                   Hub
                 </Link>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── LUDO 5-POINT PROTOCOLS MODAL (MAX 5 POINTS) ─── */}
+      <AnimatePresence>
+        {showProtocolsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md rounded-3xl bg-[#080E14] border border-[#00FF66]/40 p-6 shadow-[0_0_60px_rgba(0,255,102,0.25)] text-left font-mono"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2 text-[#00FF66]">
+                  <Shield size={18} />
+                  <h3 className="text-sm font-black uppercase tracking-wider">Ludo Colosseum Protocols</h3>
+                </div>
+                <button
+                  onClick={() => setShowProtocolsModal(false)}
+                  className="text-white/40 hover:text-white text-xs uppercase"
+                >
+                  [Close]
+                </button>
+              </div>
+              <ol className="mt-4 space-y-2.5 text-xs text-white/80 list-decimal list-inside leading-relaxed">
+                <li><span className="text-white font-bold">Launch on Six:</span> Roll a 6 to deploy an operative from your dock onto the 52-tile circuit.</li>
+                <li><span className="text-white font-bold">Combat Knockout:</span> Landing on an enemy tile captures them home and grants a bonus turn.</li>
+                <li><span className="text-white font-bold">Safe Zones & Shields:</span> Star tiles grant sanctuary; pickup shields block 1 knockout.</li>
+                <li><span className="text-white font-bold">Singularity Goal:</span> Guide all 4 operative tokens to the central Nexus to win.</li>
+                <li><span className="text-white font-bold">Ranked vs Casual:</span> Ranked PvP awards +35 ELO, Solo AI grants +10 ELO, and Friend matches award 0 ELO (casual play).</li>
+              </ol>
+              <button
+                onClick={() => setShowProtocolsModal(false)}
+                className="mt-6 w-full neon-green-button py-3 rounded-xl font-bold uppercase text-xs tracking-wider"
+              >
+                Understood
+              </button>
             </motion.div>
           </div>
         )}

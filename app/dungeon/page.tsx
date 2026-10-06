@@ -84,12 +84,14 @@ function saveRecords(data: PersistentStorage) {
 }
 
 export default function DungeonPage() {
-  const { currentAvatar } = useAvatarStore();
+  const { currentAvatar, addCoins } = useAvatarStore();
   const baseStats = useMemo(() => calculateAvatarStats(currentAvatar), [currentAvatar]);
 
   // Game Flow State
   const [mode, setMode] = useState<PageMode>('title');
   const [isPaused, setIsPaused] = useState(false);
+  const [currentSector, setCurrentSector] = useState(1);
+  const [isWarpingOut, setIsWarpingOut] = useState(false);
   const [records, setRecords] = useState<PersistentStorage>({
     bestSurvivalSeconds: 0,
     bestScore: 0,
@@ -363,6 +365,10 @@ export default function DungeonPage() {
         soulShardsEarned: extracted ? Math.floor(finalScore / 250) : 0,
       };
 
+      if (coinsEarned > 0) {
+        addCoins(coinsEarned);
+      }
+
       setFinalRunStats(runStats);
       setMode('summary');
 
@@ -392,15 +398,78 @@ export default function DungeonPage() {
             iconType: 'dungeon',
             tag: 'DUNGEON',
             text: extracted
-              ? `Explorer extracted from Dungeon with ${finalScore} pts (${kills} kills, Tier ${director.currentTier.tier})`
-              : `Explorer survived ${survivalSeconds}s in Dungeon (${kills} kills, ${finalScore} pts)`,
+              ? `Explorer extracted from Sector ${currentSector} with ${finalScore} pts (${kills} kills, Tier ${director.currentTier.tier})`
+              : `Explorer survived ${survivalSeconds}s in Sector ${currentSector} (${kills} kills, ${finalScore} pts)`,
             color: extracted ? '#00FF66' : '#F59E0B',
             link: '/dungeon',
           }),
         }).catch(() => {});
       }
     },
-    [director.currentTier.tier, director.tierIndex, eliteKills, highestStreak, kills, streak, survivalSeconds]
+    [addCoins, currentSector, director.currentTier.tier, director.tierIndex, eliteKills, highestStreak, kills, streak, survivalSeconds]
+  );
+
+  // Cinematic Extraction Warp Sequence
+  const handleTriggerExtraction = useCallback(() => {
+    setIsWarpingOut(true);
+    sound.playLevelUp();
+    setTimeout(() => {
+      setIsWarpingOut(false);
+      endRun(true);
+    }, 1800);
+  }, [endRun]);
+
+  // Sector 2 Descent Progression
+  const handleNextSector = useCallback(() => {
+    setCurrentSector((prev) => prev + 1);
+    startRun();
+  }, [startRun]);
+
+  // Central Dais Weapon & Full Ammo Portal Pickup
+  const handleCentralPortalPickup = useCallback(
+    (weaponId: WeaponId) => {
+      const config = WEAPON_CONFIGS[weaponId];
+      if (config) {
+        setWeaponAmmo((prev) => ({
+          ...prev,
+          [weaponId]: { clip: config.magSize, reserve: config.reserveMax },
+          [currentWeaponId]: {
+            clip: WEAPON_CONFIGS[currentWeaponId].magSize,
+            reserve: WEAPON_CONFIGS[currentWeaponId].reserveMax,
+          },
+        }));
+
+        const existingIdx = inventorySlots.findIndex(
+          (s) => s.item?.weaponId === weaponId || s.item?.id === weaponId
+        );
+        if (existingIdx !== -1) {
+          setActiveSlotIndex(existingIdx);
+        } else {
+          const emptyIdx = inventorySlots.findIndex((s) => s.item === null);
+          const targetSlot = emptyIdx !== -1 ? emptyIdx : activeSlotIndex;
+          const newSlots = [...inventorySlots];
+          newSlots[targetSlot] = {
+            index: targetSlot,
+            item: {
+              id: `wep-${weaponId}-${Date.now()}`,
+              name: config.name,
+              kind: 'weapon',
+              rarity: 'epic',
+              weaponId: weaponId,
+              icon: 'rifle',
+              color: config.color,
+              description: config.description,
+              stats: { damageBonus: 10 },
+            },
+          };
+          setInventorySlots(newSlots);
+          setActiveSlotIndex(targetSlot);
+        }
+      }
+      setDamageBuffUntil(Date.now() + 15000);
+      sound.playOverdrive();
+    },
+    [activeSlotIndex, currentWeaponId, inventorySlots]
   );
 
   // ─── PLAYER DAMAGE HANDLER ────────────────────────────────────────────────
@@ -702,7 +771,8 @@ export default function DungeonPage() {
                 isChanneling: channeling,
               }));
             }}
-            onExtract={() => endRun(true)}
+            onExtract={handleTriggerExtraction}
+            onCentralPortalPickup={handleCentralPortalPickup}
             onSelectSlotIndex={setActiveSlotIndex}
             onUseActiveItem={() => handleUseItem(activeSlotIndex)}
           />
@@ -740,6 +810,23 @@ export default function DungeonPage() {
             onUseItem={handleUseItem}
           />
 
+          {/* Cinematic Quantum Extraction Warp Pulse Overlay */}
+          {isWarpingOut && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-cyan-950/90 backdrop-blur-2xl animate-pulse font-mono text-cyan-300">
+              <div className="relative flex items-center justify-center">
+                <div className="w-48 h-48 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin" />
+                <div className="absolute w-36 h-36 rounded-full border-2 border-[#00FF66] border-b-transparent animate-ping" />
+                <Sparkles size={48} className="text-[#00FF66] animate-bounce" />
+              </div>
+              <h2 className="mt-6 text-2xl sm:text-3xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_15px_#22D3EE]">
+                WARPING OUT OF SECTOR {currentSector}...
+              </h2>
+              <p className="mt-2 text-xs uppercase tracking-widest text-cyan-400">
+                QUANTUM EVACUATION CONFIRMED // BANKING BOUNTY CREDITS
+              </p>
+            </div>
+          )}
+
           {/* Tactical Pause Button (Top-Right Micro) */}
           <button
             onClick={() => setIsPaused(true)}
@@ -759,6 +846,8 @@ export default function DungeonPage() {
           stats={finalRunStats}
           onRestart={startRun}
           onReturnToHub={() => setMode('title')}
+          onNextSector={handleNextSector}
+          currentSector={currentSector}
         />
       )}
 
