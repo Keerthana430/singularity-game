@@ -89,6 +89,7 @@ export function ProceduralCharacter() {
       }
       if (k === 't' && combatState === 'IDLE') {
         setCombatState('TAUNTING');
+        timeSinceLastPunch.current = 0;
         triggerTaunt(() => setCombatState('IDLE'));
       }
       if (k === '1' && combatState === 'IDLE') {

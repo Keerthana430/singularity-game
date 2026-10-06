@@ -177,8 +177,12 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     tl.to(cAnim, { pWeight: 0, duration: 0.5, ease: "power2.inOut" });
   };
 
+  const nextTauntHandIsLeftRef = useRef(true);
+
   const triggerTaunt = (onComplete: () => void) => {
-    activeArmOverrideRef.current = 'BOTH';
+    activeArmOverrideRef.current = nextTauntHandIsLeftRef.current ? 'L' : 'R';
+    nextTauntHandIsLeftRef.current = !nextTauntHandIsLeftRef.current;
+    
     const cAnim = combatAnimRef.current;
     gsap.killTweensOf(cAnim);
     cAnim.pWeight = 0;
@@ -227,8 +231,8 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const targetBlockWeight = combatState === 'BLOCKING' ? 1 : 0;
     blockAnimRef.current.weight += (targetBlockWeight - blockAnimRef.current.weight) * Math.min(1, 15 * dt);
     
-    // Only apply stance weight if not hurt/celebrating/taunting/attacking via combo
-    const targetStanceWeight = (combatStanceRef?.current && !['HURT', 'CELEBRATING', 'TAUNTING'].includes(combatState)) ? 1 : 0;
+    // Only apply stance weight if not hurt/celebrating
+    const targetStanceWeight = (combatStanceRef?.current && !['HURT', 'CELEBRATING'].includes(combatState)) ? 1 : 0;
     stanceWeightRef.current += (targetStanceWeight - stanceWeightRef.current) * Math.min(1, 10 * dt);
     
     if (squatPhaseRef.current > 0) {
