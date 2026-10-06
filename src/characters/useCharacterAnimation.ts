@@ -366,6 +366,9 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       const cw = cAnim.pWeight;
 
       bones.chest.rotation.y = bones.chest.rotation.y * iw + cAnim.pChestTwist * cw;
+      // Pivot hips and shift weight forward into the punch to drive leg movement
+      bones.hips.rotation.y = bones.hips.rotation.y * iw + (cAnim.pChestTwist * 0.4) * cw;
+      bones.hips.rotation.x = bones.hips.rotation.x * iw + (0.15) * cw;
       
       if (activeArmOverrideRef.current === 'L') {
         bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.2) * cw;

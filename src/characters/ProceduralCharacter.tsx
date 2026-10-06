@@ -92,6 +92,7 @@ export function ProceduralCharacter() {
       }
       if (k === '1' && combatState === 'IDLE') {
         setCombatState('ATTACKING');
+        timeSinceLastPunch.current = 0;
         // Start auto combo
         triggerAutoCombo(() => setCombatState('IDLE'));
         
