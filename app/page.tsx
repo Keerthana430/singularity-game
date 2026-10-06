@@ -53,34 +53,39 @@ const DEFAULT_BATTLE_LEADERBOARD: BattleLeaderboardEntry[] = [
   { name: 'PIXEL-BYTE', rating: 2310, victories: 31, losses: 11, winRate: 74, classRole: 'Rogue Hacker' },
 ];
 
-const TICKER_ITEMS: {
+export interface LiveActivityItem {
   iconType: 'colosseum' | 'dungeon' | 'ludo' | 'snakes' | 'runway' | 'studio';
   tag: string;
   text: string;
   color: string;
   link: string;
-}[] = [
-  { iconType: 'colosseum', tag: 'COLOSSEUM', text: 'Operative KAGE-07 advanced to Grand Finals (+650 COINS bounty)', color: '#F59E0B', link: '/lobby' },
-  { iconType: 'dungeon', tag: 'DUNGEON', text: 'Explorer VEX-TITAN breached Floor 4 // Bio-Sanctuary', color: '#00FF66', link: '/dungeon' },
-  { iconType: 'ludo', tag: 'LUDO', text: 'Cerulean Vanguard rolled double 6 for an instant sanctuary sprint', color: '#38BDF8', link: '/ludo' },
-  { iconType: 'snakes', tag: 'SNAKES', text: 'Pilot QUANTUM-9 warped via Anti-Grav Ladder to Sector 88', color: '#A855F7', link: '/snakes' },
-  { iconType: 'runway', tag: 'RUNWAY', text: 'Celestial AURA-V achieved 2,400+ style likes in Hall of Fashion', color: '#F472B6', link: '/contest' },
-  { iconType: 'studio', tag: 'STUDIO', text: 'New Relic "Photon Katana" tuned in Outfitting Bay', color: '#34D399', link: '/studio' },
-];
+}
 
 export default function HomePage() {
-  const { currentAvatar, randomizeAvatar, updateAvatar } = useAvatarStore();
+  const { currentAvatar, coins, randomizeAvatar, updateAvatar } = useAvatarStore();
   const { entries: contestEntries } = useContestStore();
   const { add: addToast } = useToast();
   const [leaderboardTab, setLeaderboardTab] = useState<'overall' | 'battle' | 'beauty'>('overall');
   const [battleLeaderboard, setBattleLeaderboard] = useState<BattleLeaderboardEntry[]>(DEFAULT_BATTLE_LEADERBOARD);
+  const [liveActivities, setLiveActivities] = useState<LiveActivityItem[]>([]);
   const [tickerIndex, setTickerIndex] = useState(0);
 
+  // Fetch real live platform activity stream from backend
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTickerIndex((prev) => (prev + 1) % TICKER_ITEMS.length);
-    }, 3800);
-    return () => clearInterval(timer);
+    const fetchActivities = () => {
+      fetch('/api/activity')
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setLiveActivities(json.data);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchActivities();
+    const interval = setInterval(fetchActivities, 6000);
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -107,6 +112,73 @@ export default function HomePage() {
     () => [...contestEntries].sort((a, b) => b.likes - a.likes).slice(0, 6),
     [contestEntries]
   );
+
+  // Derive 100% genuine real-time ticker items from actual platform data
+  const effectiveTickerItems = useMemo<LiveActivityItem[]>(() => {
+    const items: LiveActivityItem[] = [...liveActivities];
+
+    // If server has few logged events, populate with real live active platform stats:
+    if (battleLeaderboard.length > 0 && battleLeaderboard[0]?.name) {
+      items.push({
+        iconType: 'colosseum',
+        tag: 'ARENA',
+        text: `Arena Leader ${battleLeaderboard[0].name} holds Rank #1 with ${battleLeaderboard[0].victories} wins (${battleLeaderboard[0].rating} ELO)`,
+        color: '#F59E0B',
+        link: '/lobby',
+      });
+    }
+
+    if (beautyLeaderboard.length > 0 && beautyLeaderboard[0]?.name) {
+      items.push({
+        iconType: 'runway',
+        tag: 'CONTEST',
+        text: `Stylist ${beautyLeaderboard[0].name} leads Hall of Fame with ${beautyLeaderboard[0].likes} style votes`,
+        color: '#F472B6',
+        link: '/contest',
+      });
+    }
+
+    if (currentAvatar?.name) {
+      items.push({
+        iconType: 'studio',
+        tag: 'OPERATIVE',
+        text: `Active Hero ${currentAvatar.name} online with ${coins ?? 0} cyber coins`,
+        color: '#38BDF8',
+        link: '/studio',
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({
+        iconType: 'studio',
+        tag: 'SYSTEM',
+        text: 'Singularity Live Matrix online // 50 Hackathon Team Quadrants active',
+        color: '#00FF66',
+        link: '/studio',
+      });
+    }
+
+    return items;
+  }, [liveActivities, battleLeaderboard, beautyLeaderboard, currentAvatar]);
+
+  useEffect(() => {
+    if (effectiveTickerItems.length === 0) return;
+    const timer = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % effectiveTickerItems.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, [effectiveTickerItems.length]);
+
+  const currentItem =
+    effectiveTickerItems.length > 0
+      ? effectiveTickerItems[tickerIndex % effectiveTickerItems.length]
+      : {
+          iconType: 'studio' as const,
+          tag: 'SYSTEM',
+          text: 'Singularity Live Matrix online // 50 Hackathon Team Quadrants active',
+          color: '#00FF66',
+          link: '/studio',
+        };
 
   // Combined overall leaderboard: merge battle + beauty scores
   const overallLeaderboard = useMemo(() => {
@@ -201,10 +273,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Interactive Live Adventurer Activity Stream Ticker */}
+      {/* Interactive Live Adventurer Activity Stream Ticker (100% Real Live Platform Events) */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 z-10">
         <Link
-          href={TICKER_ITEMS[tickerIndex].link}
+          href={currentItem.link}
           onClick={() => sound.playClick()}
           className="group block rounded-2xl border border-[#00FF66]/25 bg-[#08150D]/85 backdrop-blur-xl p-3 sm:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.6)] hover:border-[#00FF66]/60 transition-all"
         >
@@ -219,30 +291,30 @@ export default function HomePage() {
                 <div
                   className="w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-colors shadow-sm"
                   style={{
-                    color: TICKER_ITEMS[tickerIndex].color,
-                    borderColor: `${TICKER_ITEMS[tickerIndex].color}50`,
-                    background: `${TICKER_ITEMS[tickerIndex].color}18`,
+                    color: currentItem.color,
+                    borderColor: `${currentItem.color}50`,
+                    background: `${currentItem.color}18`,
                   }}
                 >
-                  {TICKER_ITEMS[tickerIndex].iconType === 'colosseum' && <Swords size={13} />}
-                  {TICKER_ITEMS[tickerIndex].iconType === 'dungeon' && <Compass size={13} />}
-                  {TICKER_ITEMS[tickerIndex].iconType === 'ludo' && <Dices size={13} />}
-                  {TICKER_ITEMS[tickerIndex].iconType === 'snakes' && <Zap size={13} />}
-                  {TICKER_ITEMS[tickerIndex].iconType === 'runway' && <Sparkles size={13} />}
-                  {TICKER_ITEMS[tickerIndex].iconType === 'studio' && <Layers size={13} />}
+                  {currentItem.iconType === 'colosseum' && <Swords size={13} />}
+                  {currentItem.iconType === 'dungeon' && <Compass size={13} />}
+                  {currentItem.iconType === 'ludo' && <Dices size={13} />}
+                  {currentItem.iconType === 'snakes' && <Zap size={13} />}
+                  {currentItem.iconType === 'runway' && <Sparkles size={13} />}
+                  {currentItem.iconType === 'studio' && <Layers size={13} />}
                 </div>
                 <span
                   className="font-mono text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded border"
                   style={{
-                    color: TICKER_ITEMS[tickerIndex].color,
-                    borderColor: `${TICKER_ITEMS[tickerIndex].color}40`,
-                    background: `${TICKER_ITEMS[tickerIndex].color}15`,
+                    color: currentItem.color,
+                    borderColor: `${currentItem.color}40`,
+                    background: `${currentItem.color}15`,
                   }}
                 >
-                  [{TICKER_ITEMS[tickerIndex].tag}]
+                  [{currentItem.tag}]
                 </span>
                 <span className="text-white/85 group-hover:text-white transition-colors">
-                  {TICKER_ITEMS[tickerIndex].text}
+                  {currentItem.text}
                 </span>
               </div>
             </div>

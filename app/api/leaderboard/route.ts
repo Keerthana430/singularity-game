@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { recordActivity } from '@/lib/activityFeed';
 
 interface LeaderboardEntry {
   rank: number;
@@ -76,6 +77,15 @@ export async function POST(request: Request) {
       entry.rank = idx + 1;
       const total = entry.victories + entry.losses || 1;
       entry.winRate = Math.round((entry.victories / total) * 100);
+    });
+
+    const userEntry = leaderboardData.find((e) => e.name === safeName);
+    recordActivity({
+      iconType: 'colosseum',
+      tag: 'ARENA',
+      text: `${safeName} achieved ${isVictory ? 'Victory' : 'Defeat'} in Battle Arena // Rank #${userEntry?.rank || 1} (${userEntry?.rating || 1200} ELO)`,
+      color: isVictory ? '#00FF66' : '#F59E0B',
+      link: '/lobby',
     });
 
     return NextResponse.json(

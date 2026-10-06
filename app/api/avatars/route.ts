@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PRESET_AVATARS } from '@/data/presets';
 import { AvatarConfig } from '@/types/avatar';
+import { recordActivity } from '@/lib/activityFeed';
 
 // In-memory server-side storage for avatars (fallback/demo database)
 let serverAvatars: AvatarConfig[] = PRESET_AVATARS.map((p) => p.avatar);
@@ -70,6 +71,14 @@ export async function POST(request: Request) {
     } else {
       serverAvatars.unshift(newAvatar);
     }
+
+    recordActivity({
+      iconType: 'studio',
+      tag: 'STUDIO',
+      text: `Operative ${newAvatar.name} customized avatar & outfitting loadout`,
+      color: '#34D399',
+      link: '/studio',
+    });
 
     return NextResponse.json(
       {

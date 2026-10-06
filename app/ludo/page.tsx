@@ -702,6 +702,20 @@ export default function LudoPage() {
       } else {
         addToast(`${movedPlayer.name} completed all 4 tokens and claimed 1st Place!`, 'info');
       }
+
+      if (typeof window !== 'undefined') {
+        fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iconType: 'ludo',
+            tag: 'LUDO',
+            text: `Commander ${movedPlayer.name} conquered 1st Place in Ludo Colosseum`,
+            color: movedPlayer.colorHex,
+            link: '/ludo',
+          }),
+        }).catch(() => {});
+      }
       return;
     }
 
