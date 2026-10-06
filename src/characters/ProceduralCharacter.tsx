@@ -127,9 +127,21 @@ export function ProceduralCharacter() {
               attackType = 'UPPERCUT';
               isLeft = punchCombo.current % 2 === 0;
             } else {
-              attackType = 'JAB';
-              isLeft = punchCombo.current % 2 === 0;
-              if (!isLeft) attackType = 'CROSS';
+              // 4-hit auto combo
+              if (punchCombo.current === 0) {
+                 attackType = 'JAB';
+                 isLeft = true;
+              } else if (punchCombo.current === 1) {
+                 attackType = 'CROSS';
+                 isLeft = false;
+              } else if (punchCombo.current === 2) {
+                 attackType = 'HOOK';
+                 isLeft = true;
+              } else {
+                 attackType = 'SPIN_ATTACK'; // Heavy Combo Finisher
+                 isLeft = false;
+                 punchCombo.current = -1; // Will reset to 0 below
+              }
             }
           }
 
@@ -170,6 +182,7 @@ export function ProceduralCharacter() {
                   if (attackType === 'HOOK') dmg = 15;
                   if (attackType === 'UPPERCUT') dmg = 18;
                   if (attackType === 'JUMP_ATTACK') dmg = 25;
+                  if (attackType === 'SPIN_ATTACK') dmg = 35; // Massive damage finisher
                   if (attackType === 'JAB') dmg = 5;
 
                   const impactDir = new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z);

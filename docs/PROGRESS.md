@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Completed Phases:** 22-Animation Phase 1-7 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll)
+- **Completed Phases:** 22-Animation Phase 1-8 (Idle, Fighting, Walk, Run, Jump, Strafe, Roll, Combos)
 - **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
 - **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
 - **How to Test:** WASD to move, Space to jump, Left Click to punch, Double-Tap WASD to dodge/roll.
 - **Open Risks:** Animation blending vs Physics overrides might need tweaking.
-- **Next Phase:** Phase 8 (Attack Combo 1)
+- **Next Phase:** Phase 9 (Hit Reactions/Flinching) or Phase 10 (Defeat)
 
 ---
 
@@ -643,4 +643,13 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
 - Files changed: src/characters/useCharacterAnimation.ts, src/characters/ProceduralCharacter.tsx
 - Decisions: Localized velocity to character facing angle so the walking animation correctly adapts when targeting an enemy while moving laterally. Applied a fast X-axis spin to the chest during a dash for the roll.
 - Exit criteria: Smooth jump stretching. PASS. Fluid strafing. PASS. Double-tap rolls character in the dash direction. PASS.
+- Known issues: None.
+
+## Phase 8: Attack Combos & Heavy Strike (06 Oct 2026)
+- Built: Fluid 4-hit auto combo sequence on rapid left clicks (JAB -> CROSS -> HOOK -> SPIN_ATTACK).
+- Built: SPIN_ATTACK finisher using a massive 360 degree chest/hip rotation and backfist swing logic via GSAP.
+- Built: Custom damage scaling per attack in the physics raycast to reward landing the full combo (Jab: 5, Hook: 15, Uppercut: 18, Jump: 25, Spin: 35).
+- Files changed: src/characters/useCharacterAnimation.ts, src/characters/ProceduralCharacter.tsx
+- Decisions: Integrated the Spin attack directly into the procedural skeleton by commanding a `-Math.PI` rotation on the chest to simulate a full spin backfist.
+- Exit criteria: Attack combo logic implemented and visible. PASS. Heavy strike implemented. PASS.
 - Known issues: None.

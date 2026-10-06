@@ -53,7 +53,7 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
   // We can just rely on the component using this hook to trigger GSAP directly, OR we can watch state here.
   // For simplicity, we'll expose a triggerPunch method.
   
-  const triggerPunch = (attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK', isLeft: boolean, onComplete: () => void) => {
+  const triggerPunch = (attackType: 'JAB' | 'CROSS' | 'HOOK' | 'UPPERCUT' | 'JUMP_ATTACK' | 'SPIN_ATTACK', isLeft: boolean, onComplete: () => void) => {
     const combatAnim = combatAnimRef.current;
     
     gsap.killTweensOf(combatAnim);
@@ -82,6 +82,9 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.5; strikeDur = 0.14; lungeDist = 0.6; recoilDur = 0.4; strikeArmZ = -0.1;
     } else if (attackType === 'JUMP_ATTACK') {
       strikeElbow = -0.2; strikeChest = isLeft ? -0.8 : 0.8; strikeShoulder = -1.0; strikeArmZ = -0.5; strikeDur = 0.15; lungeDist = 0.8; recoilDur = 0.5; recoilDelay = "+=0.15";
+    } else if (attackType === 'SPIN_ATTACK') {
+      strikeElbow = -0.5; strikeChest = isLeft ? -3.14 : 3.14; strikeShoulder = -1.5; strikeArmZ = -1.0; 
+      windupHook = isLeft ? 1.0 : -1.0; strikeHook = isLeft ? -2.0 : 2.0; strikeDur = 0.25; lungeDist = 0.5; recoilDur = 0.5; recoilDelay = "+=0.1";
     }
 
     // 1. Windup (Anticipation)
