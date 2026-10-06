@@ -225,22 +225,42 @@ export function FirstPersonController({
     let nextX = pos.current.x + velocity.current.x * delta;
     let nextZ = pos.current.z + velocity.current.z * delta;
 
-    // Arena boundary collision [-20, 20]
+    // Arena boundary collision [-20, 20] with smooth edge sliding
     const ARENA_RADIUS = 19.8;
-    nextX = THREE.MathUtils.clamp(nextX, -ARENA_RADIUS, ARENA_RADIUS);
-    nextZ = THREE.MathUtils.clamp(nextZ, -ARENA_RADIUS, ARENA_RADIUS);
+    if (nextX <= -ARENA_RADIUS) {
+      nextX = -ARENA_RADIUS;
+      if (velocity.current.x < 0) velocity.current.x = 0;
+    } else if (nextX >= ARENA_RADIUS) {
+      nextX = ARENA_RADIUS;
+      if (velocity.current.x > 0) velocity.current.x = 0;
+    }
+    if (nextZ <= -ARENA_RADIUS) {
+      nextZ = -ARENA_RADIUS;
+      if (velocity.current.z < 0) velocity.current.z = 0;
+    } else if (nextZ >= ARENA_RADIUS) {
+      nextZ = ARENA_RADIUS;
+      if (velocity.current.z > 0) velocity.current.z = 0;
+    }
 
-    // Collider obstacles (pillars)
+    // Collider obstacles (pillars): smooth physics sliding along cylinder normal
     const PLAYER_RADIUS = 0.45;
     for (const obs of ARENA_COLLIDERS) {
       const dx = nextX - obs.x;
       const dz = nextZ - obs.z;
       const dist = Math.hypot(dx, dz);
       const minDist = obs.r + PLAYER_RADIUS;
-      if (dist < minDist) {
-        const pushAngle = Math.atan2(dz, dx);
-        nextX = obs.x + Math.cos(pushAngle) * minDist;
-        nextZ = obs.z + Math.sin(pushAngle) * minDist;
+      if (dist < minDist && dist > 0.0001) {
+        const nx = dx / dist;
+        const nz = dz / dist;
+        nextX = obs.x + nx * minDist;
+        nextZ = obs.z + nz * minDist;
+
+        // Eliminate velocity pushing directly into the pillar, preserving tangential glide
+        const vn = velocity.current.x * nx + velocity.current.z * nz;
+        if (vn < 0) {
+          velocity.current.x -= vn * nx;
+          velocity.current.z -= vn * nz;
+        }
       }
     }
 

@@ -4,7 +4,7 @@
 // Stage Entrance Announcements & Shockwaves, Dynamic Lunging, Slashing Arcs, and Recoil Feedback.
 
 import React, { useRef, Suspense, useMemo, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -53,6 +53,8 @@ interface Arena3DCanvasProps {
   vfxSpark?: string;
   isCrit?: boolean;
   isDodge?: boolean;
+  overdriveActive?: boolean;
+  bloomEnabled?: boolean;
   floatingCombatText?: {
     id: number;
     text: string;
@@ -161,6 +163,57 @@ function HealingAuraEffect({ position }: { position: [number, number, number] })
       </mesh>
 
       <pointLight color="#10B981" intensity={4} distance={4} position={[0, 0.8, 0]} />
+    </group>
+  );
+}
+
+function OverdriveAuraEffect({ position, color = '#F59E0B' }: { position: [number, number, number]; color?: string }) {
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const particlesRef = useRef<THREE.Points>(null);
+
+  const particles = useMemo(() => {
+    const p = new Float32Array(40 * 3);
+    for (let i = 0; i < 40; i++) {
+      const angle = (i / 40) * Math.PI * 2;
+      const radius = 0.55 + Math.random() * 0.25;
+      p[i * 3] = Math.cos(angle) * radius;
+      p[i * 3 + 1] = Math.random() * 1.6 - 0.5;
+      p[i * 3 + 2] = Math.sin(angle) * radius;
+    }
+    return p;
+  }, []);
+
+  useFrame((_, delta) => {
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.z += delta * 3.5;
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.z -= delta * 2.8;
+      ring2Ref.current.position.y = -0.3 + Math.sin(Date.now() * 0.005) * 0.15;
+    }
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y += delta * 1.8;
+    }
+  });
+
+  return (
+    <group position={position}>
+      <mesh ref={ring1Ref} position={[0, -0.45, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.55, 0.75, 32]} />
+        <meshBasicMaterial color={color} side={THREE.DoubleSide} transparent opacity={0.7} />
+      </mesh>
+      <mesh ref={ring2Ref} position={[0, -0.2, 0]} rotation={[-Math.PI / 2.2, 0, 0]}>
+        <ringGeometry args={[0.7, 0.82, 32]} />
+        <meshBasicMaterial color="#38BDF8" side={THREE.DoubleSide} transparent opacity={0.5} />
+      </mesh>
+      <points ref={particlesRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[particles, 3]} />
+        </bufferGeometry>
+        <pointsMaterial size={0.06} color={color} transparent opacity={0.8} />
+      </points>
+      <pointLight color={color} intensity={4} distance={3} />
     </group>
   );
 }
@@ -837,10 +890,14 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
   const bodyProps = useMemo(() => getBodyProps(config), [config]);
 
   // The arena dais surface is at Y = -0.62. AvatarModel's feet extend downwards from its torso origin.
-  // We offset Y so that the soles of the boots rest precisely on top of the dais ring:
   const standingY = -0.62 + (0.36 * bodyProps.torsoHScale + 0.58 * bodyProps.legScale) * bodyProps.totalScale;
   const targetXRef = useRef(homeX);
   const targetYRef = useRef(standingY);
+  const actionTimeRef = useRef<{ action: CombatAction; start: number }>({ action, start: performance.now() });
+
+  useEffect(() => {
+    actionTimeRef.current = { action, start: performance.now() };
+  }, [action]);
 
   const isRangedAttack = Boolean(attackId && /plasma|arrow|bolt|burst|surge/i.test(attackId));
   const isHeavyAttack = Boolean(attackId && /hammer|smash|tremor|eruption|cataclysm/i.test(attackId));
@@ -849,88 +906,109 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
   useFrame((_, delta) => {
     if (!groupRef.current) return;
     const frameDelta = Math.min(delta, 0.05);
+    const elapsed = (performance.now() - actionTimeRef.current.start) / 1000;
 
-    // Determine dynamic target X and Y positions based on combat action
+    // Multi-stage Combat Physics & Kinetic Animation Curves
     if (action === 'attack') {
-      // Aggressive lunge forward into the opponent
-      targetXRef.current = isPlayer ? (homeX + 0.95) : (homeX - 0.95);
-      targetYRef.current = standingY + 0.05;
+      if (elapsed < 0.16) {
+        // Stage 1: Coiling Windup (steps back, lowers stance, draws weapon back)
+        targetXRef.current = isPlayer ? (homeX - 0.28) : (homeX + 0.28);
+        targetYRef.current = standingY - 0.06;
+      } else if (elapsed < 0.48) {
+        // Stage 2: Explosive Forward Lunge & Strike
+        const lungeDist = isHeavyAttack ? 1.35 : isUltimateAttack ? 1.5 : 1.15;
+        targetXRef.current = isPlayer ? (homeX + lungeDist) : (homeX - lungeDist);
+        targetYRef.current = standingY + (isHeavyAttack ? 0.18 : 0.04);
+      } else if (elapsed < 0.58) {
+        // Stage 3: Hit Stop / Impact Freeze
+        const holdDist = isHeavyAttack ? 1.25 : 1.05;
+        targetXRef.current = isPlayer ? (homeX + holdDist) : (homeX - holdDist);
+        targetYRef.current = standingY;
+      } else {
+        // Stage 4: Acrobatic Spring Recovery Leap back to Home Dais
+        const recoveryArc = Math.sin(Math.min(Math.PI, (elapsed - 0.58) * 6)) * 0.2;
+        targetXRef.current = homeX;
+        targetYRef.current = standingY + recoveryArc;
+      }
     } else if (action === 'crit-hit') {
-      // Violent critical knockback: launched upwards into the air and pushed far back!
-      targetXRef.current = isPlayer ? (homeX - 0.7) : (homeX + 0.7);
-      targetYRef.current = standingY + 0.45;
+      if (elapsed < 0.32) {
+        // Launched high into the air and pushed backward
+        targetXRef.current = isPlayer ? (homeX - 0.85) : (homeX + 0.85);
+        targetYRef.current = standingY + 0.65;
+      } else {
+        // Rebound back to earth
+        targetXRef.current = homeX;
+        targetYRef.current = standingY;
+      }
     } else if (action === 'hit') {
-      // Stagger and fly backwards from the hit
-      targetXRef.current = isPlayer ? (homeX - 0.4) : (homeX + 0.4);
-      targetYRef.current = standingY;
+      if (elapsed < 0.28) {
+        // Violent stagger back
+        targetXRef.current = isPlayer ? (homeX - 0.5) : (homeX + 0.5);
+        targetYRef.current = standingY + 0.05;
+      } else {
+        targetXRef.current = homeX;
+        targetYRef.current = standingY;
+      }
     } else if (action === 'dodge') {
-      // Acrobatic evasive backstep / sidestep hop!
-      targetXRef.current = isPlayer ? (homeX - 0.65) : (homeX + 0.65);
-      targetYRef.current = standingY + 0.22;
+      // Fluid backstep evasion hop
+      const hopY = Math.sin(Math.min(Math.PI, elapsed * 6)) * 0.35;
+      targetXRef.current = isPlayer ? (homeX - 0.7) : (homeX + 0.7);
+      targetYRef.current = standingY + hopY;
     } else {
-      // Idle / defend / healing: stand firm on home dais
+      // Idle / defend / healing: firm on home dais with subtle organic breathing idle
       targetXRef.current = homeX;
-      targetYRef.current = standingY;
+      targetYRef.current = standingY + Math.sin(performance.now() * 0.003 + (isPlayer ? 0 : 1.5)) * 0.015;
     }
 
-    // Smooth physics lerp for position X and Y
+    // High-responsiveness smooth physics lerp
     groupRef.current.position.x = THREE.MathUtils.lerp(
       groupRef.current.position.x,
       targetXRef.current,
-      1 - Math.exp(-frameDelta * 14)
+      1 - Math.exp(-frameDelta * 18)
     );
     groupRef.current.position.y = THREE.MathUtils.lerp(
       groupRef.current.position.y,
       targetYRef.current,
-      1 - Math.exp(-frameDelta * 12)
+      1 - Math.exp(-frameDelta * 16)
     );
 
-    // Dynamic rotation recoil, dodge lean, and attack surge
+    // Dynamic rotation recoil, dodge twist, and weapon follow-through
     if (action === 'crit-hit') {
-      // Severe backward recoil tilt + violent twist
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? -0.55 : 0.55,
+        elapsed < 0.35 ? (isPlayer ? -0.65 : 0.65) : 0,
         1 - Math.exp(-frameDelta * 18)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.35, 1 - Math.exp(-frameDelta * 14));
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -0.4, 1 - Math.exp(-frameDelta * 14));
     } else if (action === 'hit') {
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? -0.35 : 0.35,
-        1 - Math.exp(-frameDelta * 16)
+        elapsed < 0.25 ? (isPlayer ? -0.42 : 0.42) : 0,
+        1 - Math.exp(-frameDelta * 20)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 1 - Math.exp(-frameDelta * 10));
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 1 - Math.exp(-frameDelta * 12));
     } else if (action === 'dodge') {
-      // Agile backward evasion arch
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isPlayer ? -0.42 : 0.42,
-        1 - Math.exp(-frameDelta * 18)
+        isPlayer ? -0.48 : 0.48,
+        1 - Math.exp(-frameDelta * 20)
       );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.25, 1 - Math.exp(-frameDelta * 14));
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0.3, 1 - Math.exp(-frameDelta * 16));
     } else if (action === 'attack') {
+      const strikeLean = elapsed < 0.16 ? -0.2 : elapsed < 0.5 ? 0.35 : 0;
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        isHeavyAttack
-          ? (isPlayer ? 0.32 : -0.32)
-          : isRangedAttack
-          ? (isPlayer ? -0.08 : 0.08)
-          : isPlayer ? 0.2 : -0.2,
-        1 - Math.exp(-frameDelta * (isUltimateAttack ? 16 : 12))
+        isPlayer ? strikeLean : -strikeLean,
+        1 - Math.exp(-frameDelta * 22)
       );
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
-        isUltimateAttack ? -0.22 : isHeavyAttack ? 0.30 : isRangedAttack ? 0.04 : 0.15,
-        1 - Math.exp(-frameDelta * 10)
+        isUltimateAttack ? -0.25 : isHeavyAttack ? 0.35 : 0.15,
+        1 - Math.exp(-frameDelta * 14)
       );
     } else {
-      groupRef.current.rotation.z = THREE.MathUtils.lerp(
-        groupRef.current.rotation.z,
-        0,
-        1 - Math.exp(-frameDelta * 10)
-      );
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, delta * 10);
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, 0, 1 - Math.exp(-frameDelta * 14));
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, frameDelta * 14);
     }
   });
 
@@ -957,6 +1035,57 @@ function DynamicFighter({ config, action, side, homeX, attackId }: DynamicFighte
   );
 }
 
+// ─── Cinematic Action Combat Director & Camera Shake ────────────────────────
+function CinematicCombatDirector({
+  playerAction,
+  opponentAction,
+  fxSource,
+  isCrit,
+}: {
+  playerAction: CombatAction;
+  opponentAction: CombatAction;
+  fxSource?: 'player' | 'opponent';
+  isCrit?: boolean;
+}) {
+  const { camera } = useThree();
+  const shakeRef = useRef(0);
+  const isAttacking = playerAction === 'attack' || opponentAction === 'attack';
+  const isHit =
+    playerAction === 'hit' ||
+    opponentAction === 'hit' ||
+    playerAction === 'crit-hit' ||
+    opponentAction === 'crit-hit';
+
+  useEffect(() => {
+    if (isHit) {
+      shakeRef.current = isCrit ? 0.22 : 0.12;
+    }
+  }, [isHit, isCrit]);
+
+  useFrame((_, delta) => {
+    const frameDelta = Math.min(delta, 0.05);
+
+    if (shakeRef.current > 0.001) {
+      const offsetX = (Math.random() - 0.5) * shakeRef.current;
+      const offsetY = (Math.random() - 0.5) * shakeRef.current;
+      camera.position.x += offsetX;
+      camera.position.y += offsetY;
+      shakeRef.current = THREE.MathUtils.lerp(shakeRef.current, 0, 1 - Math.exp(-frameDelta * 14));
+    }
+
+    if (isAttacking) {
+      const targetZ = 3.75;
+      const targetX = fxSource === 'player' ? 0.28 : -0.28;
+      const targetY = 0.38;
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 1 - Math.exp(-frameDelta * 9));
+      camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 1 - Math.exp(-frameDelta * 9));
+      camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 1 - Math.exp(-frameDelta * 7));
+    }
+  });
+
+  return null;
+}
+
 // ─── Main Exported 3D Colosseum Arena ───────────────────────────────────────
 
 export function Arena3DCanvas({
@@ -974,6 +1103,8 @@ export function Arena3DCanvas({
   vfxSpark,
   isCrit,
   isDodge,
+  overdriveActive = false,
+  bloomEnabled = true,
   floatingCombatText = [],
 }: Arena3DCanvasProps) {
   const playerHomeX = -1.45;
@@ -985,6 +1116,13 @@ export function Arena3DCanvas({
   const sourcePos: [number, number, number] = fxSource === 'player' ? [-0.8, 0.4, 0] : [0.8, 0.4, 0];
   const targetPos: [number, number, number] = fxSource === 'player' ? [opponentHomeX, 0.4, 0] : [playerHomeX, 0.4, 0];
   const facingDir: 'right' | 'left' = fxSource === 'player' ? 'right' : 'left';
+  const isCombatActive =
+    playerAction === 'attack' ||
+    opponentAction === 'attack' ||
+    playerAction === 'hit' ||
+    opponentAction === 'hit' ||
+    playerAction === 'crit-hit' ||
+    opponentAction === 'crit-hit';
 
   // Biome Lighting & Fog Atmosphere with Bright High-Tech Contrast
   const lighting = useMemo(() => {
@@ -1092,7 +1230,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       camera={{ position: [0, 0.45, 4.3], fov: 42 }}
       className="w-full h-full"
     >
@@ -1109,8 +1247,8 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           color={lighting.sunColor}
           intensity={lighting.sunInt}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
           shadow-bias={-0.0001}
         />
 
@@ -1293,38 +1431,35 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           <MagicEnergyProjectile source={sourcePos} target={targetPos} type={activeFx} />
         )}
 
-        {/* 6. In-Canvas 3D Floating Combat Text */}
-        {floatingCombatText.map((f) => (
-          <group
-            key={f.id}
-            position={[f.target === 'player' ? playerHomeX : opponentHomeX, 1.8, 0]}
-          >
-            <Html center distanceFactor={8}>
-              <div
-                className={`font-black font-mono text-xl sm:text-2xl whitespace-nowrap animate-bounce select-none pointer-events-none drop-shadow-[0_0_15px_rgba(0,0,0,0.9)] ${
-                  f.isCrit ? 'text-amber-300 scale-125' : f.color ? '' : 'text-red-400'
-                }`}
-                style={{ color: f.color }}
-              >
-                {f.text}
-              </div>
-            </Html>
-          </group>
-        ))}
+        {/* ─── DYNAMIC OVERDRIVE 100% CHARGE AURA ─── */}
+        {overdriveActive && (
+          <OverdriveAuraEffect position={[playerHomeX, 0, 0]} color="#F59E0B" />
+        )}
 
         {/* ─── POST-PROCESSING: BLOOM & VIGNETTE FOR 3D DEPTH ─── */}
-        <EffectComposer>
-          <Bloom
-            intensity={0.65}
-            luminanceThreshold={0.42}
-            luminanceSmoothing={0.8}
-            radius={0.75}
-          />
-          <Vignette eskil={false} offset={0.16} darkness={0.65} />
-        </EffectComposer>
+        {bloomEnabled && (
+          <EffectComposer multisampling={0}>
+            <Bloom
+              intensity={0.65}
+              luminanceThreshold={0.42}
+              luminanceSmoothing={0.8}
+              radius={0.75}
+            />
+            <Vignette eskil={false} offset={0.16} darkness={0.65} />
+          </EffectComposer>
+        )}
+
+        {/* ─── DYNAMIC ACTION COMBAT CAMERA & IMPACT SHAKE ─── */}
+        <CinematicCombatDirector
+          playerAction={playerAction}
+          opponentAction={opponentAction}
+          fxSource={fxSource}
+          isCrit={isCrit}
+        />
 
         {/* ─── LOW CINEMATIC FIGHTING CAMERA CONTROLS ─── */}
         <OrbitControls
+          enabled={!isCombatActive}
           target={[0, 0.35, 0]}
           enableZoom={false}
           enablePan={false}

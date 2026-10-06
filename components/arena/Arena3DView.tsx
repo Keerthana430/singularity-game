@@ -41,6 +41,8 @@ interface Arena3DViewProps {
   vfxSpark?: string;
   isCrit?: boolean;
   isDodge?: boolean;
+  overdriveActive?: boolean;
+  bloomEnabled?: boolean;
   floatingCombatText?: {
     id: number;
     text: string;
