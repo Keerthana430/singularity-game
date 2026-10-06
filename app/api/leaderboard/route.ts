@@ -29,7 +29,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, isVictory, classRole } = await request.json();
+    const { name, isVictory, classRole, matchType = 'pvp', game = 'arena' } = await request.json();
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
@@ -40,20 +40,51 @@ export async function POST(request: Request) {
       .replace(/<[^>]*>/g, '')
       .trim()
       .slice(0, 40);
+    const isCasual = matchType === 'casual' || matchType === 'friends';
+    const isBotMatch = matchType === 'bot';
 
     if (!safeName) {
       return NextResponse.json({ success: false, error: 'Invalid name' }, { status: 400 });
     }
+
+    // ─── 1. CASUAL / PLAY WITH FRIENDS MODE ──────────────────────────────────
+    // Zero points contributed to official leaderboard for friendly couch matches
+    if (isCasual) {
+      recordActivity({
+        iconType: 'colosseum',
+        tag: 'CASUAL',
+        text: `${safeName} completed a Casual Match with Friends in ${String(game).toUpperCase()} (0 Leaderboard points contributed)`,
+        color: '#38BDF8',
+        link: `/${game}`,
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          pointsAwarded: 0,
+          isCasual: true,
+          message: 'Casual match with friends: 0 points contributed to official leaderboard.',
+          data: leaderboardData,
+        },
+        { status: 200 }
+      );
+    }
+
+    // ─── 2. RATED MATCHES: REAL PLAYERS (PVP) VS BOT TRAINING ────────────────
+    // Real players: +35 ELO / -15 ELO
+    // AI Bots: Reduced +10 ELO / -5 ELO
+    const winPoints = isBotMatch ? 10 : 35;
+    const lossPoints = isBotMatch ? 5 : 15;
 
     const existing = leaderboardData.find((entry) => entry.name === safeName);
 
     if (existing) {
       if (isVictory) {
         existing.victories += 1;
-        existing.rating += 25;
+        existing.rating += winPoints;
       } else {
         existing.losses += 1;
-        existing.rating = Math.max(1000, existing.rating - 15);
+        existing.rating = Math.max(1000, existing.rating - lossPoints);
       }
       const total = existing.victories + existing.losses;
       existing.winRate = Math.round((existing.victories / total) * 100);
@@ -66,7 +97,7 @@ export async function POST(request: Request) {
         victories: isVictory ? 1 : 0,
         losses: isVictory ? 0 : 1,
         winRate: isVictory ? 100 : 0,
-        rating: isVictory ? 1225 : 1185,
+        rating: isVictory ? 1200 + winPoints : 1200 - lossPoints,
         classRole: safeRole,
       };
       leaderboardData.push(entry);
@@ -80,18 +111,26 @@ export async function POST(request: Request) {
     });
 
     const userEntry = leaderboardData.find((e) => e.name === safeName);
+    const modeTag = isBotMatch ? 'BOT TRAINING' : 'RANKED PVP';
+    const pointsDelta = isVictory ? `+${winPoints}` : `-${lossPoints}`;
+
     recordActivity({
       iconType: 'colosseum',
-      tag: 'ARENA',
-      text: `${safeName} achieved ${isVictory ? 'Victory' : 'Defeat'} in Battle Arena // Rank #${userEntry?.rank || 1} (${userEntry?.rating || 1200} ELO)`,
+      tag: modeTag,
+      text: `${safeName} achieved ${isVictory ? 'Victory' : 'Defeat'} in ${String(game).toUpperCase()} [${modeTag}] (${pointsDelta} ELO) // Rank #${userEntry?.rank || 1} (${userEntry?.rating || 1200} ELO)`,
       color: isVictory ? '#00FF66' : '#F59E0B',
-      link: '/lobby',
+      link: `/${game}`,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Leaderboard updated successfully',
+        pointsAwarded: isVictory ? winPoints : -lossPoints,
+        isBot: isBotMatch,
+        isPvP: !isBotMatch,
+        message: isBotMatch
+          ? `Bot Match ${isVictory ? 'Victory' : 'Defeat'}: ${pointsDelta} ELO (reduced practice points)`
+          : `Ranked PvP ${isVictory ? 'Victory' : 'Defeat'}: ${pointsDelta} ELO (full points)`,
         data: leaderboardData,
       },
       { status: 200 }

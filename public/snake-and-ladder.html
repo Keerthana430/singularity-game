@@ -133,7 +133,20 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     <label for="custom-seed">Custom Seed:</label>
     <input id="custom-seed" type="text" placeholder="Random (or enter custom number)" maxlength="12">
   </div>
-  <button id="go">START GAME</button>
+
+  <!-- CONCISE 5-POINT PROTOCOL CARD (MAX 5 RULES) -->
+  <div style="margin-top:14px;padding:12px;background:rgba(0,255,102,0.04);border:1px solid rgba(0,255,102,0.25);border-radius:12px;text-align:left;font-size:12px;line-height:1.6;">
+    <div style="font-weight:bold;color:#00FF66;margin-bottom:6px;font-size:11px;letter-spacing:1px;">CLIMB PROTOCOLS (5 RULES)</div>
+    <ol style="margin:0;padding-left:18px;color:rgba(255,255,255,0.75);">
+      <li><b>Roll & Climb:</b> Roll the 3D quantum dice to ascend from tile 1 to tile 100.</li>
+      <li><b>Ladders & Serpents:</b> Quantum ladders boost ascent; cyber serpents drag you down.</li>
+      <li><b>Exact Finish:</b> Land exactly on tile 100 to win; overshoots hold your position.</li>
+      <li><b>Forfeit on Three 6s:</b> Rolling three consecutive sixes forfeits remaining moves.</li>
+      <li><b>Ranked vs Casual:</b> AI solo matches award +10 ELO; Friend matches award 0 ELO (casual play).</li>
+    </ol>
+  </div>
+
+  <button id="go" style="margin-top:16px;">START GAME</button>
   <button id="replay-start-btn" style="display:none;background:#1b2142;color:var(--cy);border:1px solid var(--line);font-size:14px;padding:10px 16px;">REPLAY LAST MATCH ↺</button>
 </div></div>
 
@@ -141,6 +154,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 <div id="end" class="ov" hidden><div class="card">
   <h1 id="wt">Winner</h1>
   <p id="wp"></p>
+  <div id="we-elo" style="margin:12px 0;padding:10px;border-radius:10px;font-size:13px;font-weight:bold;text-align:center;"></div>
   <div style="display:flex;gap:10px;">
     <button id="again" style="flex:1;">PLAY AGAIN</button>
     <button id="copy-log" style="flex:1;background:#1b2142;color:var(--fg);border:1px solid var(--line);font-size:14px;">COPY MATCH LOG</button>
@@ -843,6 +857,38 @@ async function turn(){
       await tween(1.0,k=>{p.c.g.position.y+=Math.sin(k*Math.PI*6)*.02});
       $('wt').textContent=p.name+' reaches the summit!';
       $('wp').textContent='Victory with Seed #'+currentSeed.toString(16).toUpperCase()+'! Reached Tile 100 in '+totalTime+' ('+matchHistory.length+' turns).';
+
+      const isCasual = gameMode === 'friends';
+      const isHumanWin = cur === 0;
+      const eloBox = $('we-elo');
+      if (eloBox) {
+        if (isCasual) {
+          eloBox.style.background = 'rgba(56, 189, 248, 0.15)';
+          eloBox.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+          eloBox.style.color = '#38BDF8';
+          eloBox.innerHTML = '<span style="display:block;font-size:10px;letter-spacing:1px;">CASUAL MATCH WITH FRIENDS</span>0 LEADERBOARD PTS CONTRIBUTED<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;">Friendly couch match does not affect competitive rankings</div>';
+        } else {
+          eloBox.style.background = isHumanWin ? 'rgba(0, 255, 102, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+          eloBox.style.border = isHumanWin ? '1px solid rgba(0, 255, 102, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)';
+          eloBox.style.color = isHumanWin ? '#00FF66' : '#EF4444';
+          eloBox.innerHTML = '<span style="display:block;font-size:10px;letter-spacing:1px;">SOLO VS AI TRAINING</span>' + (isHumanWin ? '+10 ELO RATING (VICTORY)' : '-5 ELO RATING (DEFEAT)');
+        }
+      }
+
+      try {
+        fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: isCasual ? p.name : PL[0].n,
+            isVictory: isHumanWin,
+            classRole: 'Campus Climber',
+            matchType: isCasual ? 'friends' : 'bot',
+            game: 'snakes',
+          }),
+        });
+      } catch (e) {}
+
       $('end').hidden=false;
       return;
     }

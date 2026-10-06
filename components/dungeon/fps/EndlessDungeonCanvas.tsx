@@ -29,7 +29,7 @@ import { FPSEnemy } from './FPSEnemy';
 import { FPSArena3D } from './FPSArena3D';
 import { PhysicalLoot } from './PhysicalLoot';
 import { evaluateDirector, generateSurvivalEnemy, SPAWN_PORTALS } from './DifficultyDirector';
-import { rollLootDrop } from './LootCatalog';
+import { rollLootDrop, BASE_ITEMS } from './LootCatalog';
 
 // Vibrant, atmospheric palettes with rich colors and textures (no pitch-black voids!)
 const TIER_PALETTES = [
@@ -124,6 +124,7 @@ interface EndlessDungeonCanvasProps {
   onExtract: () => void;
   onSelectSlotIndex: (index: number) => void;
   onUseActiveItem: () => void;
+  onCentralPortalPickup?: (weaponId: WeaponId) => void;
 }
 
 
@@ -157,6 +158,7 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
     onExtract,
     onSelectSlotIndex,
     onUseActiveItem,
+    onCentralPortalPickup,
   } = props;
 
   const evalState = useMemo(() => evaluateDirector(survivalSeconds, kills), [survivalSeconds, kills]);
@@ -225,6 +227,46 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
     },
     []
   );
+
+  // Central Quantum Weapon Portal state at [0, 0]
+  const [portalDropReady, setPortalDropReady] = useState(true);
+  const portalCooldownRef = useRef(0);
+  const [portalWeaponId, setPortalWeaponId] = useState<WeaponId>('plasma_shotgun');
+
+  // Emergency Lifeline: If ammo completely runs out, immediately flare the center portal!
+  useEffect(() => {
+    if (ammo.clip === 0 && ammo.reserve === 0) {
+      portalCooldownRef.current = 0;
+      setPortalDropReady(true);
+      sound.playLaser();
+    }
+  }, [ammo.clip, ammo.reserve]);
+
+  // Periodic respawn for central quantum arsenal
+  useEffect(() => {
+    if (portalDropReady) return;
+    const interval = setInterval(() => {
+      portalCooldownRef.current -= 1;
+      if (portalCooldownRef.current <= 0) {
+        setPortalDropReady(true);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [portalDropReady]);
+
+  const handleCentralPortalPickup = useCallback(() => {
+    setPortalDropReady(false);
+    portalCooldownRef.current = 35;
+    sound.playEquip();
+    sound.playOverdrive();
+    const config = WEAPON_CONFIGS[currentWeaponId];
+    onAmmoChange({ clip: config.magSize, reserve: config.reserveMax });
+    spawnFloatingDamage([0, 1.5, 0], 999, true, false);
+    onCentralPortalPickup?.(portalWeaponId);
+    const weapons: WeaponId[] = ['plasma_shotgun', 'void_railgun', 'pulse_rifle', 'energy_pistol'];
+    const nextWep = weapons[Math.floor(Math.random() * weapons.length)];
+    setPortalWeaponId(nextWep);
+  }, [currentWeaponId, onAmmoChange, onCentralPortalPickup, portalWeaponId, spawnFloatingDamage]);
 
   // Reload action
   const startReload = useCallback(() => {
@@ -377,10 +419,13 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
             if (newHp <= 0) {
               sound.playImpact();
               const isElite = e.archetype === 'elite' || e.archetype === 'boss';
-              const shouldDrop = Math.random() < 0.30;
+              const isLowAmmo = (ammo.clip + ammo.reserve) <= 25;
+              const shouldDrop = isLowAmmo || Math.random() < 0.30;
               let drop: PhysicalLootDrop | null = null;
               if (shouldDrop) {
-                const droppedItem = rollLootDrop(evalState.tierIndex + 1, isElite);
+                const droppedItem: SurvivalItem = isLowAmmo && Math.random() < 0.75
+                  ? { ...BASE_ITEMS.ammo_box, id: `loot-ammo-${Date.now()}` }
+                  : rollLootDrop(evalState.tierIndex + 1, isElite);
                 drop = {
                   id: `loot-${Date.now()}-${Math.random()}`,
                   item: droppedItem,
@@ -532,6 +577,9 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           position={extractionState.position}
         />
 
+        {/* Central Quantum Weapon & Ammo Portal at Dais [0, 0, 0] */}
+        <CentralWeaponPortal3D isReady={portalDropReady} />
+
         {/* 3D Physical Loot Drops */}
         <PhysicalLoot lootDrops={lootDrops} />
 
@@ -581,6 +629,8 @@ export function EndlessDungeonCanvas(props: EndlessDungeonCanvasProps) {
           isPaused={isPaused}
           isDead={isDead}
           isHordeEnraged={isHordeEnraged}
+          portalDropReady={portalDropReady}
+          onCentralPortalPickup={handleCentralPortalPickup}
           onPlayerDamage={(amount) => {
             onPlayerDamage(amount);
             setDamageShakePulse((p) => p + 1);
@@ -711,6 +761,98 @@ function ExtractionPad3D({
   );
 }
 
+// ─── 3D CENTRAL QUANTUM WEAPON & AMMO PORTAL ────────────────────────────────
+function CentralWeaponPortal3D({
+  isReady,
+}: {
+  isReady: boolean;
+}) {
+  const beamRef = useRef<THREE.Mesh>(null);
+  const ring1Ref = useRef<THREE.Group>(null);
+  const ring2Ref = useRef<THREE.Group>(null);
+  const weaponMeshRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (ring1Ref.current) ring1Ref.current.rotation.y = t * 1.6;
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.y = -t * 1.3;
+      ring2Ref.current.rotation.x = Math.sin(t * 2) * 0.15;
+    }
+    if (weaponMeshRef.current && isReady) {
+      weaponMeshRef.current.rotation.y = t * 1.8;
+      weaponMeshRef.current.position.y = 1.35 + Math.sin(t * 3.5) * 0.1;
+    }
+    if (beamRef.current) {
+      beamRef.current.scale.y = isReady ? 1 + Math.sin(t * 5) * 0.12 : 0.35;
+    }
+  });
+
+  const portalColor = isReady ? '#00FF66' : '#334155';
+  const beamColor = isReady ? '#22D3EE' : '#1E293B';
+
+  return (
+    <group position={[0, 0, 0]}>
+      {/* Base Quantum Well Disc */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.38, 0]}>
+        <circleGeometry args={[1.35, 32]} />
+        <meshBasicMaterial color={portalColor} transparent opacity={isReady ? 0.75 : 0.18} />
+      </mesh>
+
+      {/* Counter-Rotating Containment Rings */}
+      <group ref={ring1Ref} position={[0, 0.42, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.4, 1.55, 32]} />
+          <meshBasicMaterial color={portalColor} transparent opacity={isReady ? 0.9 : 0.25} />
+        </mesh>
+      </group>
+      <group ref={ring2Ref} position={[0, 0.52, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.05, 1.18, 24]} />
+          <meshBasicMaterial color="#38BDF8" transparent opacity={isReady ? 0.8 : 0.2} />
+        </mesh>
+      </group>
+
+      {/* Ascending Ion Portal Beam */}
+      <mesh ref={beamRef} position={[0, 4.5, 0]}>
+        <cylinderGeometry args={[0.45, 0.85, 9, 16]} />
+        <meshBasicMaterial color={beamColor} transparent opacity={isReady ? 0.35 : 0.08} />
+      </mesh>
+
+      {/* Floating Rotating Holographic Weapon */}
+      {isReady && (
+        <group ref={weaponMeshRef} position={[0, 1.35, 0]}>
+          {/* Main Chassis Box */}
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[0.16, 0.24, 0.95]} />
+            <meshStandardMaterial
+              color="#00FF66"
+              emissive="#00FF66"
+              emissiveIntensity={1.8}
+              roughness={0.2}
+              metalness={0.9}
+            />
+          </mesh>
+          {/* Extended Plasma Barrel */}
+          <mesh position={[0, 0.04, 0.45]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.5, 12]} />
+            <meshStandardMaterial
+              color="#38BDF8"
+              emissive="#38BDF8"
+              emissiveIntensity={2.5}
+            />
+          </mesh>
+          {/* Energy Core Orb */}
+          <mesh position={[0, 0.08, -0.1]}>
+            <sphereGeometry args={[0.11, 16, 16]} />
+            <meshBasicMaterial color="#FFD700" />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+
 // ─── HIGH-PERFORMANCE SCENE LOGIC MANAGER ────────────────────────────────────
 function EndlessSceneLogicManager({
   survivalSeconds,
@@ -724,6 +866,8 @@ function EndlessSceneLogicManager({
   isPaused,
   isDead,
   isHordeEnraged = false,
+  portalDropReady = false,
+  onCentralPortalPickup,
   onPlayerDamage,
   onNearbyLootChange,
   onExtractionChannel,
@@ -740,6 +884,8 @@ function EndlessSceneLogicManager({
   isPaused: boolean;
   isDead: boolean;
   isHordeEnraged?: boolean;
+  portalDropReady?: boolean;
+  onCentralPortalPickup?: () => void;
   onPlayerDamage: (amt: number) => void;
   onNearbyLootChange: (loot: PhysicalLootDrop | null) => void;
   onExtractionChannel: (progress: number, isChanneling: boolean) => void;
@@ -791,6 +937,14 @@ function EndlessSceneLogicManager({
     if (closestId !== lastLootIdRef.current) {
       lastLootIdRef.current = closestId;
       onNearbyLootChange(closestDrop);
+    }
+
+    // ─── 2.5 CENTRAL QUANTUM WEAPON PORTAL PICKUP ─────────────────────
+    if (portalDropReady) {
+      const distToCenter = Math.hypot(playerPos.x, playerPos.z);
+      if (distToCenter < 2.0) {
+        onCentralPortalPickup?.();
+      }
     }
 
     // ─── 3. EXTRACTION CHANNELING ─────────────────────────────────────
