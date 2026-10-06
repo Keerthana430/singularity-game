@@ -34,6 +34,7 @@ export function ProceduralCharacter() {
 
   let punchCombo = useRef(0);
   let timeSinceLastPunch = useRef(999);
+  let pointerDownTime = useRef(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -147,6 +148,17 @@ export function ProceduralCharacter() {
 
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
+      pointerDownTime.current = performance.now();
+    };
+
+    const handlePointerUp = (e: MouseEvent) => {
+      const clickDuration = performance.now() - pointerDownTime.current;
+      // If the click is longer than 200ms, it's a drag (camera movement), so ignore it
+      if (clickDuration > 200) return;
+      
+      // Only allow mouse attacks when explicitly locked onto an enemy
+      if (!combatStanceRef.current) return;
+
       if (e.button === 0 || e.button === 2) {
         if (combatState === 'IDLE') {
           if (timeSinceLastPunch.current > 0.8) punchCombo.current = 0;
@@ -168,7 +180,6 @@ export function ProceduralCharacter() {
               attackType = 'UPPERCUT';
               isLeft = punchCombo.current % 2 === 0;
             } else {
-              // 4-hit auto combo
               if (punchCombo.current === 0) {
                  attackType = 'JAB';
                  isLeft = true;
@@ -179,9 +190,9 @@ export function ProceduralCharacter() {
                  attackType = 'HOOK';
                  isLeft = true;
               } else {
-                 attackType = 'SPIN_ATTACK'; // Heavy Combo Finisher
+                 attackType = 'SPIN_ATTACK'; 
                  isLeft = false;
-                 punchCombo.current = -1; // Will reset to 0 below
+                 punchCombo.current = -1; 
               }
             }
           }
@@ -190,7 +201,6 @@ export function ProceduralCharacter() {
           punchCombo.current++;
           timeSinceLastPunch.current = 0;
 
-          // Schedule Hit Detection
           setTimeout(() => {
             if (rigidBodyRef.current) {
               const trans = rigidBodyRef.current.translation();
@@ -200,30 +210,17 @@ export function ProceduralCharacter() {
               const rayDir = new rapier.Vector3(Math.sin(angle), 0, Math.cos(angle));
               
               const ray = new rapier.Ray(rayOrigin, rayDir);
-              const maxToi = 1.2; // Strike distance
-              const solid = true;
-              
-              // We raycast, ignoring this character's collider
-              const hit = world.castRay(
-                ray,
-                maxToi,
-                solid,
-                undefined,
-                undefined,
-                rigidBodyRef.current.collider(0)
-              );
+              const hit = world.castRay(ray, 1.2, true, undefined, undefined, rigidBodyRef.current.collider(0));
 
               if (hit) {
                 const collider = hit.collider;
-                // Check if hit object has takeHit
                 const userData = collider.parent()?.userData as any;
                 if (userData && userData.isEnemy && userData.takeHit) {
-                  // Damage based on attack type
                   let dmg = 10;
                   if (attackType === 'HOOK') dmg = 15;
                   if (attackType === 'UPPERCUT') dmg = 18;
                   if (attackType === 'JUMP_ATTACK') dmg = 25;
-                  if (attackType === 'SPIN_ATTACK') dmg = 35; // Massive damage finisher
+                  if (attackType === 'SPIN_ATTACK') dmg = 35; 
                   if (attackType === 'JAB') dmg = 5;
 
                   const impactDir = new THREE.Vector3(rayDir.x, rayDir.y, rayDir.z);
@@ -231,7 +228,7 @@ export function ProceduralCharacter() {
                 }
               }
             }
-          }, 100); // 100ms windup before strike hits
+          }, 100); 
 
           triggerPunch(attackType, isLeft, () => {
             setCombatState('IDLE');
@@ -239,15 +236,20 @@ export function ProceduralCharacter() {
         }
       }
     };
+    
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
     };
 
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('contextmenu', handleContextMenu);
     return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [combatState, isGrounded, triggerPunch, setCombatState]);
+  }, [combatState, isGrounded, triggerPunch, setCombatState, world]);
 
   useFrame((state, dt) => {
     timeSinceLastPunch.current += dt;
