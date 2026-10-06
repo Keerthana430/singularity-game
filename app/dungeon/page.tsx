@@ -383,6 +383,22 @@ export default function DungeonPage() {
       } else {
         sound.playHurt();
       }
+
+      if (typeof window !== 'undefined') {
+        fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iconType: 'dungeon',
+            tag: 'DUNGEON',
+            text: extracted
+              ? `Explorer extracted from Dungeon with ${finalScore} pts (${kills} kills, Tier ${director.currentTier.tier})`
+              : `Explorer survived ${survivalSeconds}s in Dungeon (${kills} kills, ${finalScore} pts)`,
+            color: extracted ? '#00FF66' : '#F59E0B',
+            link: '/dungeon',
+          }),
+        }).catch(() => {});
+      }
     },
     [director.currentTier.tier, director.tierIndex, eliteKills, highestStreak, kills, streak, survivalSeconds]
   );

@@ -236,6 +236,20 @@ export const useContestStore = create<ContestStore>()(
           hasSubmitted: true,
           myEntryId: entry.id,
         });
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              iconType: 'runway',
+              tag: 'CONTEST',
+              text: `Team ${myTeamName} entered "${avatar.name}" into the Beauty Contest`,
+              color: '#F472B6',
+              link: '/contest',
+            }),
+          }).catch(() => {});
+        }
       },
 
       voteForEntry: (entryId) => {
@@ -243,6 +257,8 @@ export const useContestStore = create<ContestStore>()(
         if (entryId === myEntryId) return false; // Can't vote for yourself
         if (!myTeamName) return false;
         if (votedForId === entryId) return false; // Already voted for this build
+
+        const targetEntry = entries.find((e) => e.id === entryId);
 
         // If previously voted for another build, transfer vote (-1 from old, +1 to new)
         const updated = entries.map((e) => {
@@ -268,6 +284,20 @@ export const useContestStore = create<ContestStore>()(
           hasVoted: true,
           votedForId: entryId,
         });
+
+        if (typeof window !== 'undefined' && targetEntry) {
+          fetch('/api/activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              iconType: 'runway',
+              tag: 'VOTE',
+              text: `Team ${myTeamName} voted for "${targetEntry.name}" in Beauty Contest (${targetEntry.likes + 1} votes)`,
+              color: '#F472B6',
+              link: '/contest',
+            }),
+          }).catch(() => {});
+        }
         return true;
       },
 
