@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS queue_entries (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   matched_at TIMESTAMPTZ NULL,
   match_id UUID NULL,
-  queue_metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+  queue_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  UNIQUE(team_id, game_type)
 );
 
 CREATE TABLE IF NOT EXISTS matches (
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS matches (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   started_at TIMESTAMPTZ NULL,
   ended_at TIMESTAMPTZ NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   state_version INT NOT NULL DEFAULT 0,
   active_turn_team_id UUID NULL REFERENCES teams(id),
   winner_team_id UUID NULL REFERENCES teams(id),

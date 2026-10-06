@@ -117,7 +117,9 @@ export function normalizeUsername(value: string) {
 
 export function sanitizeDisplayName(value: string, fallback: string) {
   const safe = String(value || '')
-    .replace(/<[^>]*>/g, '')
+    .replace(/<script\b[^>]*>.*?<\/script>/gi, ' ')
+    .replace(/<\/?[a-z0-9]+(?:\s[^>]*)?>/gi, ' ')
+    .replace(/&lt;|&gt;|&amp;|&quot;|&#39;/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 30);
@@ -222,7 +224,10 @@ export async function registerTeamAccount(input: {
   password: string;
   teamName?: string;
   code?: string;
-}) {
+}): Promise<
+  | { ok: true; teamId: string; teamCode: string; username: string; teamName: string }
+  | { ok: false; error: string }
+> {
   const username = normalizeUsername(input.username);
   const password = String(input.password || '').trim();
   const teamCode = String(input.code || '').trim() || `TEAM-${Date.now().toString(36).slice(-6).toUpperCase()}`;
@@ -273,13 +278,29 @@ export async function registerTeamAccount(input: {
   });
 
   if (!result.ok) {
-    return result;
+    return { ok: false, error: result.error };
   }
 
-  return result.data.ok === false ? result.data : result.data;
+  if (!result.data.ok) {
+    return { ok: false, error: result.data.error };
+  }
+
+  return {
+    ok: true,
+    teamId: result.data.teamId || '',
+    teamCode: result.data.teamCode || '',
+    username: result.data.username || '',
+    teamName: result.data.teamName || '',
+  };
 }
 
-export async function authenticateTeamCredentials(username: string, password: string) {
+export async function authenticateTeamCredentials(
+  username: string,
+  password: string
+): Promise<
+  | { ok: true; team: TeamAccountRecord }
+  | { ok: false; error: string }
+> {
   const normalizedUsername = normalizeUsername(username);
   if (!normalizedUsername || !password) {
     return { ok: false, error: 'Missing username or password.' };
@@ -329,7 +350,13 @@ export async function authenticateTeamCredentials(username: string, password: st
   return result.ok ? result.data : { ok: false, error: result.error };
 }
 
-export async function createPersistentSessionForTeam(teamId: string, role: TeamIdentityRole = 'team') {
+export async function createPersistentSessionForTeam(
+  teamId: string,
+  role: TeamIdentityRole = 'team'
+): Promise<
+  | { ok: true; token: string; sessionId: string; expiresAt: number; teamId: string; role: TeamIdentityRole }
+  | { ok: false, error: string }
+> {
   const sessionId = crypto.randomUUID();
   const expiresAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
   const token = createSessionToken({ teamId, role, sessionId, exp: expiresAt });
@@ -346,6 +373,7 @@ export async function createPersistentSessionForTeam(teamId: string, role: TeamI
 
     const row = insertResult.rows[0];
     return {
+      ok: true as const,
       token,
       sessionId: row?.id || sessionId,
       expiresAt: row ? new Date(row.expires_at).getTime() / 1000 : expiresAt,
@@ -358,7 +386,7 @@ export async function createPersistentSessionForTeam(teamId: string, role: TeamI
     return { ok: false, error: result.error };
   }
 
-  return { ok: true, ...result.data };
+  return result.data;
 }
 
 export async function verifySessionFromToken(token: string): Promise<{ ok: true; identity: AuthenticatedIdentity } | { ok: false; error: string } | { ok: false; error: string; expired: true }> {

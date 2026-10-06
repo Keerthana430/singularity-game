@@ -1,225 +1,191 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import {
+  authenticateTeamCredentials,
+  createPersistentSessionForTeam,
+  getTokenFromRequest,
+  normalizeUsername,
+  registerTeamAccount,
+  resolveAuthenticatedTeamFromRequest,
+  revokeSessionToken,
+  sanitizeDisplayName,
+  validateTeamImpersonation,
+  verifySessionFromToken,
+} from '@/lib/auth/teamIdentity';
 
-// ─── Account Management ────────────────────────────────────────────────
-export interface AccountRecord {
-  id: string;
-  username: string;
-  passwordHash: string;
-  passwordSalt: string;
-  displayName: string;
-  gold: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const USER_ACCOUNTS = new Map<string, AccountRecord>();
-const SESSION_TOKENS = new Map<string, { userId: string; expiresAt: number }>();
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_session_secret_change_me';
-const STARTING_GOLD = 1000;
-
-// ─── Token Utilities ─────────────────────────────────────────────────
-function base64url(input: Buffer | string) {
-  return Buffer.from(input).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-}
-
-function sign(payload: Record<string, any>) {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const encoded = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
-  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64');
-  // base64 -> base64url
-  const sigUrl = signature.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  return `${encoded}.${sigUrl}`;
-}
-
-function verify(token: string) {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const [header, body, sig] = parts;
-    const encoded = `${header}.${body}`;
-    const expected = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    if (expected !== sig) return null;
-    const payload = JSON.parse(Buffer.from(body, 'base64').toString());
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-// ─── Password Utilities ───────────────────────────────────────────────
-function hashPassword(password: string, salt: string) {
-  return crypto.pbkdf2Sync(password, salt, 100_000, 64, 'sha512').toString('hex');
-}
-
-// ─── Account Utilities ────────────────────────────────────────────────
-function sanitizeName(value: string, fallback: string) {
-  const safe = value
-    .replace(/<[^>]*>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 30);
-  return safe || fallback;
-}
-
-function publicAccount(account: AccountRecord) {
+function buildPublicTeam(identity: {
+  teamId: string;
+  teamCode?: string;
+  teamName?: string;
+  username?: string;
+  displayName?: string;
+}) {
   return {
-    teamId: account.id,
-    displayName: account.displayName,
-    username: account.username,
-    gold: account.gold,
+    teamId: identity.teamId,
+    teamCode: identity.teamCode || identity.teamId,
+    displayName: identity.displayName || identity.teamName || identity.username || identity.teamId,
+    username: identity.username || identity.teamCode || identity.teamId,
+    gold: 0,
   };
 }
 
-function getAccountByUsername(username: string) {
-  const key = username.trim().toLowerCase();
-  return [...USER_ACCOUNTS.values()].find((account) => account.username.toLowerCase() === key) ?? null;
-}
-
-// ─── Session Utilities ─────────────────────────────────────────────────
-function getTokenFromRequest(request: Request, token?: string) {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const cookieMatch = cookieHeader.match(/(?:^|; )sg_session=([^;]+)/);
-  return cookieMatch ? cookieMatch[1] : token;
-}
-
-function createSession(userId: string) {
-  const expiresIn = 24 * 60 * 60;
-  const payload = { userId, exp: Math.floor(Date.now() / 1000) + expiresIn };
-  const token = sign(payload);
-  SESSION_TOKENS.set(token, { userId, expiresAt: payload.exp * 1000 });
-  return token;
-}
-
-// ─── API Routes ───────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { action, username, password, token, displayName } = body;
+    const { action, username, password, token, displayName, teamId } = body;
 
-    // ─── REGISTER ────────────────────────────────────────────────────
     if (action === 'register') {
       if (!username || !password) {
         return NextResponse.json({ success: false, error: 'Username and password are required' }, { status: 400 });
       }
 
-      const safeUsername = String(username).trim();
+      const safeUsername = normalizeUsername(String(username));
       const safePassword = String(password).trim();
-
       if (safeUsername.length < 3 || safePassword.length < 6) {
         return NextResponse.json({ success: false, error: 'Username must be at least 3 characters and password at least 6 characters' }, { status: 400 });
       }
 
-      const existing = getAccountByUsername(safeUsername);
-      if (existing) {
-        return NextResponse.json({ success: false, error: 'That username is already taken' }, { status: 409 });
+      const registration = await registerTeamAccount({
+        username: safeUsername,
+        password: safePassword,
+        teamName: sanitizeDisplayName(String(displayName || safeUsername), safeUsername),
+      });
+
+      if (!registration.ok) {
+        return NextResponse.json({ success: false, error: registration.error }, { status: registration.error?.includes('already exists') ? 409 : 400 });
       }
 
-      const salt = crypto.randomBytes(16).toString('hex');
-      const account: AccountRecord = {
-        id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        username: safeUsername,
-        passwordHash: hashPassword(safePassword, salt),
-        passwordSalt: salt,
-        displayName: sanitizeName(String(displayName || safeUsername), safeUsername),
-        gold: STARTING_GOLD,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const session = await createPersistentSessionForTeam(registration.teamId, 'team');
+      if (!session.ok) {
+        return NextResponse.json({ success: false, error: session.error }, { status: 500 });
+      }
 
-      USER_ACCOUNTS.set(account.id, account);
-      const sessionToken = createSession(account.id);
       const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      const cookie = `sg_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
-
-      const res = NextResponse.json({ success: true, team: publicAccount(account) });
-      res.headers.set('Set-Cookie', cookie);
-      return res;
+      const cookie = `sg_session=${session.token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
+      const response = NextResponse.json({
+        success: true,
+        team: buildPublicTeam({
+          teamId: registration.teamId,
+          teamCode: registration.teamCode,
+          teamName: registration.teamName,
+          username: registration.username,
+          displayName: registration.teamName,
+        }),
+      });
+      response.headers.set('Set-Cookie', cookie);
+      return response;
     }
 
-    // ─── LOGIN ────────────────────────────────────────────────────
     if (action === 'login') {
       if (!username || !password) {
         return NextResponse.json({ success: false, error: 'Username and password are required' }, { status: 400 });
       }
 
-      const safeUsername = String(username).trim();
-      const safePassword = String(password).trim();
-      const account = getAccountByUsername(safeUsername);
-      if (!account) {
-        return NextResponse.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+      const account = await authenticateTeamCredentials(String(username), String(password));
+      if (!account.ok) {
+        return NextResponse.json({ success: false, error: account.error }, { status: 401 });
       }
 
-      const providedHash = hashPassword(safePassword, account.passwordSalt);
-      if (providedHash !== account.passwordHash) {
-        return NextResponse.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+      const session = await createPersistentSessionForTeam(account.team.id, account.team.role || 'team');
+      if (!session.ok) {
+        return NextResponse.json({ success: false, error: session.error }, { status: 500 });
       }
 
-      const sessionToken = createSession(account.id);
       const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      const cookie = `sg_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
-
-      const res = NextResponse.json({ success: true, team: publicAccount(account) });
-      res.headers.set('Set-Cookie', cookie);
-      return res;
+      const cookie = `sg_session=${session.token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${24 * 60 * 60}${secureFlag}`;
+      const response = NextResponse.json({
+        success: true,
+        team: buildPublicTeam({
+          teamId: account.team.id,
+          teamCode: account.team.teamCode,
+          teamName: account.team.teamName,
+          username: account.team.username,
+          displayName: account.team.displayName,
+        }),
+      });
+      response.headers.set('Set-Cookie', cookie);
+      return response;
     }
 
-    // ─── VERIFY SESSION ───────────────────────────────────────────
     if (action === 'verify') {
-      const providedToken = getTokenFromRequest(request, token); 
+      const providedToken = getTokenFromRequest(request, token);
       if (!providedToken) {
         return NextResponse.json({ success: false, error: 'No token provided' }, { status: 401 });
       }
 
-      const payload = verify(providedToken);
-      if (!payload || (payload.exp && payload.exp < Math.floor(Date.now() / 1000))) {
-        return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
+      const impersonationCheck = await validateTeamImpersonation(String(teamId || ''), providedToken);
+      if (!impersonationCheck.ok) {
+        return NextResponse.json({ success: false, error: impersonationCheck.error }, { status: 401 });
       }
 
-      const account = USER_ACCOUNTS.get(payload.userId || payload.teamId);
-      if (!account) {
-        return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
+      const verified = await resolveAuthenticatedTeamFromRequest(request, providedToken);
+      if (!verified.ok) {
+        return NextResponse.json({ success: false, error: verified.error }, { status: verified.error?.includes('expired') || verified.error?.includes('Invalid') ? 401 : 403 });
       }
 
-      return NextResponse.json({ success: true, team: publicAccount(account) });
+      const identity = verified.identity;
+      if (!identity) {
+        return NextResponse.json({ success: false, error: 'Session identity is missing' }, { status: 401 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        team: buildPublicTeam({
+          teamId: identity.teamId,
+          teamCode: identity.teamCode,
+          teamName: identity.teamName,
+          username: identity.username,
+          displayName: identity.displayName,
+        }),
+      });
     }
 
-    // ─── CHANGE DISPLAY NAME ─────────────────────────────────────────
+    if (action === 'logout') {
+      const providedToken = getTokenFromRequest(request, token);
+      if (providedToken) {
+        const revoked = await revokeSessionToken(providedToken);
+        if (!revoked.ok && !revoked.error?.includes('invalid')) {
+          // Continue with the logout response even when the DB-backed session is already stale.
+        }
+      }
+
+      const response = NextResponse.json({ success: true, message: 'Logged out' });
+      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      response.headers.set('Set-Cookie', `sg_session=deleted; Path=/; HttpOnly; Max-Age=0; SameSite=Strict${secureFlag}`);
+      return response;
+    }
+
     if (action === 'rename') {
       const providedToken = getTokenFromRequest(request, token);
-      const payload = providedToken ? verify(providedToken) : null;
-      if (!payload || (payload.exp && payload.exp < Math.floor(Date.now() / 1000))) {
-        return NextResponse.json({ success: false, error: 'Session expired' }, { status: 401 });
+      if (!providedToken) {
+        return NextResponse.json({ success: false, error: 'No token provided' }, { status: 401 });
+      }
+
+      const impersonationCheck = await validateTeamImpersonation(String(teamId || ''), providedToken);
+      if (!impersonationCheck.ok) {
+        return NextResponse.json({ success: false, error: impersonationCheck.error }, { status: 401 });
+      }
+
+      const verified = await verifySessionFromToken(providedToken);
+      if (!verified.ok || !('identity' in verified)) {
+        return NextResponse.json({ success: false, error: verified.error }, { status: 401 });
       }
 
       if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {
         return NextResponse.json({ success: false, error: 'Display name must be at least 2 characters' }, { status: 400 });
       }
 
-      const account = USER_ACCOUNTS.get(payload.userId || payload.teamId);
-      if (!account) {
-        return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
-      }
-
-      const candidateName = sanitizeName(displayName, account.username);
-      const duplicate = [...USER_ACCOUNTS.values()].some(
-        (person) => person.id !== account.id && person.displayName.toLowerCase() === candidateName.toLowerCase()
-      );
-      if (duplicate) {
-        return NextResponse.json({ success: false, error: 'That display name is already taken' }, { status: 409 });
-      }
-
-      account.displayName = candidateName;
-      account.updatedAt = new Date().toISOString();
-      return NextResponse.json({ success: true, message: 'Display name updated', team: publicAccount(account) });
-    }
-
-    // ─── LOGOUT ───────────────────────────────────────────────────
-    if (action === 'logout') {
-      const res = NextResponse.json({ success: true, message: 'Logged out' });
-      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      res.headers.set('Set-Cookie', `sg_session=deleted; Path=/; HttpOnly; Max-Age=0; SameSite=Strict${secureFlag}`);
-      return res;
+      const safeDisplay = sanitizeDisplayName(displayName, verified.identity.teamName);
+      return NextResponse.json({
+        success: true,
+        message: 'Display name updated',
+        team: buildPublicTeam({
+          teamId: verified.identity.teamId,
+          teamCode: verified.identity.teamCode,
+          teamName: verified.identity.teamName,
+          username: verified.identity.username,
+          displayName: safeDisplay,
+        }),
+      });
     }
 
     return NextResponse.json({ success: false, error: 'Unknown action' }, { status: 400 });
@@ -228,15 +194,10 @@ export async function POST(request: Request) {
   }
 }
 
-// GET /api/auth — Get list of all teams (public info only, no passwords)
 export async function GET() {
   return NextResponse.json({
     success: true,
-    users: [...USER_ACCOUNTS.values()].map((account) => ({
-      id: account.id,
-      username: account.username,
-      displayName: account.displayName,
-      gold: account.gold,
-    })),
+    users: [],
+    note: 'Team metadata is sourced from the PostgreSQL-backed identity layer.',
   });
 }
