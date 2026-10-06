@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Completed Phases:** 1, 2, 3, 4, 5 (Character Prototype, Refactor), R3F Character Migration
+- **Completed Phases:** 22-Animation Phase 1 (Idle), Phase 2 (Fighting Stance), Phase 3 (Walk Cycle)
 - **Current Stack:** React, `@react-three/fiber`, `@react-three/rapier`, `zustand`, Next.js
 - **How to Run:** `npm run dev` -> Open `http://localhost:3000/character-test`
-- **How to Test:** Use WASD to move, Space to jump, Left Click to punch, Control + WASD to dodge.
+- **How to Test:** Use WASD to move, Space to jump, Left Click to punch, Double-Tap WASD to dodge.
 - **Open Risks:** Animation blending vs Physics overrides might need tweaking.
-- **Next Phase:** Build the static physics dummy for combat target testing.
+- **Next Phase:** Phase 4 (Run Cycle)
 
 ---
 
@@ -618,3 +618,20 @@ pm run test executes fuzz test that plays 1000 games headlessly without UI.
   - Elbow movement during strikes feels dynamic and tucks properly - PASS.
 - **Known issues**: None.
 - **Deferred**: None.
+
+## Phase 3: Walk Cycle (06 Oct 2026)
+- Built: Procedural math for confident swagger walk cycle with heel-to-toe foot roll.
+- Built: Replaced rounded capsule body parts with true BoxGeometry to clearly visualize torso and hip twisting during animations. Reduced the chest block dimensions to `0.42x0.45x0.30` to prevent bulkiness.
+- Built: Re-engineered 'E' blocking animation. Replaced relative offset subtraction with absolute target lerping to prevent additive Math overflow. Removed Y-axis twists that were causing elbows to bend sideways and clip into the shoulders. Hands now form a tight, vertical shield perfectly in front of the face.
+- Files changed: src/characters/useCharacterAnimation.ts, src/characters/characterUtils.ts
+- Decisions: Used cos() and sin() phase shifting to model foot rotations for strikes/push offs. Switched from SphereGeometry to BoxGeometry for procedural dummy debugging.
+- Exit criteria: Natural arm swing, heel-toe roll, no chest clipping. PASS.
+- Known issues: None.
+
+## Phase 4: Run Cycle (06 Oct 2026)
+- Built: Dynamic procedural sprint animation that activates when holding Shift.
+- Built: Smooth weight interpolation `runWeight` that scales based on velocity, seamlessly transitioning the walk cycle into a sprint without hard cuts.
+- Files changed: src/characters/useCharacterAnimation.ts
+- Decisions: Dynamically blended leg swing arc, arm pump intensity, elbow tightness, knee drive, and chest forward lean based on `speed > 2.8`.
+- Exit criteria: Distinct visual difference from walking. PASS. (Stride is wider, elbows tighter, deep forward lean).
+- Known issues: None.

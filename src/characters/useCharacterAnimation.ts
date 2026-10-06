@@ -158,13 +158,12 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const speed = new THREE.Vector2(velocity.x, velocity.z).length();
     
     // Calculate movement blend
-    const targetBlend = speed > 0.1 ? Math.min(speed / 2.8, 1.5) : 0;
+    const targetBlend = speed > 0.1 ? Math.min(speed / 2.8, 1.0) : 0;
     moveBlendRef.current += (targetBlend - moveBlendRef.current) * Math.min(1, 8 * dt);
     
-    const isRunning = speed > 2.8 * 1.1;
-    const runFactor = isRunning ? WALK.runMultiplier : 1.0;
-
-    walkCyclePhaseRef.current += speed * WALK.cycleSpeed * dt;
+    const runWeight = Math.max(0, Math.min(1, (speed - 3.0) / 2.5)); // 0 at walk speed (2.8), 1 at run speed (5.5)
+    
+    walkCyclePhaseRef.current += speed * (WALK.cycleSpeed - runWeight * 1.5) * dt;
 
     if (isGrounded && !prevGroundedRef.current) {
         squatPhaseRef.current = 1.0; // Trigger landing squash
@@ -196,28 +195,48 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     const breathPhase = sin(t * PI2 * IDLE.breathFreq);
     const wc = walkCyclePhaseRef.current;
     
-    const legSwing = sin(wc) * WALK.legSwing * runFactor;
-    const armSwing = sin(wc) * WALK.armSwing * runFactor;
-    const hipBob = Math.abs(sin(wc * 2)) * WALK.hipBob * runFactor;
-    const hipSway = sin(wc) * WALK.hipSway;
-    const chestTwist = sin(wc) * WALK.chestTwist * runFactor;
-    const kneeBend = Math.max(0, -sin(wc)) * WALK.kneeFlexion * runFactor;
-    const kneeOpp = Math.max(0, sin(wc)) * WALK.kneeFlexion * runFactor;
-    const footLift = Math.max(0, sin(wc)) * WALK.footLift * runFactor;
-    const footOpp = Math.max(0, -sin(wc)) * WALK.footLift * runFactor;
+    // Interpolate parameters based on runWeight (Phase 4: Run Cycle)
+    const legSwingMax = WALK.legSwing + runWeight * 0.6; // Wider stride
+    const armSwingMax = WALK.armSwing + runWeight * 0.7; // Harder arm pumping
+    const footLiftMax = WALK.footLift + runWeight * 0.06; // Knees drive higher
+    const chestLeanMax = WALK.leanForward + runWeight * 0.25; // Lean aggressively forward
+    const hipBobMax = WALK.hipBob + runWeight * 0.03; // More vertical bounce
+
+    // Walk/Run Cycle Mathematics
+    const lLegSwing = -sin(wc) * legSwingMax;
+    const rLegSwing = sin(wc) * legSwingMax;
+    
+    const lKnee = Math.max(0, Math.cos(wc)) * WALK.kneeFlexion * (1 + runWeight);
+    const rKnee = Math.max(0, -Math.cos(wc)) * WALK.kneeFlexion * (1 + runWeight);
+    
+    const lFootLift = Math.max(0, Math.cos(wc)) * footLiftMax;
+    const rFootLift = Math.max(0, -Math.cos(wc)) * footLiftMax;
+    
+    const lFootRoll = sin(wc) * 0.3 * (1 + runWeight * 0.5); // Heel -> Toe
+    const rFootRoll = -sin(wc) * 0.3 * (1 + runWeight * 0.5);
+
+    const lArmSwing = sin(wc) * armSwingMax;
+    const rArmSwing = -sin(wc) * armSwingMax;
+    // When running, elbows bend much tighter to the body (like a sprinter)
+    const lElbowSwing = Math.max(0, -lArmSwing) * 0.8 + 0.1 + runWeight * 1.5; 
+    const rElbowSwing = Math.max(0, -rArmSwing) * 0.8 + 0.1 + runWeight * 1.5;
+
+    const hipBob = Math.abs(sin(wc * 2)) * hipBobMax;
+    const hipSway = sin(wc) * 0.08 * (1 - runWeight * 0.8); // Less side-to-side swagger when sprinting
+    const chestTwist = sin(wc) * 0.12 * (1 + runWeight * 1.0); // More torso rotation when sprinting
 
     const tuckLegs = -1.0 * jumpRiseWeight + 0.1 * fallWeight + -1.2 * squatPhaseRef.current;
     const tuckKnees = 1.2 * jumpRiseWeight + 0.1 * fallWeight + 1.8 * squatPhaseRef.current;
     const armFlailZ = 0.3 * jumpRiseWeight + 0.8 * fallWeight;
     const armFlailX = 0.2 * jumpRiseWeight - 1.2 * fallWeight;
-    const elbowBend = -0.6 * jumpRiseWeight - 0.4 * fallWeight;
+    const fallElbowBend = -0.6 * jumpRiseWeight - 0.4 * fallWeight;
     
     // Core body
     // Simulate breathing by expanding chest depth (Z) and width (X) slightly, and tilting it up (negative X rotation)
     bones.chest.scale.z = 1 + breathPhase * IDLE.breathAmp * idleWeight;
     bones.chest.scale.x = 1 + breathPhase * (IDLE.breathAmp * 0.5) * idleWeight;
     bones.chest.scale.y = 1;
-    bones.chest.rotation.x = walkWeight * WALK.leanForward * runFactor + 0.8 * squatPhaseRef.current - 0.1 * fallWeight - breathPhase * IDLE.breathAmp * idleWeight;
+    bones.chest.rotation.x = walkWeight * chestLeanMax + 0.8 * squatPhaseRef.current - 0.1 * fallWeight - breathPhase * IDLE.breathAmp * idleWeight;
     bones.chest.rotation.y = walkWeight * chestTwist;
     bones.chest.rotation.z = 0; // Lean into turns could go here
 
@@ -245,20 +264,20 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
 
     // Default Legs (IDLE + WALK + FALLING + STANCE)
     // Left Leg (Lead Leg in stance)
-    bones.lUpperLeg.rotation.x = -legSwing * walkWeight + tuckLegs - 0.5 * sw;
+    bones.lUpperLeg.rotation.x = lLegSwing * walkWeight + tuckLegs - 0.5 * sw;
     bones.lUpperLeg.rotation.z = -0.2 * sw; // Spread outward left
-    bones.lLowerLeg.rotation.x = kneeBend * walkWeight + tuckKnees + 0.8 * sw;
+    bones.lLowerLeg.rotation.x = lKnee * walkWeight + tuckKnees + 0.8 * sw;
     bones.lLowerLeg.rotation.z = 0.2 * sw; // Keep shin vertical
-    bones.lFoot.rotation.x = (legSwing > 0 ? 0 : -legSwing * 0.5) * walkWeight - 0.3 * sw;
-    bones.lFoot.position.y = -0.38 + footLift * walkWeight;
+    bones.lFoot.rotation.x = lFootRoll * walkWeight - 0.3 * sw;
+    bones.lFoot.position.y = -0.38 + lFootLift * walkWeight;
 
     // Right Leg (Rear Leg in stance)
-    bones.rUpperLeg.rotation.x = legSwing * walkWeight + tuckLegs + 0.1 * sw;
+    bones.rUpperLeg.rotation.x = rLegSwing * walkWeight + tuckLegs + 0.1 * sw;
     bones.rUpperLeg.rotation.z = 0.2 * sw; // Spread outward right
-    bones.rLowerLeg.rotation.x = kneeOpp * walkWeight + tuckKnees + 0.5 * sw;
+    bones.rLowerLeg.rotation.x = rKnee * walkWeight + tuckKnees + 0.5 * sw;
     bones.rLowerLeg.rotation.z = -0.2 * sw; // Keep shin vertical
-    bones.rFoot.rotation.x = (legSwing < 0 ? 0 : legSwing * 0.5) * walkWeight - 0.6 * sw;
-    bones.rFoot.position.y = -0.38 + footOpp * walkWeight;
+    bones.rFoot.rotation.x = rFootRoll * walkWeight - 0.6 * sw;
+    bones.rFoot.position.y = -0.38 + rFootLift * walkWeight;
 
     // Default Arms (IDLE + WALK + FALLING + STANCE)
     // In idle, shoulders rise slightly with breath
@@ -267,17 +286,17 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
     
     bones.lShoulder.rotation.z = (shoulderBreath + Math.sin(t * Math.PI * 2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight - 0.1 * walkWeight + armFlailZ) * isw + (0.1) * sw;
     bones.lShoulder.rotation.x = armFlailX * isw + (-0.1) * sw;
-    bones.lUpperArm.rotation.x = (armSwing * walkWeight + Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight) * isw + (-1.0) * sw;
-    // Flare left elbow out naturally during idle, and distinctly out (0.3) in fighting stance to avoid chest
-    bones.lUpperArm.rotation.z = (0.15 + 0.05 * Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq)) * idleWeight * isw + (-0.3) * sw; 
-    bones.lLowerArm.rotation.x = (-0.1 * idleWeight - 0.2 * walkWeight + elbowBend) * isw + (-2.2) * sw;
+    bones.lUpperArm.rotation.x = (lArmSwing * walkWeight + Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight) * isw + (-1.0) * sw;
+    // Flare left elbow out naturally during walk and idle, and distinctly out (0.3) in fighting stance to avoid chest
+    bones.lUpperArm.rotation.z = (0.2 * walkWeight + (0.15 + 0.05 * Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq)) * idleWeight) * isw + (-0.3) * sw; 
+    bones.lLowerArm.rotation.x = (-lElbowSwing * walkWeight - 0.1 * idleWeight + fallElbowBend) * isw + (-2.2) * sw;
 
     bones.rShoulder.rotation.z = (-shoulderBreath - Math.sin(t * Math.PI * 2 * IDLE.shoulderFreq) * IDLE.shoulderAmp * idleWeight + 0.1 * walkWeight - armFlailZ) * isw + (-0.1) * sw;
     bones.rShoulder.rotation.x = armFlailX * isw + (-0.1) * sw;
-    bones.rUpperArm.rotation.x = (-armSwing * walkWeight + Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight) * isw + (-1.0) * sw;
-    // Flare right elbow out naturally during idle, and distinctly out (0.3) in fighting stance to avoid chest
-    bones.rUpperArm.rotation.z = (-0.15 - 0.05 * Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq)) * idleWeight * isw + (0.3) * sw; 
-    bones.rLowerArm.rotation.x = (-0.1 * idleWeight - 0.2 * walkWeight + elbowBend) * isw + (-2.2) * sw;
+    bones.rUpperArm.rotation.x = (rArmSwing * walkWeight + Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq) * IDLE.armSwingAmp * idleWeight) * isw + (-1.0) * sw;
+    // Flare right elbow out naturally during walk and idle, and distinctly out (0.3) in fighting stance to avoid chest
+    bones.rUpperArm.rotation.z = (-0.2 * walkWeight + (-0.15 - 0.05 * Math.sin(t * Math.PI * 2 * IDLE.armSwingFreq)) * idleWeight) * isw + (0.3) * sw; 
+    bones.rLowerArm.rotation.x = (-rElbowSwing * walkWeight - 0.1 * idleWeight + fallElbowBend) * isw + (-2.2) * sw;
 
     // Apply Combat Override
     const cAnim = combatAnimRef.current;
@@ -335,25 +354,32 @@ export function useCharacterAnimation(bones: Record<string, THREE.Group | THREE.
       bones.head.rotation.x += hAnim.pitch * 0.5 * hAnim.weight;
     }
 
-    // Apply Block Override
+    // Apply Block Override (Realistic Tight High Guard)
     if (blockWeight > 0) {
-      bones.chest.rotation.x -= 0.2 * blockWeight; // Crunch forward
-      bones.head.rotation.x += 0.1 * blockWeight; // Look up slightly through guard
-      
-      // Roll shoulders forward
-      bones.lShoulder.rotation.x -= 0.2 * blockWeight;
-      bones.rShoulder.rotation.x -= 0.2 * blockWeight;
-      
-      // Lift upper arms forward and up to face level, flare elbows out
-      bones.lUpperArm.rotation.x -= 1.2 * blockWeight;
-      bones.lUpperArm.rotation.z -= 0.4 * blockWeight;
-      
-      bones.rUpperArm.rotation.x -= 1.2 * blockWeight;
-      bones.rUpperArm.rotation.z += 0.4 * blockWeight;
+      const iw = 1.0 - blockWeight;
+      const bw = blockWeight;
 
-      // Bend elbows tightly to cover face
-      bones.lLowerArm.rotation.x -= 2.5 * blockWeight;
-      bones.rLowerArm.rotation.x -= 2.5 * blockWeight;
+      bones.chest.rotation.x = bones.chest.rotation.x * iw + (0.25) * bw; // Crunch forward heavily to protect body
+      bones.head.rotation.x = bones.head.rotation.x * iw + (-0.15) * bw; // Tuck chin down behind the gloves
+      
+      // Roll shoulders forward and up to protect the chin
+      bones.lShoulder.rotation.x = bones.lShoulder.rotation.x * iw + (-0.3) * bw;
+      bones.lShoulder.rotation.y = bones.lShoulder.rotation.y * iw + (0.2) * bw;
+      
+      bones.rShoulder.rotation.x = bones.rShoulder.rotation.x * iw + (-0.3) * bw;
+      bones.rShoulder.rotation.y = bones.rShoulder.rotation.y * iw + (-0.2) * bw;
+      
+      // Upper arms: Raise up (-1.4), pull IN tightly across the chest/face (+0.3/-0.3)
+      // Note: Removed the .y twist because it caused the elbow joint to bend sideways into the shoulder
+      bones.lUpperArm.rotation.x = bones.lUpperArm.rotation.x * iw + (-1.4) * bw;
+      bones.lUpperArm.rotation.z = bones.lUpperArm.rotation.z * iw + (0.3) * bw; 
+      
+      bones.rUpperArm.rotation.x = bones.rUpperArm.rotation.x * iw + (-1.4) * bw;
+      bones.rUpperArm.rotation.z = bones.rUpperArm.rotation.z * iw + (-0.3) * bw;
+
+      // Bend elbows straight up and slightly in, forming a vertical shield in front of the face
+      bones.lLowerArm.rotation.x = bones.lLowerArm.rotation.x * iw + (-2.0) * bw;
+      bones.rLowerArm.rotation.x = bones.rLowerArm.rotation.x * iw + (-2.0) * bw;
     }
   });
 

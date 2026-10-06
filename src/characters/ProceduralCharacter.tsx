@@ -185,8 +185,17 @@ export function ProceduralCharacter() {
         }
       }
     };
+    
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
     window.addEventListener('pointerdown', handlePointerDown);
-    return () => window.removeEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('contextmenu', handleContextMenu);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('contextmenu', handleContextMenu);
+    };
   }, [combatState, isGrounded, triggerPunch, setCombatState]);
 
   useFrame((state, dt) => {

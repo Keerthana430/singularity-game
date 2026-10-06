@@ -8,91 +8,83 @@ export interface CharacterRig {
 
 // Helper: high-poly rounded body parts
 export function createRoundedBox(w: number, h: number, d: number, mat: THREE.Material) {
-  // Use a high-resolution sphere and scale it to form a smooth organic shape
-  const geom = new THREE.SphereGeometry(1, 64, 48);
+  // Use a BoxGeometry instead of a Sphere so we can clearly see the character twisting
+  const geom = new THREE.BoxGeometry(w, h, d);
   const mesh = new THREE.Mesh(geom, mat);
-  mesh.scale.set(w / 2, h / 2, d / 2);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
 }
 
-// Helper: Create seamless procedural SkinnedMesh for limbs
-export function createSkinnedLimb(radius: number, upperLength: number, lowerLength: number, mat: THREE.Material) {
-  const totalLength = upperLength + lowerLength;
-  const geom = new THREE.CylinderGeometry(radius, radius, totalLength, 32, 32);
-  geom.translate(0, -totalLength / 2, 0); // Origin at top
-
-  const pos = geom.attributes.position;
-  const skinIndices = [];
-  const skinWeights = [];
-  const jointY = -upperLength;
-  const blendZone = radius * 3.0;
-
-  for (let i = 0; i < pos.count; i++) {
-    const y = pos.getY(i);
-    let wUpper = 0, wLower = 0;
-    if (y > jointY + blendZone / 2) {
-      wUpper = 1; wLower = 0;
-    } else if (y < jointY - blendZone / 2) {
-      wUpper = 0; wLower = 1;
-    } else {
-      const t = (jointY + blendZone / 2 - y) / blendZone;
-      wLower = t;
-      wUpper = 1 - t;
-    }
-    skinIndices.push(0, 1, 0, 0);
-    skinWeights.push(wUpper, wLower, 0, 0);
-  }
-
-  geom.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
-  geom.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
-
-  const upperBone = new THREE.Bone();
-  const lowerBone = new THREE.Bone();
+// Helper: Create segmented limb (replaces SkinnedMesh for action-figure look)
+export function createSegmentedLimb(radius: number, upperLength: number, lowerLength: number, bodyMat: THREE.Material, glowMat: THREE.Material) {
+  const upperBone = new THREE.Group();
+  const lowerBone = new THREE.Group();
   lowerBone.position.y = -upperLength;
   upperBone.add(lowerBone);
 
-  const mesh = new THREE.SkinnedMesh(geom, mat);
-  const skeleton = new THREE.Skeleton([upperBone, lowerBone]);
-  mesh.add(upperBone);
-  mesh.bind(skeleton);
-  
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  // Joint glowing spheres
+  const shoulderMesh = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.2, 16, 16), glowMat);
+  const elbowMesh = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.1, 16, 16), glowMat);
+  elbowMesh.position.set(0, 0, 0); // elbow sits at the start of lowerBone
+  lowerBone.add(elbowMesh);
 
-  return { mesh, upperBone, lowerBone };
+  // Limb cylinders (or capsules)
+  const upperGeom = new THREE.CylinderGeometry(radius, radius * 0.9, upperLength, 16);
+  upperGeom.translate(0, -upperLength / 2, 0);
+  const upperMesh = new THREE.Mesh(upperGeom, bodyMat);
+  upperBone.add(upperMesh);
+
+  const lowerGeom = new THREE.CylinderGeometry(radius * 0.9, radius * 0.7, lowerLength, 16);
+  lowerGeom.translate(0, -lowerLength / 2, 0);
+  const lowerMesh = new THREE.Mesh(lowerGeom, bodyMat);
+  lowerBone.add(lowerMesh);
+
+  // Setup shadows
+  [shoulderMesh, elbowMesh, upperMesh, lowerMesh].forEach(m => {
+    m.castShadow = true;
+    m.receiveShadow = true;
+  });
+
+  return { upperBone, lowerBone, shoulderMesh };
 }
 
 export function buildProceduralCharacter(
-  colorBody: number = 0x1a1f3d,
-  colorAccent: number = 0x22d3ee,
-  colorDark: number = 0x0e1225
+  colorBody: number = 0x1a1a1c, // Obsidian Black
+  colorAccent: number = 0xffa800, // Neon Amber glow
+  colorDark: number = 0x0a0a0a
 ): CharacterRig {
   const group = new THREE.Group();
   const bones: Record<string, THREE.Group | THREE.Bone> = {};
 
   const bodyMat = new THREE.MeshStandardMaterial({
-    color: colorBody, roughness: 0.55, metalness: 0.3,
-    emissive: 0x0a0e28, emissiveIntensity: 0.3
+    color: colorBody, 
+    roughness: 0.15, // Glossier for high-end look
+    metalness: 0.7, // Highly metallic
+    emissive: 0x2b2b2b,
+    emissiveIntensity: 0.2 // Very subtle base glow so it doesn't get lost in the dark
   });
-  const accentMat = new THREE.MeshStandardMaterial({
-    color: colorAccent, roughness: 0.3, metalness: 0.6,
-    emissive: colorAccent, emissiveIntensity: 0.5
+  
+  // High emissive intensity triggers post-processing bloom
+  const glowMat = new THREE.MeshStandardMaterial({
+    color: colorAccent, roughness: 0.2, metalness: 0.1,
+    emissive: colorAccent, emissiveIntensity: 2.5
   });
+
   const darkMat = new THREE.MeshStandardMaterial({
     color: colorDark, roughness: 0.7, metalness: 0.2
   });
-  const eyeMat = new THREE.MeshBasicMaterial({ color: colorAccent });
-  const visorMat = new THREE.MeshBasicMaterial({
-    color: colorAccent, transparent: true, opacity: 0.7
+
+  const visorMat = new THREE.MeshStandardMaterial({
+    color: 0x050505, roughness: 0.1, metalness: 0.8 // Dark shiny visor
   });
 
-  const armMat = new THREE.MeshStandardMaterial({
-    color: 0xff3366, roughness: 0.5, metalness: 0.2
+  const eyeMat = new THREE.MeshStandardMaterial({
+    color: colorAccent, roughness: 0.2, metalness: 0.1,
+    emissive: colorAccent, emissiveIntensity: 2.0 // Glowing eyes
   });
 
-  const materials = { bodyMat, accentMat, darkMat, eyeMat, visorMat, armMat };
+  const materials = { bodyMat, glowMat, darkMat, visorMat, eyeMat };
 
   // Root
   bones.root = new THREE.Group();
@@ -105,7 +97,10 @@ export function buildProceduralCharacter(
   bones.hips.position.y = 0.95;
   bones.root.add(bones.hips);
 
-  const hipsMesh = createRoundedBox(0.44, 0.26, 0.37, darkMat); // 0.22*2 = 0.44
+  // Pill shape for pelvis
+  const hipsMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.15, 16, 32), bodyMat);
+  hipsMesh.rotation.z = Math.PI / 2; // Horizontal pill
+  hipsMesh.castShadow = true;
   bones.hips.add(hipsMesh);
 
   // Spine
@@ -117,17 +112,14 @@ export function buildProceduralCharacter(
   // Chest
   bones.chest = new THREE.Group();
   bones.chest.name = 'chest';
-  bones.chest.position.y = 0.28;
+  bones.chest.position.y = 0.25;
   bones.spine.add(bones.chest);
 
-  const chestMesh = createRoundedBox(0.52 * 1.2, 0.52 * 1.1, 0.52 * 0.85, bodyMat); // 0.26*2 = 0.52
-  chestMesh.position.y = 0.08;
+  // Large pill shape for chest
+  const chestMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.3, 16, 32), bodyMat);
+  chestMesh.position.y = 0.15;
+  chestMesh.castShadow = true;
   bones.chest.add(chestMesh);
-
-  const chestStripe = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.29), accentMat);
-  chestStripe.position.y = 0.1;
-  chestStripe.castShadow = true;
-  bones.chest.add(chestStripe);
 
   // Neck
   bones.neck = new THREE.Group();
@@ -150,10 +142,6 @@ export function buildProceduralCharacter(
   headMesh.castShadow = true;
   bones.head.add(headMesh);
 
-  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.18), visorMat);
-  visor.position.set(0, 0.02, 0.06);
-  bones.head.add(visor);
-
   const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), eyeMat);
   eyeL.position.set(-0.06, 0.02, 0.16);
   bones.head.add(eyeL);
@@ -165,20 +153,15 @@ export function buildProceduralCharacter(
   // Left Arm
   bones.lShoulder = new THREE.Group();
   bones.lShoulder.name = 'lShoulder';
-  bones.lShoulder.position.set(-0.38, 0.22, 0);
+  bones.lShoulder.position.set(-0.28, 0.22, 0); // Connected to chest sides
   bones.chest.add(bones.lShoulder);
-  
-  const lShoulderPad = new THREE.Mesh(new THREE.SphereGeometry(0.07, 32, 24), accentMat);
-  lShoulderPad.castShadow = true;
-  bones.lShoulder.add(lShoulderPad);
 
-  const lArmObj = createSkinnedLimb(0.055, 0.28, 0.26, armMat);
+  const lArmObj = createSegmentedLimb(0.06, 0.28, 0.26, bodyMat, glowMat);
   bones.lUpperArm = lArmObj.upperBone;
   bones.lUpperArm.name = 'lUpperArm';
-  bones.lUpperArm.position.y = -0.04;
   bones.lShoulder.add(bones.lUpperArm);
-  bones.lShoulder.add(lArmObj.mesh);
-
+  bones.lShoulder.add(lArmObj.shoulderMesh);
+  
   bones.lLowerArm = lArmObj.lowerBone;
   bones.lLowerArm.name = 'lLowerArm';
 
@@ -187,27 +170,23 @@ export function buildProceduralCharacter(
   bones.lHand.position.y = -0.26;
   bones.lLowerArm.add(bones.lHand);
 
-  const lHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 32, 24), accentMat);
+  // Glowing sphere hands
+  const lHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), glowMat);
   lHandMesh.castShadow = true;
   bones.lHand.add(lHandMesh);
 
   // Right Arm
   bones.rShoulder = new THREE.Group();
   bones.rShoulder.name = 'rShoulder';
-  bones.rShoulder.position.set(0.38, 0.22, 0);
+  bones.rShoulder.position.set(0.28, 0.22, 0);
   bones.chest.add(bones.rShoulder);
 
-  const rShoulderPad = new THREE.Mesh(new THREE.SphereGeometry(0.07, 32, 24), accentMat);
-  rShoulderPad.castShadow = true;
-  bones.rShoulder.add(rShoulderPad);
-
-  const rArmObj = createSkinnedLimb(0.055, 0.28, 0.26, armMat);
+  const rArmObj = createSegmentedLimb(0.06, 0.28, 0.26, bodyMat, glowMat);
   bones.rUpperArm = rArmObj.upperBone;
   bones.rUpperArm.name = 'rUpperArm';
-  bones.rUpperArm.position.y = -0.04;
   bones.rShoulder.add(bones.rUpperArm);
-  bones.rShoulder.add(rArmObj.mesh);
-
+  bones.rShoulder.add(rArmObj.shoulderMesh);
+  
   bones.rLowerArm = rArmObj.lowerBone;
   bones.rLowerArm.name = 'rLowerArm';
 
@@ -216,22 +195,45 @@ export function buildProceduralCharacter(
   bones.rHand.position.y = -0.26;
   bones.rLowerArm.add(bones.rHand);
 
-  const rHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 32, 24), accentMat);
+  const rHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), glowMat);
   rHandMesh.castShadow = true;
   bones.rHand.add(rHandMesh);
+
+  // Shoe creation helper
+  const createShoe = () => {
+    const shoe = new THREE.Group();
+    // Main shoe body (Dark Blue)
+    const shoeBody = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.24), bodyMat);
+    shoeBody.position.set(0, -0.02, 0.04);
+    shoeBody.castShadow = true;
+    shoe.add(shoeBody);
+
+    // Glowing Sole
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.26), glowMat);
+    sole.position.set(0, -0.08, 0.04);
+    sole.castShadow = true;
+    shoe.add(sole);
+
+    // Side Stripe
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.08, 0.04), glowMat);
+    stripe.position.set(0, -0.02, 0.1);
+    stripe.castShadow = true;
+    shoe.add(stripe);
+
+    return shoe;
+  };
 
   // Left Leg
   bones.lLegJoint = new THREE.Group();
   bones.lLegJoint.name = 'lLegJoint';
-  bones.lLegJoint.position.set(-0.12, -0.08, 0);
+  bones.lLegJoint.position.set(-0.14, -0.05, 0); // Connect to hips
   bones.hips.add(bones.lLegJoint);
 
-  const lLegObj = createSkinnedLimb(0.065, 0.40, 0.38, bodyMat);
+  const lLegObj = createSegmentedLimb(0.07, 0.40, 0.38, bodyMat, glowMat);
   bones.lUpperLeg = lLegObj.upperBone;
   bones.lUpperLeg.name = 'lUpperLeg';
-  bones.lUpperLeg.position.set(0, 0, 0);
   bones.lLegJoint.add(bones.lUpperLeg);
-  bones.lLegJoint.add(lLegObj.mesh);
+  // No hip glowing joint sphere according to reference image, it just attaches to the dark blue pelvis directly
 
   bones.lLowerLeg = lLegObj.lowerBone;
   bones.lLowerLeg.name = 'lLowerLeg';
@@ -240,25 +242,23 @@ export function buildProceduralCharacter(
   bones.lFoot.name = 'lFoot';
   bones.lFoot.position.y = -0.38;
   bones.lLowerLeg.add(bones.lFoot);
+  bones.lFoot.add(createShoe());
 
-  const lFootMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), accentMat);
-  lFootMesh.scale.set(0.8, 0.5, 1.4);
-  lFootMesh.position.set(0, -0.02, 0.03);
-  lFootMesh.castShadow = true;
-  bones.lFoot.add(lFootMesh);
+  // Glowing Ankles
+  const lAnkle = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowMat);
+  lAnkle.position.y = -0.38;
+  bones.lLowerLeg.add(lAnkle);
 
   // Right Leg
   bones.rLegJoint = new THREE.Group();
   bones.rLegJoint.name = 'rLegJoint';
-  bones.rLegJoint.position.set(0.12, -0.08, 0);
+  bones.rLegJoint.position.set(0.14, -0.05, 0);
   bones.hips.add(bones.rLegJoint);
 
-  const rLegObj = createSkinnedLimb(0.065, 0.40, 0.38, bodyMat);
+  const rLegObj = createSegmentedLimb(0.07, 0.40, 0.38, bodyMat, glowMat);
   bones.rUpperLeg = rLegObj.upperBone;
   bones.rUpperLeg.name = 'rUpperLeg';
-  bones.rUpperLeg.position.set(0, 0, 0);
   bones.rLegJoint.add(bones.rUpperLeg);
-  bones.rLegJoint.add(rLegObj.mesh);
 
   bones.rLowerLeg = rLegObj.lowerBone;
   bones.rLowerLeg.name = 'rLowerLeg';
@@ -267,12 +267,12 @@ export function buildProceduralCharacter(
   bones.rFoot.name = 'rFoot';
   bones.rFoot.position.y = -0.38;
   bones.rLowerLeg.add(bones.rFoot);
+  bones.rFoot.add(createShoe());
 
-  const rFootMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 24), accentMat);
-  rFootMesh.scale.set(0.8, 0.5, 1.4);
-  rFootMesh.position.set(0, -0.02, 0.03);
-  rFootMesh.castShadow = true;
-  bones.rFoot.add(rFootMesh);
+  // Glowing Ankles
+  const rAnkle = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowMat);
+  rAnkle.position.y = -0.38;
+  bones.rLowerLeg.add(rAnkle);
 
   return { group, bones, materials };
 }
