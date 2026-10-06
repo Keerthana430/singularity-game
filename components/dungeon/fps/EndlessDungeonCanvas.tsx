@@ -4,7 +4,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows, Html, PerspectiveCamera } from '@react-three/drei';
+import { PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { sound } from '@/lib/audio';
 import {
@@ -702,22 +702,10 @@ function ExtractionPad3D({
       </group>
 
       {isActive && (
-        <>
-          <mesh ref={beamRef} position={[0, 6, 0]}>
-            <cylinderGeometry args={[0.9, 1.3, 12, 16]} />
-            <meshBasicMaterial color="#22D3EE" transparent opacity={isChanneling ? 0.45 : 0.25} />
-          </mesh>
-
-          <Html position={[0, 2.6, 0]} center distanceFactor={8} occlude={false}>
-            <div className="pointer-events-none flex flex-col items-center select-none font-mono whitespace-nowrap">
-              <div className="rounded-lg border border-cyan-400 bg-cyan-950/80 px-3 py-1 text-[10px] font-black uppercase text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.5)]">
-                {isChanneling
-                  ? `CHANNELING EXTRACTION: ${Math.round(channelProgress * 100)}%`
-                  : 'HOLD [ E ] TO EXTRACT NOW'}
-              </div>
-            </div>
-          </Html>
-        </>
+        <mesh ref={beamRef} position={[0, 6, 0]}>
+          <cylinderGeometry args={[0.9, 1.3, 12, 16]} />
+          <meshBasicMaterial color="#22D3EE" transparent opacity={isChanneling ? 0.45 : 0.25} />
+        </mesh>
       )}
     </group>
   );
