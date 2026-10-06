@@ -185,7 +185,7 @@ export default function DungeonPage() {
   }, [activeSlotIndex, isReloading]);
 
   // Difficulty Director Evaluation
-  const director = useMemo(() => evaluateDirector(survivalSeconds, kills), [survivalSeconds, kills]);
+  const director = useMemo(() => evaluateDirector(survivalSeconds, kills, currentSector), [survivalSeconds, kills, currentSector]);
 
   const activeItem = inventorySlots[activeSlotIndex]?.item || null;
   const currentWeaponId: WeaponId =
@@ -712,7 +712,10 @@ export default function DungeonPage() {
       ══════════════════════════════════════════════════════════════════════ */}
       {mode === 'title' && (
         <DungeonTitleScreen
-          onDeploy={startRun}
+          onDeploy={() => {
+            setCurrentSector(1);
+            startRun();
+          }}
           onOpenControls={() => setShowControlsModal(true)}
           bestSurvivalSeconds={records.bestSurvivalSeconds}
           bestScore={records.bestScore}
@@ -748,6 +751,7 @@ export default function DungeonPage() {
             isScoped={isScoped}
             waveCountdown={waveCountdown}
             isHordeEnraged={isHordeEnraged}
+            currentSector={currentSector}
             onToggleScope={handleToggleScope}
             onPlayerDamage={handlePlayerDamage}
             onEnemyKilled={handleEnemyKilled}
@@ -864,8 +868,14 @@ export default function DungeonPage() {
       {mode === 'summary' && finalRunStats && (
         <RunSummaryModal
           stats={finalRunStats}
-          onRestart={startRun}
-          onReturnToHub={() => setMode('title')}
+          onRestart={() => {
+            setCurrentSector(1);
+            startRun();
+          }}
+          onReturnToHub={() => {
+            setCurrentSector(1);
+            setMode('title');
+          }}
           onNextSector={handleNextSector}
           currentSector={currentSector}
         />
