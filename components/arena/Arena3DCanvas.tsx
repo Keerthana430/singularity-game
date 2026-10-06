@@ -1058,33 +1058,29 @@ function CinematicCombatDirector({
 
   useEffect(() => {
     if (isHit) {
-      shakeRef.current = isCrit ? 0.28 : 0.14;
+      shakeRef.current = isCrit ? 0.22 : 0.12;
     }
   }, [isHit, isCrit]);
 
   useFrame((_, delta) => {
     const frameDelta = Math.min(delta, 0.05);
-    let targetX = 0;
-    let targetY = 0.42;
-    let targetZ = 4.2;
 
-    if (isAttacking) {
-      targetZ = 3.65;
-      targetX = fxSource === 'player' ? 0.35 : -0.35;
-      targetY = 0.38;
-    }
-
-    let offsetX = 0;
-    let offsetY = 0;
     if (shakeRef.current > 0.001) {
-      offsetX = (Math.random() - 0.5) * shakeRef.current;
-      offsetY = (Math.random() - 0.5) * shakeRef.current;
+      const offsetX = (Math.random() - 0.5) * shakeRef.current;
+      const offsetY = (Math.random() - 0.5) * shakeRef.current;
+      camera.position.x += offsetX;
+      camera.position.y += offsetY;
       shakeRef.current = THREE.MathUtils.lerp(shakeRef.current, 0, 1 - Math.exp(-frameDelta * 14));
     }
 
-    camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX + offsetX, 1 - Math.exp(-frameDelta * 8));
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY + offsetY, 1 - Math.exp(-frameDelta * 8));
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 1 - Math.exp(-frameDelta * 6));
+    if (isAttacking) {
+      const targetZ = 3.75;
+      const targetX = fxSource === 'player' ? 0.28 : -0.28;
+      const targetY = 0.38;
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 1 - Math.exp(-frameDelta * 9));
+      camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 1 - Math.exp(-frameDelta * 9));
+      camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 1 - Math.exp(-frameDelta * 7));
+    }
   });
 
   return null;
@@ -1120,6 +1116,13 @@ export function Arena3DCanvas({
   const sourcePos: [number, number, number] = fxSource === 'player' ? [-0.8, 0.4, 0] : [0.8, 0.4, 0];
   const targetPos: [number, number, number] = fxSource === 'player' ? [opponentHomeX, 0.4, 0] : [playerHomeX, 0.4, 0];
   const facingDir: 'right' | 'left' = fxSource === 'player' ? 'right' : 'left';
+  const isCombatActive =
+    playerAction === 'attack' ||
+    opponentAction === 'attack' ||
+    playerAction === 'hit' ||
+    opponentAction === 'hit' ||
+    playerAction === 'crit-hit' ||
+    opponentAction === 'crit-hit';
 
   // Biome Lighting & Fog Atmosphere with Bright High-Tech Contrast
   const lighting = useMemo(() => {
@@ -1227,7 +1230,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       camera={{ position: [0, 0.45, 4.3], fov: 42 }}
       className="w-full h-full"
     >
@@ -1244,8 +1247,8 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           color={lighting.sunColor}
           intensity={lighting.sunInt}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
           shadow-bias={-0.0001}
         />
 
@@ -1428,25 +1431,6 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
           <MagicEnergyProjectile source={sourcePos} target={targetPos} type={activeFx} />
         )}
 
-        {/* 6. In-Canvas 3D Floating Combat Text */}
-        {floatingCombatText.map((f) => (
-          <group
-            key={f.id}
-            position={[f.target === 'player' ? playerHomeX : opponentHomeX, 1.8, 0]}
-          >
-            <Html center distanceFactor={8}>
-              <div
-                className={`font-black font-mono text-xl sm:text-2xl whitespace-nowrap animate-bounce select-none pointer-events-none drop-shadow-[0_0_15px_rgba(0,0,0,0.9)] ${
-                  f.isCrit ? 'text-amber-300 scale-125' : f.color ? '' : 'text-red-400'
-                }`}
-                style={{ color: f.color }}
-              >
-                {f.text}
-              </div>
-            </Html>
-          </group>
-        ))}
-
         {/* ─── DYNAMIC OVERDRIVE 100% CHARGE AURA ─── */}
         {overdriveActive && (
           <OverdriveAuraEffect position={[playerHomeX, 0, 0]} color="#F59E0B" />
@@ -1454,7 +1438,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
 
         {/* ─── POST-PROCESSING: BLOOM & VIGNETTE FOR 3D DEPTH ─── */}
         {bloomEnabled && (
-          <EffectComposer>
+          <EffectComposer multisampling={0}>
             <Bloom
               intensity={0.65}
               luminanceThreshold={0.42}
@@ -1475,6 +1459,7 @@ function CombatArenaParticles({ color = '#00FF66' }: { color?: string }) {
 
         {/* ─── LOW CINEMATIC FIGHTING CAMERA CONTROLS ─── */}
         <OrbitControls
+          enabled={!isCombatActive}
           target={[0, 0.35, 0]}
           enableZoom={false}
           enablePan={false}

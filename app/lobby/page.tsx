@@ -176,7 +176,11 @@ export default function LobbyPage() {
   const [screenShake, setScreenShake] = useState(false);
   const [playerDamageFlash, setPlayerDamageFlash] = useState(false);
   const [battleLogOpen, setBattleLogOpen] = useState(false);
+  const [isAutoFighting, setIsAutoFighting] = useState(false);
   const autoFightIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingMoveRef = useRef<'strike' | 'magic' | 'shield' | 'ultimate' | null>(null);
+  const isAutoFightActiveRef = useRef(false);
+  const handlePlayerMoveRef = useRef<((moveType: 'strike' | 'magic' | 'shield' | 'ultimate') => void) | null>(null);
 
   const isFairy = currentAvatar.species?.toLowerCase() === 'fairy';
 
@@ -372,6 +376,12 @@ export default function LobbyPage() {
   // STEP 3: MATCH VICTORY & COIN REWARDS (Declared early for access)
   // ─────────────────────────────────────────────────────────────
   const handleMatchVictory = () => {
+    isAutoFightActiveRef.current = false;
+    setIsAutoFighting(false);
+    if (autoFightIntervalRef.current) {
+      clearTimeout(autoFightIntervalRef.current);
+      autoFightIntervalRef.current = null;
+    }
     sound.playWin();
     setOpponentAction('hit');
     setPlayerAction('victory');
@@ -483,13 +493,19 @@ export default function LobbyPage() {
       ]);
       addToast('Tournament eliminated! Refit your build in the Studio.', 'error');
       setIsTurnAnimating(false);
+      isAutoFightActiveRef.current = false;
+      setIsAutoFighting(false);
+      if (autoFightIntervalRef.current) {
+        clearTimeout(autoFightIntervalRef.current);
+        autoFightIntervalRef.current = null;
+      }
       setTimeout(() => {
         setBattleOutcome('defeat');
       }, 1200);
       return;
     }
 
-    // Reset combat actions to idle
+    // Reset combat actions to idle (snappy 220ms cooldown)
     setTimeout(() => {
       setPlayerAction('idle');
       setOpponentAction('idle');
@@ -498,12 +514,56 @@ export default function LobbyPage() {
       setIsAttackCrit(false);
       setIsAttackDodge(false);
       setIsTurnAnimating(false);
-    }, 450);
+
+      if (pendingMoveRef.current && handlePlayerMoveRef.current) {
+        const next = pendingMoveRef.current;
+        pendingMoveRef.current = null;
+        setTimeout(() => handlePlayerMoveRef.current?.(next), 50);
+      } else if (isAutoFightActiveRef.current) {
+        triggerNextAutoMove();
+      }
+    }, 220);
+  };
+
+  // Seamless Auto-Fight sequencer without tick drops
+  const triggerNextAutoMove = () => {
+    if (!isAutoFightActiveRef.current) return;
+    if (autoFightIntervalRef.current) clearTimeout(autoFightIntervalRef.current);
+
+    autoFightIntervalRef.current = setTimeout(() => {
+      if (!isAutoFightActiveRef.current) return;
+      setOpponentFighter((opp) => {
+        if (!opp || opp.hp <= 0) {
+          isAutoFightActiveRef.current = false;
+          setIsAutoFighting(false);
+          return opp;
+        }
+        if (overdriveEnergy >= 100) {
+          handlePlayerMoveRef.current?.('ultimate');
+        } else if (magicCooldown === 0 && Math.random() > 0.45) {
+          handlePlayerMoveRef.current?.('magic');
+        } else {
+          handlePlayerMoveRef.current?.('strike');
+        }
+        return opp;
+      });
+    }, 260);
   };
 
   // Execute interactive player choice — SPECIES-SPECIFIC ATTACKS
   const handlePlayerMove = (moveType: 'strike' | 'magic' | 'shield' | 'ultimate') => {
-    if (isTurnAnimating || !opponentFighter || opponentFighter.hp <= 0 || playerFighter.hp <= 0) return;
+    handlePlayerMoveRef.current = handlePlayerMove;
+    if (!opponentFighter || opponentFighter.hp <= 0 || playerFighter.hp <= 0) return;
+
+    if (isTurnAnimating) {
+      if (moveType === 'magic' && magicCooldown > 0) return;
+      if (moveType === 'shield' && shieldCooldown > 0) return;
+      if (moveType === 'ultimate' && overdriveEnergy < 100) return;
+      pendingMoveRef.current = moveType;
+      return;
+    }
+
+    pendingMoveRef.current = null;
 
     // Get the species-specific attack data for this move
     const currentAttack = getAttackByType(currentAvatar.species, moveType);
@@ -543,7 +603,7 @@ export default function LobbyPage() {
 
       setTimeout(() => {
         resolveOpponentTurn(true, currentAttack);
-      }, 700);
+      }, 340);
       return;
     }
 
@@ -621,7 +681,7 @@ export default function LobbyPage() {
     setIsAttackCrit(isCrit);
     setIsAttackDodge(false);
 
-    // Impact after 350ms
+    // Impact after 240ms
     setTimeout(() => {
       // Check Opponent Evasion
       const opponentEvaded = Math.random() * 100 < opponentFighter.evasionRate;
@@ -671,11 +731,11 @@ export default function LobbyPage() {
         return;
       }
 
-      // If opponent survives, execute opponent's counter turn
+      // If opponent survives, execute opponent's counter turn (snappy 300ms transition)
       setTimeout(() => {
         resolveOpponentTurn(false);
-      }, 700);
-    }, 380);
+      }, 300);
+    }, 240);
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -774,6 +834,7 @@ export default function LobbyPage() {
     setIsAttackDodge(false);
     sound.playSlash();
 
+    // Opponent impact after 240ms
     setTimeout(() => {
       // Check Player Evasion
       const playerEvaded = Math.random() * 100 < playerFighter.evasionRate;
@@ -826,7 +887,7 @@ export default function LobbyPage() {
         setTimeout(() => {
           setOpponentFighter((prev) => prev ? { ...prev, hp: Math.max(0, prev.hp - parryReflectDmg) } : null);
           addFloatingText(`[REFLECT] -${parryReflectDmg}`, 'opponent', true, '#38BDF8');
-        }, 200);
+        }, 120);
       }
 
       if (oppDmg > 0 && !playerEvaded) {
@@ -835,7 +896,7 @@ export default function LobbyPage() {
         setTimeout(() => {
           setPlayerDamageFlash(false);
           setScreenShake(false);
-        }, 450);
+        }, 280);
       }
 
       const newPlayerHp = Math.max(0, playerFighter.hp - oppDmg);
@@ -857,9 +918,8 @@ export default function LobbyPage() {
 
       setBattleLogs((prev) => [...prev, counterLog]);
       endRoundCleanUp(newPlayerHp);
-    }, 400);
+    }, 240);
   };
-
 
   // Post-Battle Instant Heal Handler
   const handleInstantHealPurchase = () => {
@@ -876,32 +936,23 @@ export default function LobbyPage() {
 
   // Auto-fight continuous simulation
   const handleAutoFight = () => {
-    if (autoFightIntervalRef.current) {
-      clearInterval(autoFightIntervalRef.current);
-      autoFightIntervalRef.current = null;
+    if (isAutoFightActiveRef.current) {
+      isAutoFightActiveRef.current = false;
+      setIsAutoFighting(false);
+      if (autoFightIntervalRef.current) {
+        clearTimeout(autoFightIntervalRef.current);
+        autoFightIntervalRef.current = null;
+      }
       addToast('Auto-Fight paused.', 'info');
       return;
     }
 
+    isAutoFightActiveRef.current = true;
+    setIsAutoFighting(true);
     addToast('Auto-Combat activated! AI executing combat moves.', 'success');
-    autoFightIntervalRef.current = setInterval(() => {
-      setOpponentFighter((opp) => {
-        if (!opp || opp.hp <= 0) {
-          if (autoFightIntervalRef.current) clearInterval(autoFightIntervalRef.current);
-          autoFightIntervalRef.current = null;
-          return opp;
-        }
-        // Choose best tactical move
-        if (overdriveEnergy >= 100) {
-          handlePlayerMove('ultimate');
-        } else if (opp.hp < 150) {
-          handlePlayerMove('strike');
-        } else {
-          handlePlayerMove(Math.random() > 0.4 ? 'magic' : 'strike');
-        }
-        return opp;
-      });
-    }, 1100);
+    if (!isTurnAnimating) {
+      triggerNextAutoMove();
+    }
   };
 
   return (
@@ -1069,10 +1120,14 @@ export default function LobbyPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleAutoFight}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20 text-[10px] font-bold uppercase tracking-wider transition-all"
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${
+                          isAutoFighting
+                            ? 'border-[#00FF66] bg-[#00FF66]/25 text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.4)] animate-pulse'
+                            : 'border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20'
+                        }`}
                       >
-                        <FastForward size={12} />
-                        <span>Auto</span>
+                        <FastForward size={12} className={isAutoFighting ? 'animate-pulse' : ''} />
+                        <span>{isAutoFighting ? 'Auto Active' : 'Auto'}</span>
                       </button>
                       <button
                         onClick={() => setTournamentStage('idle')}
