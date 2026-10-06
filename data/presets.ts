@@ -17,6 +17,9 @@ export const PRESET_AVATARS: PresetAvatar[] = [
     avatar: {
       id: 'preset-1',
       name: 'KAGE-07',
+      classRole: 'assassin',
+      weapon: 'photon-blade',
+      weaponColor: '#00CED1',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       body: { type: 'slim', height: 1.05, headSize: 0.95, bodySize: 0.98 },
@@ -42,6 +45,9 @@ export const PRESET_AVATARS: PresetAvatar[] = [
     avatar: {
       id: 'preset-2',
       name: 'AURA-V',
+      classRole: 'mage',
+      weapon: 'cyber-staff',
+      weaponColor: '#FF5C93',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       body: { type: 'regular', height: 1.0, headSize: 1.0, bodySize: 1.0 },
@@ -67,6 +73,9 @@ export const PRESET_AVATARS: PresetAvatar[] = [
     avatar: {
       id: 'preset-3',
       name: 'VEX-TITAN',
+      classRole: 'tank',
+      weapon: 'energy-hammer',
+      weaponColor: '#F39C12',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       body: { type: 'broad', height: 1.15, headSize: 0.92, bodySize: 1.2 },
@@ -92,6 +101,9 @@ export const PRESET_AVATARS: PresetAvatar[] = [
     avatar: {
       id: 'preset-4',
       name: 'PIXEL-BYTE',
+      classRole: 'warrior',
+      weapon: 'plasma-blaster',
+      weaponColor: '#22D3EE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       body: { type: 'chibi', height: 0.85, headSize: 1.25, bodySize: 0.9 },
