@@ -11,14 +11,14 @@ const Ludo3DColosseum = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full bg-[#101426] flex flex-col items-center justify-center gap-4 font-mono">
-        <div className="w-14 h-14 border-4 border-[#FF9E3B]/20 border-t-[#FF9E3B] rounded-full animate-spin shadow-[0_0_25px_rgba(255,158,59,0.4)]" />
+      <div className="w-full h-full bg-[#040711] flex flex-col items-center justify-center gap-4 font-mono">
+        <div className="w-14 h-14 border-4 border-[#00FF66]/20 border-t-[#00FF66] rounded-full animate-spin shadow-[0_0_25px_rgba(0,255,102,0.4)]" />
         <div className="text-center">
-          <p className="text-sm font-bold text-[#FFF8EE] tracking-widest uppercase">
-            // PREPARING STATION LOUNGE TABLE...
+          <p className="text-sm font-bold text-white tracking-widest uppercase">
+            // INITIALIZING OBSIDIAN COLOSSEUM MATRIX...
           </p>
-          <p className="text-xs text-[#FF9E3B]/70 mt-1">
-            Setting felt surface, placing faction tokens
+          <p className="text-xs text-[#00FF66]/70 mt-1">
+            Calibrating quantum conduits &amp; deploying faction avatars
           </p>
         </div>
       </div>
@@ -36,14 +36,14 @@ export function Ludo3DView(props: Ludo3DColosseumProps) {
 
   if (!mounted) {
     return (
-      <div className="w-full h-full bg-[#0D0804] flex flex-col items-center justify-center gap-4 font-mono">
-        <div className="w-14 h-14 border-4 border-[#FF9E3B]/20 border-t-[#FF9E3B] rounded-full animate-spin shadow-[0_0_25px_rgba(255,158,59,0.4)]" />
+      <div className="w-full h-full bg-[#040711] flex flex-col items-center justify-center gap-4 font-mono">
+        <div className="w-14 h-14 border-4 border-[#00FF66]/20 border-t-[#00FF66] rounded-full animate-spin shadow-[0_0_25px_rgba(0,255,102,0.4)]" />
         <div className="text-center">
-          <p className="text-sm font-black text-[#FFF8EE] tracking-widest uppercase">
-            // PREPARING COLOSSEUM TABLE...
+          <p className="text-sm font-black text-white tracking-widest uppercase">
+            // PREPARING COLOSSEUM PLATFORM...
           </p>
-          <p className="text-xs text-[#FF9E3B]/70 mt-1">
-            Setting felt surface, placing faction tokens
+          <p className="text-xs text-[#00FF66]/70 mt-1">
+            Activating nanotech chassis &amp; faction citadels
           </p>
         </div>
       </div>

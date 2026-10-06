@@ -1,7 +1,7 @@
 // components/dungeon/fps/EndlessDungeonHUD.tsx
 // First-Person Endless Survival Dungeon HUD with Hotbar (reference image layout), Threat Director, and Vitality
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Heart,
   Shield,
@@ -85,6 +85,20 @@ export function EndlessDungeonHUD({
   onSelectSlot,
   onUseItem,
 }: EndlessDungeonHUDProps) {
+  const [hitmarkerVisible, setHitmarkerVisible] = useState(false);
+
+  useEffect(() => {
+    if (hitmarkerPulse.count > 0) {
+      setHitmarkerVisible(true);
+      const timer = setTimeout(() => {
+        setHitmarkerVisible(false);
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      setHitmarkerVisible(false);
+    }
+  }, [hitmarkerPulse.count]);
+
   const hpPercent = Math.max(0, Math.min(100, (playerHp / maxHp) * 100));
   const shieldPercent = maxShield > 0 ? Math.max(0, Math.min(100, (playerShield / maxShield) * 100)) : 0;
   const staminaPercent = Math.max(0, Math.min(100, (playerStamina / maxStamina) * 100));
@@ -203,9 +217,9 @@ export function EndlessDungeonHUD({
           <div className="absolute h-1 w-1 rounded-full bg-[#00FF66] shadow-[0_0_8px_#00FF66]" />
         </div>
 
-        {/* Hitmarker Flash */}
-        {hitmarkerPulse.count > 0 && (
-          <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-ping">
+        {/* Hitmarker Flash (auto-dismisses after 150ms, no looping) */}
+        {hitmarkerVisible && (
+          <div className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform scale-110">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M6 6L9 9M18 6L15 9M6 18L9 15M18 18L15 15"
