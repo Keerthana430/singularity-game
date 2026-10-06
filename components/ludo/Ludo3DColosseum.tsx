@@ -256,62 +256,76 @@ function QuantumDice3D({
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        {/* Tactile Ivory Lounge Cube with Brass Inlay */}
+        {/* Sleek Cyber Obsidian Cube Core */}
         <mesh castShadow receiveShadow>
-          <boxGeometry args={[0.9, 0.9, 0.9]} />
+          <boxGeometry args={[0.92, 0.92, 0.92]} />
           <meshStandardMaterial
-            color="#FFF8EE"
-            roughness={0.35}
-            metalness={0.12}
+            color="#080E1C"
+            roughness={0.2}
+            metalness={0.85}
             emissive={colorHex}
-            emissiveIntensity={isRolling ? 0.35 : 0.05}
+            emissiveIntensity={isRolling ? 0.9 : 0.15}
           />
         </mesh>
 
-        <mesh scale={1.02}>
-          <boxGeometry args={[0.9, 0.9, 0.9]} />
-          <meshStandardMaterial color="#D4AF37" wireframe transparent opacity={0.4} />
+        {/* Outer Radiant Holographic Wireframe Cage */}
+        <mesh scale={1.03}>
+          <boxGeometry args={[0.92, 0.92, 0.92]} />
+          <meshStandardMaterial
+            color={colorHex}
+            wireframe
+            transparent
+            opacity={0.65}
+            emissive={colorHex}
+            emissiveIntensity={isRolling ? 2.5 : 1.0}
+          />
         </mesh>
 
-        {/* Tactile Pips on faces (Deep Burgundy & Amber Enamel) */}
+        {/* Inner Glowing Quantum Energy Singularity Core */}
+        <mesh scale={0.32}>
+          <octahedronGeometry args={[0.9, 0]} />
+          <meshBasicMaterial color={colorHex} wireframe />
+        </mesh>
+
+        {/* Tactile Holographic Pips on faces (Brilliant Emissive Glow) */}
         {/* Top (1) */}
-        <mesh position={[0, 0.46, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.47, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.16, 16]} />
-          <meshStandardMaterial color="#FF3B30" emissive="#FF3B30" emissiveIntensity={0.6} />
+          <meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.5} />
         </mesh>
         {/* Bottom (2) */}
-        <group position={[0, -0.46, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <mesh position={[-0.2, -0.2, 0]}><circleGeometry args={[0.11, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
-          <mesh position={[0.2, 0.2, 0]}><circleGeometry args={[0.11, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+        <group position={[0, -0.47, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh position={[-0.2, -0.2, 0]}><circleGeometry args={[0.11, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
+          <mesh position={[0.2, 0.2, 0]}><circleGeometry args={[0.11, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
         </group>
         {/* Right (3) */}
-        <group position={[0.46, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <mesh position={[-0.22, -0.22, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
-          <mesh position={[0, 0, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
-          <mesh position={[0.22, 0.22, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+        <group position={[0.47, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh position={[-0.22, -0.22, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
+          <mesh position={[0, 0, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
+          <mesh position={[0.22, 0.22, 0]}><circleGeometry args={[0.1, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
         </group>
         {/* Left (4) */}
-        <group position={[-0.46, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <group position={[-0.47, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
           {[-0.22, 0.22].map((x) =>
             [-0.22, 0.22].map((y) => (
-              <mesh key={`l-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+              <mesh key={`l-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
             ))
           )}
         </group>
         {/* Front (5) */}
-        <group position={[0, 0, 0.46]}>
+        <group position={[0, 0, 0.47]}>
           {[-0.22, 0.22].map((x) =>
             [-0.22, 0.22].map((y) => (
-              <mesh key={`f-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+              <mesh key={`f-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
             ))
           )}
-          <mesh position={[0, 0, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+          <mesh position={[0, 0, 0]}><circleGeometry args={[0.09, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
         </group>
         {/* Back (6) */}
-        <group position={[0, 0, -0.46]} rotation={[0, Math.PI, 0]}>
+        <group position={[0, 0, -0.47]} rotation={[0, Math.PI, 0]}>
           {[-0.22, 0.22].map((x) =>
             [-0.25, 0, 0.25].map((y) => (
-              <mesh key={`b-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.08, 16]} /><meshStandardMaterial color="#1C233B" /></mesh>
+              <mesh key={`b-${x}-${y}`} position={[x, y, 0]}><circleGeometry args={[0.08, 16]} /><meshStandardMaterial color="#FFFFFF" emissive={colorHex} emissiveIntensity={3.0} /></mesh>
             ))
           )}
         </group>
@@ -503,7 +517,7 @@ function AvatarPiece3D({
     groupRef.current.position.copy(curPos.current);
   });
 
-  const avatarScale = 0.52;
+  const avatarScale = 0.78;
 
   return (
     <group
@@ -523,21 +537,42 @@ function AvatarPiece3D({
         }
       }}
     >
-      {/* High-visibility Base Ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <ringGeometry args={[0.3, 0.42, 24]} />
+      {/* High-visibility Double Cyber Base Pedestal */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.38, 0.44, 0.05, 32]} />
+        <meshStandardMaterial
+          color="#060913"
+          roughness={0.3}
+          metalness={0.8}
+        />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <ringGeometry args={[0.32, 0.44, 32]} />
         <meshStandardMaterial
           color={isSelectable ? '#00FF66' : player.colorHex}
           emissive={isSelectable ? '#00FF66' : player.colorHex}
-          emissiveIntensity={isSelectable ? (hovered ? 3.5 : 2.2) : 0.8}
+          emissiveIntensity={isSelectable ? (hovered ? 4.0 : 2.5) : 1.2}
           side={THREE.DoubleSide}
         />
       </mesh>
 
+      {/* Selectable Vertical Energy Column / Beacon */}
+      {isSelectable && !isMoving && (
+        <mesh position={[0, 0.7, 0]}>
+          <cylinderGeometry args={[0.35, 0.45, 1.4, 24, 1, true]} />
+          <meshBasicMaterial
+            color="#00FF66"
+            transparent
+            opacity={hovered ? 0.35 : 0.18}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+
       {/* High-visibility "TAP TO MOVE" indicator */}
       {isSelectable && !isMoving && (
-        <group position={[0, 1.45, 0]}>
-          <Html center distanceFactor={12}>
+        <group position={[0, 1.85, 0]}>
+          <Html center distanceFactor={14}>
             <div
               onClick={() => onSelect(piece.id)}
               className="px-2.5 py-0.5 rounded-full bg-[#00FF66] text-black font-black font-mono text-[10px] uppercase shadow-[0_0_15px_#00FF66] border border-white animate-bounce cursor-pointer whitespace-nowrap hover:scale-125 transition-all select-none"
@@ -578,7 +613,210 @@ function AvatarPiece3D({
   );
 }
 
-// ─── 3D WARM LOUNGE GAME TABLE (FELT, WOOD, BRASS & 4 FACTIONS) ───────────
+// ─── 3D CYBERNETIC CENTRAL SINGULARITY NEXUS GOAL ─────────────────────────
+function CentralNexusCore3D() {
+  const gyroRing1Ref = useRef<THREE.Mesh>(null);
+  const gyroRing2Ref = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (gyroRing1Ref.current) {
+      gyroRing1Ref.current.rotation.x += delta * 1.2;
+      gyroRing1Ref.current.rotation.z += delta * 0.8;
+    }
+    if (gyroRing2Ref.current) {
+      gyroRing2Ref.current.rotation.y += delta * 1.5;
+      gyroRing2Ref.current.rotation.x -= delta * 0.9;
+    }
+  });
+
+  return (
+    <group position={[0, PLATFORM_Y + 0.04, 0]}>
+      {/* Tier 1 Stepped Obsidian Dais */}
+      <mesh position={[0, 0.08, 0]} receiveShadow>
+        <cylinderGeometry args={[2.2, 2.5, 0.18, 32]} />
+        <meshStandardMaterial color="#0A0F1D" roughness={0.3} metalness={0.8} />
+      </mesh>
+      {/* Outer Neon Conduit Ring */}
+      <mesh position={[0, 0.18, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.1, 2.25, 32]} />
+        <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.0} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Tier 2 Polished Metallic Dais */}
+      <mesh position={[0, 0.22, 0]} receiveShadow>
+        <cylinderGeometry args={[1.5, 1.7, 0.14, 32]} />
+        <meshStandardMaterial color="#0F172A" roughness={0.2} metalness={0.9} emissive="#00FF66" emissiveIntensity={0.2} />
+      </mesh>
+
+      {/* Counter-Rotating Gyroscopic Quantum Rings */}
+      <mesh ref={gyroRing1Ref} position={[0, 0.85, 0]}>
+        <torusGeometry args={[1.4, 0.045, 16, 48]} />
+        <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.5} />
+      </mesh>
+      <mesh ref={gyroRing2Ref} position={[0, 0.85, 0]}>
+        <torusGeometry args={[1.15, 0.04, 16, 48]} />
+        <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={2.5} />
+      </mesh>
+
+      {/* Ascending Vertical Singularity Ion Beam */}
+      <mesh position={[0, 3.2, 0]}>
+        <cylinderGeometry args={[0.22, 0.45, 5.5, 24, 1, true]} />
+        <meshBasicMaterial color="#00FF66" transparent opacity={0.25} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Apex Floating Golden Singularity Crystal */}
+      <Float speed={3.0} rotationIntensity={1.8} floatIntensity={0.8}>
+        <mesh position={[0, 0.85, 0]} scale={0.52}>
+          <octahedronGeometry args={[0.9, 0]} />
+          <meshStandardMaterial
+            color="#FFD700"
+            emissive="#FFD700"
+            emissiveIntensity={3.0}
+            roughness={0.15}
+            metalness={0.9}
+          />
+        </mesh>
+        <pointLight position={[0, 0.85, 0]} color="#FFD700" intensity={4} distance={6} />
+      </Float>
+    </group>
+  );
+}
+
+// ─── 3D FACTION BASTION (ELEVATED DOCKING PLATFORM & LAUNCHPADS) ───────────
+function FactionBastion3D({
+  faction,
+  position,
+  colorHex,
+  emissiveHex,
+  pods,
+}: {
+  faction: PlayerColor;
+  position: [number, number, number];
+  colorHex: string;
+  emissiveHex: string;
+  pods: [number, number][];
+}) {
+  const coreHoloRef = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (coreHoloRef.current) {
+      coreHoloRef.current.rotation.y += delta * 1.4;
+      coreHoloRef.current.position.y = 0.65 + Math.sin(Date.now() * 0.003) * 0.08;
+    }
+  });
+
+  return (
+    <group position={position}>
+      {/* Main Elevated Bastion Deck */}
+      <mesh position={[0, 0.12, 0]} receiveShadow>
+        <boxGeometry args={[5.2, 0.24, 5.2]} />
+        <meshStandardMaterial color="#0A0F1E" roughness={0.3} metalness={0.7} />
+      </mesh>
+
+      {/* Top Deck Surface with Faction Energy Hue */}
+      <mesh position={[0, 0.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4.9, 4.9]} />
+        <meshStandardMaterial
+          color="#040812"
+          emissive={emissiveHex}
+          emissiveIntensity={0.32}
+          roughness={0.5}
+        />
+      </mesh>
+
+      {/* Outer Border Glowing Trim */}
+      <mesh position={[0, 0.26, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.35, 2.45, 4]} />
+        <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={1.8} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* 4 Corner Pylon Beacons */}
+      {[
+        [-2.4, -2.4],
+        [2.4, -2.4],
+        [2.4, 2.4],
+        [-2.4, 2.4],
+      ].map(([px, pz], i) => (
+        <group key={`pylon-${faction}-${i}`} position={[px, 0.35, pz]}>
+          <mesh>
+            <boxGeometry args={[0.22, 0.6, 0.22]} />
+            <meshStandardMaterial color="#1E293B" metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.35, 0]}>
+            <octahedronGeometry args={[0.14, 0]} />
+            <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={2.5} />
+          </mesh>
+          <pointLight color={colorHex} intensity={0.8} distance={2.5} />
+        </group>
+      ))}
+
+      {/* Perimeter Holographic Laser Rails */}
+      <mesh position={[0, 0.45, -2.4]}>
+        <boxGeometry args={[4.5, 0.04, 0.04]} />
+        <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={2.0} transparent opacity={0.7} />
+      </mesh>
+      <mesh position={[0, 0.45, 2.4]}>
+        <boxGeometry args={[4.5, 0.04, 0.04]} />
+        <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={2.0} transparent opacity={0.7} />
+      </mesh>
+      <mesh position={[-2.4, 0.45, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <boxGeometry args={[4.5, 0.04, 0.04]} />
+        <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={2.0} transparent opacity={0.7} />
+      </mesh>
+      <mesh position={[2.4, 0.45, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <boxGeometry args={[4.5, 0.04, 0.04]} />
+        <meshStandardMaterial color={colorHex} emissive={colorHex} emissiveIntensity={2.0} transparent opacity={0.7} />
+      </mesh>
+
+      {/* Center Floating Faction Holographic Crystal Core */}
+      <mesh ref={coreHoloRef} position={[0, 0.65, 0]} scale={0.38}>
+        <octahedronGeometry args={[0.9, 0]} />
+        <meshStandardMaterial
+          color={colorHex}
+          emissive={colorHex}
+          emissiveIntensity={2.8}
+          roughness={0.15}
+          metalness={0.8}
+          wireframe
+        />
+      </mesh>
+
+      {/* 4 Dedicated Circular Quantum Docking Launchpads */}
+      {pods.map(([r, c], i) => {
+        const [wx, wy, wz] = gridToWorld(r, c, PLATFORM_Y);
+        const relX = wx - position[0];
+        const relZ = wz - position[2];
+
+        return (
+          <group key={`dock-${faction}-${i}`} position={[relX, 0.26, relZ]}>
+            {/* Recessed Docking Plate */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[0.55, 24]} />
+              <meshStandardMaterial color="#0A0F1D" roughness={0.4} metalness={0.8} />
+            </mesh>
+            {/* Concentric Neon Faction Ring */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+              <ringGeometry args={[0.42, 0.52, 24]} />
+              <meshStandardMaterial
+                color={colorHex}
+                emissive={colorHex}
+                emissiveIntensity={1.8}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+            {/* Subtle Vertical Docking Ambient Beacon */}
+            <mesh position={[0, 0.35, 0]}>
+              <cylinderGeometry args={[0.38, 0.48, 0.7, 16, 1, true]} />
+              <meshBasicMaterial color={colorHex} transparent opacity={0.12} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+// ─── 3D CYBERNETIC OBSIDIAN COLOSSEUM ARENA ────────────────────────────────
 function ObsidianColosseum3D({
   activePlayer,
 }: {
@@ -586,79 +824,94 @@ function ObsidianColosseum3D({
 }) {
   return (
     <group position={[0, 0, 0]}>
-      {/* ── 1. MAIN WARM MAHOGANY & BRASS TABLE PLATFORM ── */}
-      {/* Wooden Table Sub-Structure */}
-      <mesh position={[0, -0.65, 0]} receiveShadow>
-        <cylinderGeometry args={[11.5, 12.2, 1.4, 48]} />
-        <meshStandardMaterial color="#221612" roughness={0.65} metalness={0.15} />
+      {/* ── 1. MAIN OBSIDIAN CYBER ARENA PLATFORM ── */}
+      {/* Heavy Sub-Structure Nanocarbon Chassis */}
+      <mesh position={[0, -0.7, 0]} receiveShadow>
+        <cylinderGeometry args={[12.6, 13.4, 1.5, 64]} />
+        <meshStandardMaterial color="#060A14" roughness={0.3} metalness={0.85} />
       </mesh>
 
-      {/* Warm Golden Brass Outer Rim Bevel */}
-      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[11.2, 11.6, 64]} />
+      {/* Glowing Outer Neon Circuit Rim Bevel */}
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[12.2, 12.6, 64]} />
         <meshStandardMaterial
-          color="#D4AF37"
-          roughness={0.3}
-          metalness={0.8}
-          emissive="#FFC700"
-          emissiveIntensity={0.35}
+          color="#00FF66"
+          roughness={0.2}
+          metalness={0.9}
+          emissive="#00FF66"
+          emissiveIntensity={1.8}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Felt Tabletop Surface (Warm Deep Cosmic Navy Felt) */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[11.2, 64]} />
-        <meshStandardMaterial color="#161B33" roughness={0.9} metalness={0.05} />
+      {/* Cyber Carbon Nanotech Tabletop Surface */}
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[12.2, 64]} />
+        <meshStandardMaterial color="#080E1A" roughness={0.6} metalness={0.4} />
       </mesh>
 
-      {/* Underside Warm Table Glow */}
-      <mesh position={[0, -1.35, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[4, 9, 32]} />
-        <meshBasicMaterial color="#FF9E3B" transparent opacity={0.25} side={THREE.DoubleSide} />
-      </mesh>
-      <pointLight position={[0, -2, 0]} color="#FF9E3B" intensity={3} distance={12} />
+      {/* 4 Diagonal Heavy Cantilever Outrigger Pylons */}
+      {[
+        [-9.2, -9.2],
+        [9.2, -9.2],
+        [9.2, 9.2],
+        [-9.2, 9.2],
+      ].map(([ox, oz], i) => (
+        <group key={`outrigger-${i}`} position={[ox, -0.5, oz]}>
+          <mesh>
+            <boxGeometry args={[1.2, 0.6, 1.2]} />
+            <meshStandardMaterial color="#111827" metalness={0.9} roughness={0.2} />
+          </mesh>
+          <mesh position={[0, 0.35, 0]}>
+            <cylinderGeometry args={[0.15, 0.25, 0.4, 12]} />
+            <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={2.5} />
+          </mesh>
+        </group>
+      ))}
 
-      {/* ── 2. 4 YARD QUADRANT PLATFORMS (4 FACTIONS) ── */}
-      {/* Astraea Vanguard Yard (Top-Left: Cerulean Hexagon #0099FF) */}
-      <mesh position={[-4.7, 0.1, -4.7]} receiveShadow>
-        <boxGeometry args={[5.0, 0.18, 5.0]} />
-        <meshStandardMaterial color="#1A1F36" roughness={0.6} metalness={0.2} />
+      {/* Underside Emerald Antigrav Core Glow */}
+      <mesh position={[0, -1.45, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[5, 11, 32]} />
+        <meshBasicMaterial color="#00FF66" transparent opacity={0.28} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[-4.7, 0.2, -4.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.8, 4.8]} />
-        <meshStandardMaterial color="#0C2038" emissive="#0099FF" emissiveIntensity={0.28} />
-      </mesh>
+      <pointLight position={[0, -2, 0]} color="#00FF66" intensity={4} distance={15} />
 
-      {/* Hyperion Corsair Yard (Top-Right: Tangerine Crosshair #FF6633) */}
-      <mesh position={[4.7, 0.1, -4.7]} receiveShadow>
-        <boxGeometry args={[5.0, 0.18, 5.0]} />
-        <meshStandardMaterial color="#1A1F36" roughness={0.6} metalness={0.2} />
-      </mesh>
-      <mesh position={[4.7, 0.2, -4.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.8, 4.8]} />
-        <meshStandardMaterial color="#33180D" emissive="#FF6633" emissiveIntensity={0.28} />
-      </mesh>
+      {/* ── 2. 4 ELEVATED FACTION BASTIONS (WITH DOCKING LAUNCHPADS) ── */}
+      {/* Astraea Vanguard Yard (Top-Left: Cerulean / Cyan #0099FF) */}
+      <FactionBastion3D
+        faction="red"
+        position={[-4.7, 0, -4.7]}
+        colorHex="#0099FF"
+        emissiveHex="#00F0FF"
+        pods={YARD_PODS.red}
+      />
+
+      {/* Hyperion Corsair Yard (Top-Right: Tangerine / Crimson #FF6633) */}
+      <FactionBastion3D
+        faction="green"
+        position={[4.7, 0, -4.7]}
+        colorHex="#FF6633"
+        emissiveHex="#FF3300"
+        pods={YARD_PODS.green}
+      />
 
       {/* Solar Nova Yard (Bottom-Right: Solar Crown #FFC700) */}
-      <mesh position={[4.7, 0.1, 4.7]} receiveShadow>
-        <boxGeometry args={[5.0, 0.18, 5.0]} />
-        <meshStandardMaterial color="#1A1F36" roughness={0.6} metalness={0.2} />
-      </mesh>
-      <mesh position={[4.7, 0.2, 4.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.8, 4.8]} />
-        <meshStandardMaterial color="#2E2405" emissive="#FFC700" emissiveIntensity={0.28} />
-      </mesh>
+      <FactionBastion3D
+        faction="yellow"
+        position={[4.7, 0, 4.7]}
+        colorHex="#FFC700"
+        emissiveHex="#FFB300"
+        pods={YARD_PODS.yellow}
+      />
 
       {/* Void Syndicate Yard (Bottom-Left: Violet Diamond #9D4EDD) */}
-      <mesh position={[-4.7, 0.1, 4.7]} receiveShadow>
-        <boxGeometry args={[5.0, 0.18, 5.0]} />
-        <meshStandardMaterial color="#1A1F36" roughness={0.6} metalness={0.2} />
-      </mesh>
-      <mesh position={[-4.7, 0.2, 4.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.8, 4.8]} />
-        <meshStandardMaterial color="#220C38" emissive="#9D4EDD" emissiveIntensity={0.28} />
-      </mesh>
+      <FactionBastion3D
+        faction="blue"
+        position={[-4.7, 0, 4.7]}
+        colorHex="#9D4EDD"
+        emissiveHex="#8B5CF6"
+        pods={YARD_PODS.blue}
+      />
 
       {/* ── 3. 52 CRISP HIGH-CONTRAST STEPPING TILES ── */}
       {TRACK_COORDS.map(([r, c], idx) => {
@@ -677,7 +930,7 @@ function ObsidianColosseum3D({
           ? '#FFC700'
           : isBlueStart
           ? '#9D4EDD'
-          : '#1E2540';
+          : '#131B2E';
 
         const emissiveColor = isRedStart
           ? '#0099FF'
@@ -687,43 +940,53 @@ function ObsidianColosseum3D({
           ? '#FFC700'
           : isBlueStart
           ? '#9D4EDD'
-          : '#2A3356';
+          : '#1E293B';
 
         const powerup = CYBER_POWERUPS.find((pu) => pu.index === idx);
 
         return (
           <group key={`track-${idx}`} position={[x, y, z]}>
-            {/* Tactile Inlaid Table Tile Plate */}
+            {/* Elevated Obsidian Stepping Tile Base */}
             <mesh castShadow receiveShadow position={[0, 0.05, 0]}>
               <boxGeometry args={[0.96, 0.12, 0.96]} />
               <meshStandardMaterial
                 color={tileColor}
-                roughness={0.35}
-                metalness={0.4}
+                roughness={0.3}
+                metalness={0.6}
                 emissive={emissiveColor}
-                emissiveIntensity={isRedStart || isGreenStart || isYellowStart || isBlueStart ? 0.8 : 0.08}
+                emissiveIntensity={isRedStart || isGreenStart || isYellowStart || isBlueStart ? 1.0 : 0.12}
               />
             </mesh>
 
-            {/* Inlaid Tile Face */}
+            {/* Inlaid Nanotech Face */}
             <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[0.84, 0.84]} />
+              <planeGeometry args={[0.82, 0.82]} />
               <meshStandardMaterial
-                color="#14192D"
+                color="#0A101D"
                 emissive={emissiveColor}
-                emissiveIntensity={0.2}
-                roughness={0.5}
+                emissiveIntensity={0.25}
+                roughness={0.4}
               />
             </mesh>
 
-            {/* Safe Star Haven Marker (Warm Gold Star) */}
+            {/* Starting Portal Ring on Spawn Tiles */}
+            {(isRedStart || isGreenStart || isYellowStart || isBlueStart) && (
+              <mesh position={[0, 0.13, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.22, 0.36, 24]} />
+                <meshStandardMaterial color={tileColor} emissive={tileColor} emissiveIntensity={3.0} side={THREE.DoubleSide} />
+              </mesh>
+            )}
+
+            {/* Safe Star Haven Marker (Spinning Golden Crystal Shrine) */}
             {isSafeStar && (
-              <group position={[0, 0.26, 0]}>
-                <mesh rotation={[Math.PI / 2, 0, 0]} scale={0.26}>
-                  <octahedronGeometry args={[0.7, 0]} />
-                  <meshStandardMaterial color="#FFC700" emissive="#FFC700" emissiveIntensity={2.5} />
-                </mesh>
-                <pointLight color="#FFC700" intensity={1.8} distance={1.8} />
+              <group position={[0, 0.28, 0]}>
+                <Float speed={2.5} rotationIntensity={1.5} floatIntensity={0.5}>
+                  <mesh rotation={[Math.PI / 2, 0, 0]} scale={0.28}>
+                    <octahedronGeometry args={[0.7, 0]} />
+                    <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={3.0} />
+                  </mesh>
+                </Float>
+                <pointLight color="#FFD700" intensity={1.8} distance={1.8} />
               </group>
             )}
 
@@ -748,57 +1011,31 @@ function ObsidianColosseum3D({
             : '#9D4EDD';
 
         return tiles.map(([r, c], i) => {
-          const [x, y, z] = gridToWorld(r, c, PLATFORM_Y + 0.02);
+          const [x, y, z] = gridToWorld(r, c, PLATFORM_Y + 0.02 + i * 0.015);
           return (
-            <mesh key={`home-${col}-${i}`} position={[x, y + 0.05, z]} castShadow receiveShadow>
-              <boxGeometry args={[0.96, 0.14, 0.96]} />
-              <meshStandardMaterial
-                color={hex}
-                roughness={0.3}
-                metalness={0.5}
-                emissive={hex}
-                emissiveIntensity={0.4 + i * 0.12}
-              />
-            </mesh>
+            <group key={`home-${col}-${i}`} position={[x, y + 0.05, z]}>
+              <mesh castShadow receiveShadow>
+                <boxGeometry args={[0.96, 0.14, 0.96]} />
+                <meshStandardMaterial
+                  color={hex}
+                  roughness={0.25}
+                  metalness={0.7}
+                  emissive={hex}
+                  emissiveIntensity={0.5 + i * 0.15}
+                />
+              </mesh>
+              {/* Runway Guidance Chevron */}
+              <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.12, 0.24, 3]} />
+                <meshStandardMaterial color="#FFFFFF" emissive={hex} emissiveIntensity={2.5} side={THREE.DoubleSide} />
+              </mesh>
+            </group>
           );
         });
       })}
 
       {/* ── 5. CENTER SINGULARITY NEXUS GOAL ── */}
-      <group position={[0, PLATFORM_Y + 0.04, 0]}>
-        {/* Tier 1 Mahogany & Brass Dais */}
-        <mesh position={[0, 0.08, 0]} receiveShadow>
-          <cylinderGeometry args={[2.0, 2.2, 0.16, 24]} />
-          <meshStandardMaterial color="#221612" roughness={0.6} metalness={0.2} />
-        </mesh>
-
-        {/* Tier 2 Glowing Golden Brass Ring */}
-        <mesh position={[0, 0.18, 0]} receiveShadow>
-          <cylinderGeometry args={[1.3, 1.45, 0.12, 24]} />
-          <meshStandardMaterial
-            color="#D4AF37"
-            emissive="#FFC700"
-            emissiveIntensity={0.6}
-            roughness={0.25}
-            metalness={0.8}
-          />
-        </mesh>
-
-        {/* Floating Rotating Golden Singularity Star */}
-        <Float speed={2.5} rotationIntensity={1.5} floatIntensity={0.6}>
-          <mesh position={[0, 0.85, 0]} scale={0.42}>
-            <octahedronGeometry args={[0.9, 0]} />
-            <meshStandardMaterial
-              color="#FFC700"
-              emissive="#FFC700"
-              emissiveIntensity={2.4}
-              roughness={0.2}
-              metalness={0.85}
-            />
-          </mesh>
-          <pointLight position={[0, 0.85, 0]} color="#FFC700" intensity={3} distance={4} />
-        </Float>
-      </group>
+      <CentralNexusCore3D />
     </group>
   );
 }
@@ -866,38 +1103,84 @@ function CombatClashVfx({
   );
 }
 
-// ─── AMBIENT STADIUM CYBER MOTES ───────────────────────────────────────────
-function LudoStadiumMotes() {
+// ─── AMBIENT STADIUM CYBER MOTES & ORBITAL ARCHITECTURE ────────────────────
+function StadiumArenaSurroundings3D() {
   const points = useMemo(() => {
-    const p = new Float32Array(150 * 3);
-    for (let i = 0; i < 150; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 26;
-      p[i * 3 + 1] = Math.random() * 8 + 0.5;
-      p[i * 3 + 2] = (Math.random() - 0.5) * 26;
+    const p = new Float32Array(300 * 3);
+    for (let i = 0; i < 300; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 45;
+      p[i * 3 + 1] = Math.random() * 18 - 2;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 45;
     }
     return p;
   }, []);
 
   const pointsRef = useRef<THREE.Points>(null);
+  const ringRef = useRef<THREE.Group>(null);
+
   useFrame((_, delta) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y += delta * 0.02;
+      pointsRef.current.rotation.y += delta * 0.025;
+    }
+    if (ringRef.current) {
+      ringRef.current.rotation.y -= delta * 0.04;
     }
   });
 
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[points, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.04}
-        color="#D4AF37"
-        transparent
-        opacity={0.5}
-        sizeAttenuation
-      />
-    </points>
+    <group>
+      {/* 300 Ambient Floating Cyber Dust Motes */}
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[points, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.06}
+          color="#00FF66"
+          transparent
+          opacity={0.65}
+          sizeAttenuation
+        />
+      </points>
+
+      {/* Distant Orbiting Superstructure Ring */}
+      <group ref={ringRef} position={[0, -2, 0]} rotation={[0.3, 0, 0.2]}>
+        <mesh>
+          <torusGeometry args={[22, 0.15, 16, 64]} />
+          <meshStandardMaterial color="#00FF66" emissive="#00FF66" emissiveIntensity={1.2} wireframe transparent opacity={0.35} />
+        </mesh>
+        <mesh>
+          <torusGeometry args={[26, 0.08, 16, 64]} />
+          <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={1.0} wireframe transparent opacity={0.25} />
+        </mesh>
+      </group>
+
+      {/* 4 Diagonal High-Intensity Cyber Stadium Floodlight Towers */}
+      {[
+        [-17, 0, -17],
+        [17, 0, -17],
+        [17, 0, 17],
+        [-17, 0, 17],
+      ].map(([fx, fy, fz], i) => (
+        <group key={`floodlight-${i}`} position={[fx, fy, fz]}>
+          {/* Truss Tower Pylon */}
+          <mesh position={[0, 6, 0]}>
+            <cylinderGeometry args={[0.3, 0.6, 12, 6]} />
+            <meshStandardMaterial color="#0F172A" metalness={0.9} roughness={0.3} wireframe />
+          </mesh>
+          {/* Floodlight Head Box */}
+          <mesh position={[0, 12, 0]} rotation={[0.4, (i * Math.PI) / 2 + Math.PI / 4, 0]}>
+            <boxGeometry args={[2.2, 0.8, 1.2]} />
+            <meshStandardMaterial color="#020617" metalness={0.8} />
+          </mesh>
+          {/* Glowing Floodlight Emitter Panel */}
+          <mesh position={[0, 12, 0]} rotation={[0.4, (i * Math.PI) / 2 + Math.PI / 4, 0]}>
+            <planeGeometry args={[2.0, 0.6]} />
+            <meshBasicMaterial color="#00FF66" />
+          </mesh>
+        </group>
+      ))}
+    </group>
   );
 }
 
@@ -950,27 +1233,27 @@ function LudoCameraController({
   const controlsRef = useRef<any>(null);
 
   useFrame((state, delta) => {
-    // True Isometric Tactical Camera (diagonal corner angle showcasing all 4 yards and all paths)
-    let targetX = 12.0;
-    let targetY = 17.5;
-    let targetZ = 12.0;
+    // Crisp, immersive tactical isometric camera: board and avatars are large & vibrant
+    let targetX = 8.6;
+    let targetY = 12.8;
+    let targetZ = 8.6;
     let lookX = 0;
-    let lookY = 0.2;
+    let lookY = 0.35;
     let lookZ = 0;
 
     if (preset === 'topdown') {
       targetX = 0;
-      targetY = 23.0;
+      targetY = 18.5;
       targetZ = 0.05;
       lookX = 0;
       lookY = 0;
       lookZ = 0;
     } else if (preset === 'action' && activeTargetPos) {
-      targetX = activeTargetPos[0] * 0.4;
-      targetY = 8.5;
-      targetZ = activeTargetPos[2] * 0.4 + 9.0;
+      targetX = activeTargetPos[0] * 0.45;
+      targetY = 7.5;
+      targetZ = activeTargetPos[2] * 0.45 + 7.8;
       lookX = activeTargetPos[0];
-      lookY = activeTargetPos[1] + 0.5;
+      lookY = activeTargetPos[1] + 0.6;
       lookZ = activeTargetPos[2];
     }
 
@@ -991,9 +1274,9 @@ function LudoCameraController({
       ref={controlsRef}
       enableDamping
       dampingFactor={0.06}
-      minDistance={6}
-      maxDistance={35}
-      maxPolarAngle={Math.PI / 2 - 0.05}
+      minDistance={5}
+      maxDistance={28}
+      maxPolarAngle={Math.PI / 2 - 0.06}
     />
   );
 }
@@ -1045,40 +1328,40 @@ export function Ludo3DColosseum({
   }, [activeClash, activePlayer]);
 
   return (
-    <div className="w-full h-full overflow-hidden bg-[#101426]">
+    <div className="w-full h-full overflow-hidden bg-[#040711]">
       <Canvas
         shadows
         dpr={[1, 1.5]}
-        camera={{ position: [0, 16.5, 16.5], fov: 45 }}
+        camera={{ position: [0, 14.5, 14.5], fov: 45 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
-        {/* Deep Cosmic Space Fog */}
-        <color attach="background" args={['#101426']} />
-        <fog attach="fog" args={['#12162B', 25, 65]} />
+        {/* Deep Obsidian Cyber Cosmos Background & Fog */}
+        <color attach="background" args={['#040711']} />
+        <fog attach="fog" args={['#040711', 22, 60]} />
 
-        {/* Warm Space Station Lounge Lighting */}
-        <ambientLight intensity={1.4} color="#2A2440" />
+        {/* Ambient & Dramatic Cyber Colosseum Lighting */}
+        <ambientLight intensity={1.6} color="#0E1726" />
         <directionalLight
-          position={[10, 20, 14]}
-          intensity={2.6}
-          color="#FFE5C4"
+          position={[8, 22, 12]}
+          intensity={2.8}
+          color="#FFFFFF"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-bias={-0.0001}
         />
-        <pointLight position={[0, 8, 0]} intensity={2.8} color="#FFE5C4" distance={22} />
+        <pointLight position={[0, 7, 0]} intensity={3.5} color="#00FF66" distance={20} />
 
-        {/* 4 Faction Corner Key Lights */}
-        <pointLight position={[-8, 4, -8]} color="#0099FF" intensity={3} distance={12} />
-        <pointLight position={[8, 4, -8]} color="#FF6633" intensity={3} distance={12} />
-        <pointLight position={[8, 4, 8]} color="#FFC700" intensity={3} distance={12} />
-        <pointLight position={[-8, 4, 8]} color="#9D4EDD" intensity={3} distance={12} />
+        {/* 4 Faction Bastion Colored Key Lights */}
+        <pointLight position={[-7, 5, -7]} color="#00F0FF" intensity={3.2} distance={14} />
+        <pointLight position={[7, 5, -7]} color="#FF5500" intensity={3.2} distance={14} />
+        <pointLight position={[7, 5, 7]} color="#FFD700" intensity={3.2} distance={14} />
+        <pointLight position={[-7, 5, 7]} color="#A855F7" intensity={3.2} distance={14} />
 
         {/* Camera Controller */}
         <LudoCameraController preset={cameraPreset} activeTargetPos={actionTargetPos} />
 
-        {/* Obsidian & Emerald Platform */}
+        {/* Obsidian & Emerald Colosseum Platform */}
         <ObsidianColosseum3D activePlayer={activePlayer} />
 
         {/* 16 Avatars on Board with 60 FPS useFrame movement */}
@@ -1143,8 +1426,8 @@ export function Ludo3DColosseum({
           </group>
         ))}
 
-        {/* Ambient Stadium Cyber Motes */}
-        <LudoStadiumMotes />
+        {/* Ambient Stadium Cyber Motes & Orbital Surroundings */}
+        <StadiumArenaSurroundings3D />
 
         {/* Celebratory Supernova Burst on Rolling a 6 */}
         <SixSupernovaBurst active={diceRoll === 6} />

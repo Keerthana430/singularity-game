@@ -1005,41 +1005,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FOOTER CALL TO ACTION BANNER matching Image 2 "DESIGN IS REBELLION." */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-[#00FF66]/20">
-        <div className="hud-box glass-panel p-8 sm:p-12 border border-[#00FF66]/40 relative overflow-hidden text-center flex flex-col items-center">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,255,102,0.1),transparent_70%)] pointer-events-none" />
-          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight mb-4 relative z-10 font-mono text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            DESIGN IS REBELLION.
-          </h2>
-          <p className="text-white/80 max-w-xl text-xs sm:text-sm mb-8 relative z-10 font-mono">
-            &gt; Build your avatar, enter the beauty contest, customize blocky cosmetics, and dominate the battle arena &amp; overall leaderboard.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 relative z-10">
-            <Link
-              href="/studio"
-              className="cyber-button flex items-center gap-2 px-8 py-4 text-sm font-black uppercase text-black"
-            >
-              <Sparkles size={18} />
-              <span>&gt; LAUNCH AVATAR STUDIO_</span>
-            </Link>
-            <Link
-              href="/contest"
-              className="flex items-center gap-2 px-6 py-4 text-sm font-bold uppercase border border-[#FF69B4]/60 bg-[#FF69B4]/10 text-[#FF69B4] hover:bg-[#FF69B4] hover:text-white transition-all"
-            >
-              <Heart size={18} />
-              <span>[ BEAUTY CONTEST ]</span>
-            </Link>
-            <Link
-              href="/lobby"
-              className="cyber-button-outline flex items-center gap-2 px-6 py-4 text-sm font-bold uppercase text-[#00FF66]"
-            >
-              <Swords size={18} />
-              <span>[ ENTER BATTLE ARENA ]</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+
 
       {/* SITE FOOTER */}
       <footer className="border-t border-[#00FF66]/20 bg-[#020502] py-6 text-center text-xs font-mono text-white/40">

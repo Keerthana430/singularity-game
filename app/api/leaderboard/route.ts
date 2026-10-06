@@ -11,18 +11,16 @@ interface LeaderboardEntry {
   classRole: string;
 }
 
-let leaderboardData: LeaderboardEntry[] = [
-  { rank: 1, id: 'preset-1', name: 'KAGE-07', victories: 48, losses: 4, winRate: 92, rating: 2850, classRole: 'Cyber Shinobi' },
-  { rank: 2, id: 'preset-3', name: 'VEX-TITAN', victories: 42, losses: 6, winRate: 87, rating: 2680, classRole: 'Heavy Juggernaut' },
-  { rank: 3, id: 'preset-2', name: 'AURA-V', victories: 39, losses: 8, winRate: 83, rating: 2540, classRole: 'Valkyrie Vanguard' },
-  { rank: 4, id: 'preset-4', name: 'PIXEL-BYTE', victories: 31, losses: 11, winRate: 74, rating: 2310, classRole: 'Rogue Hacker' },
-];
+let leaderboardData: LeaderboardEntry[] = [];
 
 export async function GET() {
   return NextResponse.json(
     {
       success: true,
-      data: leaderboardData.sort((a, b) => b.rating - a.rating),
+      data: [...leaderboardData].sort((a, b) => b.rating - a.rating).map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+      })),
     },
     { status: 200 }
   );
@@ -36,10 +34,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
     }
 
-    // Sanitize inputs
     const safeName = name.replace(/<[^>]*>/g, '').replace(/[^\w\s\-]/g, '').trim().slice(0, 30);
     const safeRole = (typeof classRole === 'string' ? classRole : 'Cyber Fighter')
-      .replace(/<[^>]*>/g, '').trim().slice(0, 40);
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 40);
 
     if (!safeName) {
       return NextResponse.json({ success: false, error: 'Invalid name' }, { status: 400 });
@@ -57,12 +56,9 @@ export async function POST(request: Request) {
       }
       const total = existing.victories + existing.losses;
       existing.winRate = Math.round((existing.victories / total) * 100);
+      existing.classRole = safeRole;
     } else {
-      // Cap leaderboard size to prevent memory exhaustion
-      if (leaderboardData.length >= 200) {
-        leaderboardData = leaderboardData.slice(0, 150);
-      }
-      leaderboardData.push({
+      const entry: LeaderboardEntry = {
         rank: leaderboardData.length + 1,
         id: `player-${Date.now()}`,
         name: safeName,
@@ -71,13 +67,15 @@ export async function POST(request: Request) {
         winRate: isVictory ? 100 : 0,
         rating: isVictory ? 1225 : 1185,
         classRole: safeRole,
-      });
+      };
+      leaderboardData.push(entry);
     }
 
-    // Re-rank entries
     leaderboardData.sort((a, b) => b.rating - a.rating);
     leaderboardData.forEach((entry, idx) => {
       entry.rank = idx + 1;
+      const total = entry.victories + entry.losses || 1;
+      entry.winRate = Math.round((entry.victories / total) * 100);
     });
 
     return NextResponse.json(
@@ -88,7 +86,7 @@ export async function POST(request: Request) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to update leaderboard' },
       { status: 500 }

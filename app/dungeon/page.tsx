@@ -673,6 +673,9 @@ export default function DungeonPage() {
             }}
             onHitmarker={(isCrit) => {
               setHitmarkerPulse({ count: Date.now(), isCrit });
+              window.setTimeout(() => {
+                setHitmarkerPulse((prev) => (Date.now() - prev.count >= 140 ? { count: 0, isCrit: false } : prev));
+              }, 160);
             }}
             onNearbyLootChange={setNearbyLoot}
             onPickupLoot={handlePickupLoot}

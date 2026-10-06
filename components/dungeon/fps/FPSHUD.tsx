@@ -1,7 +1,7 @@
 // components/dungeon/fps/FPSHUD.tsx
 // Cyber-Anime Sci-Fi FPS HUD with Dynamic Reticle, Hitmarkers, Ammo Telemetry, Radar, and Boss Bar
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Heart, Zap, Crosshair, AlertCircle, RefreshCw } from 'lucide-react';
 import { WeaponId, WEAPON_CONFIGS, FPSEnemyEntity } from './types';
 
@@ -55,6 +55,20 @@ export function FPSHUD({
   potionCount,
   interactPrompt,
 }: FPSHUDProps) {
+  const [hitmarkerVisible, setHitmarkerVisible] = useState(false);
+
+  useEffect(() => {
+    if (hitmarkerPulse.count > 0) {
+      setHitmarkerVisible(true);
+      const timer = setTimeout(() => {
+        setHitmarkerVisible(false);
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      setHitmarkerVisible(false);
+    }
+  }, [hitmarkerPulse.count]);
+
   const weaponDef = WEAPON_CONFIGS[currentWeapon];
   const hpPercent = Math.max(0, Math.min(100, (playerHp / maxHp) * 100));
   const shieldPercent = maxShield > 0 ? Math.max(0, Math.min(100, (playerShield / maxShield) * 100)) : 0;
@@ -96,9 +110,9 @@ export function FPSHUD({
           style={{ left: `${baseSpread}px` }}
         />
 
-        {/* Dynamic Hitmarker Tickmarks */}
-        {hitmarkerPulse.count > 0 && (
-          <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-ping">
+        {/* Dynamic Hitmarker Tickmarks (auto-dismisses after 150ms, no looping) */}
+        {hitmarkerVisible && (
+          <div className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform scale-110">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M6 6L9 9M18 6L15 9M6 18L9 15M18 18L15 15"
